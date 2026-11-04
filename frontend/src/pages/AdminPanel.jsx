@@ -36,11 +36,11 @@ export default function AdminPanel() {
         e.preventDefault();
         try {
             if (isEditing) {
-                await api.put(`/users/${editId}`, formData);
-                alert('Utilizador atualizado com sucesso!');
+                const res = await api.put(`/users/${editId}`, formData);
+                alert(res.data.message || 'Utilizador atualizado com sucesso!');
             } else {
-                await api.post('/users', formData);
-                alert('Utilizador criado com sucesso!');
+                const res = await api.post('/users', formData);
+                alert(res.data.message || 'Utilizador criado com sucesso!');
             }
             resetForm();
             fetchUsers();
@@ -83,14 +83,7 @@ export default function AdminPanel() {
 
     return (
         <div>
-            <aside>
-                <div>🍔</div>
-                <div>
-                    <span title="Utilizadores">👤</span>
-                    {isChefe && <span title="Relatórios e Gráficos (Dashboard)">📊</span>}
-                    <span title="Cardápio">🍔</span>
-                </div>
-            </aside>
+        
 
             <main>
                 <h1>Gestão de Utilizadores</h1>
@@ -106,23 +99,22 @@ export default function AdminPanel() {
                             E-mail
                             <input type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} required />
                         </label>
-                        <label>
-                            Senha Inicial
-                            <input type="password" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} {...(!isEditing && {required: true})} />
-                        </label>
+                        {/* Senha gerada automaticamente pelo sistema e enviada por email */}
                         <label>
                             Cargo
                             <select value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}>
-                                <option value="Atendente">Atendente</option>
+                                <option value="Atendente">Atendente</option>                                
+                                <option value="Auxiliar de cozinha">Auxiliar de cozinha</option>
+                                <option value="Gerente">Gerente</option>
                                 <option value="Chefe">Chefe</option>
                             </select>
                         </label>
                         <label>
                             Nível de Acesso
                             <select value={formData.access_level} onChange={e => setFormData({...formData, access_level: e.target.value})}>
-                                <option value="Nível 1">Nível 1</option>
-                                <option value="Nível 2">Nível 2</option>
-                                <option value="Nível 3">Nível 3</option>
+                                <option value="Nível 1">Nível 1 - Básico (Pedidos e cardápio)</option>
+                                <option value="Nível 2">Nível 2 - Intermediário (Relatórios)</option>
+                                <option value="Nível 3">Nível 3 - Avançado (Acesso total)</option>
                             </select>
                         </label>
                         <label>

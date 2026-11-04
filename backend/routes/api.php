@@ -11,6 +11,10 @@ Route::get('/user', function (Request $request) {
 
 Route::post('/login', [AuthController::class, 'login']);
 
+Route::post('/password/forgot', [AuthController::class, 'forgotPassword']);
+Route::post('/password/verify', [AuthController::class, 'verifyCode']);
+Route::post('/password/reset', [AuthController::class, 'resetPassword']);
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/users', [UserController::class, 'index']);
     Route::get('/users/{id}', [UserController::class, 'show']);

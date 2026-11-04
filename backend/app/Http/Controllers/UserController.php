@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Mail\WelcomePasswordMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 
 class UserController extends Controller
 {
@@ -27,7 +29,6 @@ class UserController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:6',
             'role' => 'required|in:Chefe,Atendente,chefe,atendente',
             'access_level' => 'nullable|in:Nível 1,Nível 2,Nível 3',
             'status' => 'nullable|in:Ativo,Inativo,ativo,inativo',
@@ -37,16 +38,22 @@ class UserController extends Controller
         $accessLevel = $request->input('access_level', 'Nível 1');
         $status = ucfirst(strtolower($request->input('status', 'Ativo')));
 
+        // Gera uma senha temporária pelo sistema (não solicitada no formulário)
+        $plainPassword = strtoupper(substr(str_shuffle('ABCDEFGHJKLMNPQRSTUVWXYZ23456789'), 0, 8));
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'password' => Hash::make($plainPassword),
             'role' => $role,
             'access_level' => $accessLevel,
             'status' => $status,
         ]);
 
-        return response()->json(['message' => 'Utilizador criado com sucesso!', 'user' => $user], 201);
+        // Envia a senha gerada para o email do utilizador
+        Mail::to($user->email)->send(new WelcomePasswordMail($user->name, $plainPassword));
+
+        return response()->json(['message' => 'Utilizador criado com sucesso! A senha foi enviada para o email.', 'user' => $user], 201);
     }
 
     // Atualizar utilizador
