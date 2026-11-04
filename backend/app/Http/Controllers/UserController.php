@@ -51,7 +51,7 @@ class UserController extends Controller
         ]);
 
         // Envia a senha gerada para o email do utilizador
-        Mail::to($user->email)->send(new WelcomePasswordMail($user->name, $plainPassword));
+        Mail::to($user->email)->queue(new WelcomePasswordMail($user->name, $plainPassword));
 
         return response()->json(['message' => 'Utilizador criado com sucesso! A senha foi enviada para o email.', 'user' => $user], 201);
     }

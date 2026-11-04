@@ -53,7 +53,7 @@ class AuthController extends Controller
             'updated_at' => now(),
         ]);
 
-        Mail::to($request->email)->send(new PasswordResetCodeMail($code));
+        Mail::to($request->email)->queue(new PasswordResetCodeMail($code));
 
         return response()->json(['message' => 'Código de redefinição enviado para o email.']);
     }
