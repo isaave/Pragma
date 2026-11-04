@@ -13,6 +13,12 @@ Route::post('/login', [AuthController::class, 'login']);
 
 Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
 
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'show']);
+    Route::put('/profile', [\App\Http\Controllers\ProfileController::class, 'update']);
+    Route::post('/profile/avatar', [\App\Http\Controllers\ProfileController::class, 'uploadAvatar']);
+});
+
 Route::post('/password/forgot', [AuthController::class, 'forgotPassword']);
 Route::post('/password/verify', [AuthController::class, 'verifyCode']);
 Route::post('/password/reset', [AuthController::class, 'resetPassword']);
