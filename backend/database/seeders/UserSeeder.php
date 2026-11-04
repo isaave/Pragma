@@ -15,7 +15,9 @@ class UserSeeder extends Seeder
             'name' => 'Chefe House Burguer',
             'email' => 'chefe@pragma.com',
             'password' => Hash::make('password123'),
-            'role' => 'chefe',
+            'role' => 'Chefe',
+            'access_level' => 'Nível 3',
+            'status' => 'Ativo',
         ]);
 
         // Criar a conta da Atendente
@@ -23,7 +25,9 @@ class UserSeeder extends Seeder
             'name' => 'Atendente Pragma',
             'email' => 'atendente@pragma.com',
             'password' => Hash::make('password123'),
-            'role' => 'atendente',
+            'role' => 'Atendente',
+            'access_level' => 'Nível 1',
+            'status' => 'Ativo',
         ]);
     }
 }

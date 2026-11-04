@@ -1,12 +1,34 @@
-import React from 'react';
-import Login from './pages/Login'; // Ajusta o caminho se o Login.jsx estiver noutra pasta (ex: './components/Login')
+import React, { useState, useEffect } from 'react';
+import Login from './pages/Login';
+import AdminPanel from './pages/AdminPanel';
 
-function App() {
+export default function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Verifica se já existe um token guardado quando a aplicação arranca
+  useEffect(() => {
+    const token = localStorage.getItem('pragma_token');
+    if (token) {
+      setIsAuthenticated(true);
+    }
+
+    const handleLogout = () => setIsAuthenticated(false);
+    window.addEventListener('pragma:logout', handleLogout);
+    return () => window.removeEventListener('pragma:logout', handleLogout);
+  }, []);
+
+  // Função chamada após o login ser bem-sucedido
+  const handleLoginSuccess = () => {
+    setIsAuthenticated(true);
+  };
+
   return (
     <div>
-      <Login />
+      {isAuthenticated ? (
+        <AdminPanel />
+      ) : (
+        <Login onLoginSuccess={handleLoginSuccess} />
+      )}
     </div>
   );
 }
-
-export default App;
