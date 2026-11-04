@@ -25,7 +25,7 @@ export default function Profile() {
             setUser(res.data);
             setName(res.data.name || '');
             setEmail(res.data.email || '');
-            setAvatarPreview(res.data.avatar_url ? `${BACKEND_URL}${res.data.avatar_url}` : null);
+            setAvatarPreview(res.data.avatar_url ? `${BACKEND_URL}${res.data.avatar_url}?t=${Date.now()}` : null);
         } catch (err) {
             setError('Erro ao carregar perfil.');
         }
@@ -52,7 +52,7 @@ export default function Profile() {
             });
             setMessage(res.data.message);
             setAvatarFile(null);
-            setAvatarPreview(res.data.avatar_url ? `${BACKEND_URL}${res.data.avatar_url}` : null);
+            setAvatarPreview(res.data.avatar_url ? `${BACKEND_URL}${res.data.avatar_url}?t=${Date.now()}` : null);
             fetchProfile();
             // atualiza localStorage
             const stored = localStorage.getItem('pragma_user');
