@@ -11,6 +11,10 @@ export default function App() {
     if (token) {
       setIsAuthenticated(true);
     }
+
+    const handleLogout = () => setIsAuthenticated(false);
+    window.addEventListener('pragma:logout', handleLogout);
+    return () => window.removeEventListener('pragma:logout', handleLogout);
   }, []);
 
   // Função chamada após o login ser bem-sucedido
