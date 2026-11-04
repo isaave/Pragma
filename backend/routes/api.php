@@ -11,6 +11,8 @@ Route::get('/user', function (Request $request) {
 
 Route::post('/login', [AuthController::class, 'login']);
 
+Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
+
 Route::post('/password/forgot', [AuthController::class, 'forgotPassword']);
 Route::post('/password/verify', [AuthController::class, 'verifyCode']);
 Route::post('/password/reset', [AuthController::class, 'resetPassword']);

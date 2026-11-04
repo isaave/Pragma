@@ -29,12 +29,12 @@ class UserController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'role' => 'required|in:Chefe,Atendente,chefe,atendente',
-            'access_level' => 'nullable|in:Nível 1,Nível 2,Nível 3',
+            'role' => 'required|string|max:255',
+            'access_level' => 'nullable|string|max:255',
             'status' => 'nullable|in:Ativo,Inativo,ativo,inativo',
         ]);
 
-        $role = ucfirst(strtolower($request->role));
+        $role = $request->role;
         $accessLevel = $request->input('access_level', 'Nível 1');
         $status = ucfirst(strtolower($request->input('status', 'Ativo')));
 
@@ -65,15 +65,15 @@ class UserController extends Controller
             'name' => 'sometimes|required|string|max:255',
             'email' => 'sometimes|required|string|email|max:255|unique:users,email,' . $id,
             'password' => 'nullable|string|min:6',
-            'role' => 'nullable|in:Chefe,Atendente,chefe,atendente',
-            'access_level' => 'nullable|in:Nível 1,Nível 2,Nível 3',
+            'role' => 'nullable|string|max:255',
+            'access_level' => 'nullable|string|max:255',
             'status' => 'nullable|in:Ativo,Inativo,ativo,inativo',
         ]);
 
         $data = $request->only(['name', 'email']);
 
         if ($request->filled('role')) {
-            $data['role'] = ucfirst(strtolower($request->role));
+            $data['role'] = $request->role;
         }
         if ($request->filled('access_level')) {
             $data['access_level'] = $request->access_level;
