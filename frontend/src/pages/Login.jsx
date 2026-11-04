@@ -109,6 +109,7 @@ export default function Login({ onLoginSuccess }) {
                     </label>
                     <button type="submit" disabled={loading}>{loading ? 'A entrar...' : 'Entrar'}</button>
                     <button type="button" onClick={() => { setView('forgot'); setError(''); setInfo(''); }}>Esqueci a senha</button>
+                    br
                 </form>
             )}
 

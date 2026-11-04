@@ -173,6 +173,7 @@ export default function AdminPanel() {
                                     </td>
                                 )}
                             </tr>
+                            
                         ))}
                     </tbody>
                 </table>
