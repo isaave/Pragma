@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import Login from './pages/Login';
+import Home from './pages/Home';
 import AdminPanel from './pages/AdminPanel';
 import Profile from './pages/Profile';
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [view, setView] = useState('admin'); // admin | profile
+  const [view, setView] = useState('home'); // home | admin | profile
 
   // Verifica se já existe um token guardado quando a aplicação arranca
   useEffect(() => {
@@ -22,7 +23,7 @@ export default function App() {
   // Função chamada após o login ser bem-sucedido
   const handleLoginSuccess = () => {
     setIsAuthenticated(true);
-    setView('admin');
+    setView('home');
   };
 
   if (!isAuthenticated) {
@@ -32,10 +33,11 @@ export default function App() {
   return (
     <div>
       <nav>
+        <button type="button" onClick={() => setView('home')}>Início</button>
         <button type="button" onClick={() => setView('admin')}>Utilizadores</button>
         <button type="button" onClick={() => setView('profile')}>Perfil</button>
       </nav>
-      {view === 'profile' ? <Profile /> : <AdminPanel />}
+      {view === 'profile' ? <Profile /> : view === 'admin' ? <AdminPanel /> : <Home />}
     </div>
   );
 }
