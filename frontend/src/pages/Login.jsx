@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import api from '../Services/api'; // Ajusta o caminho conforme a localização do teu api.js
 
-export default function Login() {
+export default function Login({ onLoginSuccess }) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -24,7 +24,9 @@ export default function Login() {
             localStorage.setItem('pragma_token', token);
             localStorage.setItem('pragma_user', JSON.stringify(user));
 
-            alert(`Bem-vindo de volta, ${user.name}!`);
+            if (onLoginSuccess) {
+                onLoginSuccess();
+            }
             
             // Aqui podes redirecionar o utilizador para a página principal (ex: dashboard)
             // window.location.href = '/dashboard';
