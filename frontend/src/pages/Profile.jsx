@@ -59,7 +59,9 @@ export default function Profile() {
             if (stored) {
                 const u = JSON.parse(stored);
                 u.avatar = res.data.avatar;
+                u.avatar_url = res.data.avatar_url;
                 localStorage.setItem('pragma_user', JSON.stringify(u));
+                window.dispatchEvent(new Event('pragma:user'));
             }
         } catch (err) {
             setError('Erro ao enviar imagem.');

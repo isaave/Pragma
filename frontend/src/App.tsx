@@ -32,6 +32,16 @@ export default function App() {
     return () => window.removeEventListener('pragma:logout', handleLogout);
   }, []);
 
+  // Atualiza o utilizador quando o perfil é alterado (ex.: avatar)
+  useEffect(() => {
+    const handleUserUpdate = () => {
+      const storedUser = localStorage.getItem('pragma_user');
+      if (storedUser) setCurrentUser(JSON.parse(storedUser));
+    };
+    window.addEventListener('pragma:user', handleUserUpdate);
+    return () => window.removeEventListener('pragma:user', handleUserUpdate);
+  }, []);
+
   // Função chamada após o login ser bem-sucedido
   const handleLoginSuccess = () => {
     setIsAuthenticated(true);
