@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Home, Users, UserCog, LogOut } from 'lucide-react';
+import { Bell, History, Utensils, BarChart3, Users, LogOut } from 'lucide-react';
 import api from '../Services/api';
 import logo from '../assets/LogoHouseBurguer.png';
 
@@ -12,56 +12,125 @@ export default function Sidebar({ currentView, onNavigate, onLogout, currentUser
         } catch (error) {
             // ignora erros de rede
         }
+        localStorage.removeItem('pragma_token');
+        localStorage.removeItem('pragma_user');
         if (onLogout) onLogout();
     };
 
     const width = expanded ? '220px' : '64px';
 
     const items = [
-        { view: 'home', icon: Home, label: 'Início' },
-        { view: 'admin', icon: Users, label: 'Utilizadores' },
-        { view: 'profile', icon: UserCog, label: 'Perfil' },
+        { view: 'orders', icon: Bell, label: 'Gestão de Pedidos' },
+        { view: 'history', icon: History, label: 'Históricos de pedidos' },
+        { view: 'menu', icon: Utensils, label: 'Produtos' },
+        { view: 'reports', icon: BarChart3, label: 'Relatórios' },
+        { view: 'admin', icon: Users, label: 'Usuários' },
     ];
 
     return (
         <aside
             onMouseEnter={() => setExpanded(true)}
             onMouseLeave={() => setExpanded(false)}
-            style={{ width, transition: 'width 0.2s ease', overflow: 'hidden', minHeight: '100vh', background: '#0b132b', color: 'white', padding: '16px 8px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '12px' }}
+            style={{
+                width,
+                transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                overflow: 'hidden',
+                minHeight: '100vh',
+                backgroundColor: '#03071e',
+                borderRadius: '30px',
+                margin: '12px',
+                height: 'calc(100vh - 24px)',
+                padding: '20px 10px',
+                boxSizing: 'border-box',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                boxShadow: '8px 0 30px rgba(0, 0, 0, 0.25)',
+                zIndex: 10
+            }}
         >
-            <div style={{ fontWeight: 'bold', textAlign: 'center' }}>
-                <img src={logo} alt="House Burguer" width="32" height="32" />
-                {expanded ? ' Pragma' : ''}
+            {/* Topo: Logótipo da House Burguer */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '20px', transition: 'all 0.3s' }}>
+                <img 
+                    src={logo} 
+                    alt="House Burguer" 
+                    style={{ 
+                        width: expanded ? '70px' : '40px', 
+                        height: expanded ? '70px' : '40px', 
+                        borderRadius: '50%', 
+                        objectFit: 'cover',
+                        border: '2px solid rgba(255, 255, 255, 0.15)',
+                        transition: 'width 0.3s, height 0.3s'
+                    }} 
+                />
             </div>
-            <nav style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: expanded ? 'flex-start' : 'center' }}>
-                {items.map(({ view, icon: Icon, label }) => (
-                    <button
-                        key={view}
-                        type="button"
-                        onClick={() => onNavigate(view)}
-                        title={label}
-                        style={{ background: 'none', border: 'none', color: 'white', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '6px', width: '100%', textAlign: 'left' }}
-                    >
-                        <Icon size={24} />
-                        {expanded ? label : ''}
-                    </button>
-                ))}
+
+            {/* Menu de Navegação */}
+            <nav style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
+                {items.map(({ view, icon: Icon, label }) => {
+                    const isActive = currentView === view;
+                    return (
+                        <button
+                            key={view}
+                            type="button"
+                            onClick={() => onNavigate(view)}
+                            title={label}
+                            style={{
+                                background: isActive ? '#1d4ed8' : 'rgba(255, 255, 255, 0.04)',
+                                border: '1px solid rgba(255, 255, 255, 0.08)',
+                                color: 'white',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '14px',
+                                cursor: 'pointer',
+                                padding: expanded ? '12px 16px' : '12px',
+                                justifyContent: expanded ? 'flex-start' : 'center',
+                                borderRadius: '16px',
+                                width: '100%',
+                                transition: 'background 0.2s, padding 0.3s',
+                                whiteSpace: 'nowrap'
+                            }}
+                        >
+                            <Icon size={22} style={{ minWidth: '22px' }} />
+                            {expanded && (
+                                <span style={{ fontSize: '13px', fontWeight: '500', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    {label}
+                                </span>
+                            )}
+                        </button>
+                    );
+                })}
             </nav>
-            <div style={{ marginTop: 'auto', alignItems: expanded ? 'flex-start' : 'center' }}>
-                {expanded && (
-                    <>
-                        <p>{currentUser?.name}</p>
-                        <p>{currentUser?.role}</p>
-                    </>
-                )}
+
+            {/* Parte Inferior: Botão Logout */}
+            <div style={{ marginTop: 'auto', paddingTop: '20px', width: '100%' }}>
                 <button
                     type="button"
                     onClick={handleLogout}
-                    title="Sair"
-                    style={{ background: 'none', border: 'none', color: 'white', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '6px', width: '100%', textAlign: 'left' }}
+                    title="Logout"
+                    style={{
+                        background: 'linear-gradient(135deg, #311052 0%, #1f0b36 100%)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        color: 'white',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        cursor: 'pointer',
+                        padding: expanded ? '12px 16px' : '12px',
+                        justifyContent: expanded ? 'flex-start' : 'center',
+                        borderRadius: '16px',
+                        width: '100%',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                        transition: 'all 0.3s',
+                        whiteSpace: 'nowrap'
+                    }}
                 >
-                    <LogOut size={24} />
-                    {expanded ? ' Sair' : ''}
+                    <LogOut size={22} style={{ minWidth: '22px' }} />
+                    {expanded && (
+                        <span style={{ fontSize: '14px', fontWeight: '600' }}>
+                            Logout
+                        </span>
+                    )}
                 </button>
             </div>
         </aside>
