@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import api from '../Services/api';
 
 export default function Sidebar({ currentView, onNavigate, onLogout, currentUser }) {
+    const [expanded, setExpanded] = useState(false);
+
     const handleLogout = async () => {
         try {
             await api.post('/logout');
@@ -11,18 +13,36 @@ export default function Sidebar({ currentView, onNavigate, onLogout, currentUser
         if (onLogout) onLogout();
     };
 
+    const width = expanded ? '220px' : '64px';
+
     return (
-        <aside>
-            <div>🍔 Pragma</div>
-            <nav>
-                <button type="button" onClick={() => onNavigate('home')}>Início</button>
-                <button type="button" onClick={() => onNavigate('admin')}>Utilizadores</button>
-                <button type="button" onClick={() => onNavigate('profile')}>Perfil</button>
+        <aside
+            onMouseEnter={() => setExpanded(true)}
+            onMouseLeave={() => setExpanded(false)}
+            style={{ width, transition: 'width 0.2s ease', overflow: 'hidden', minHeight: '100vh', background: '#0b132b', color: 'white', padding: '16px 8px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '12px' }}
+        >
+            <div style={{ fontWeight: 'bold', textAlign: 'center' }}>🍔{expanded ? ' Pragma' : ''}</div>
+            <nav style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <button type="button" onClick={() => onNavigate('home')} title="Início">
+                    🏠{expanded ? ' Início' : ''}
+                </button>
+                <button type="button" onClick={() => onNavigate('admin')} title="Utilizadores">
+                    👤{expanded ? ' Utilizadores' : ''}
+                </button>
+                <button type="button" onClick={() => onNavigate('profile')} title="Perfil">
+                    ⚙️{expanded ? ' Perfil' : ''}
+                </button>
             </nav>
-            <div>
-                <p>{currentUser?.name}</p>
-                <p>{currentUser?.role}</p>
-                <button type="button" onClick={handleLogout}>Sair</button>
+            <div style={{ marginTop: 'auto' }}>
+                {expanded && (
+                    <>
+                        <p>{currentUser?.name}</p>
+                        <p>{currentUser?.role}</p>
+                    </>
+                )}
+                <button type="button" onClick={handleLogout} title="Sair">
+                    🚪{expanded ? ' Sair' : ''}
+                </button>
             </div>
         </aside>
     );
