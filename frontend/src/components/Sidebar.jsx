@@ -17,7 +17,7 @@ export default function Sidebar({ currentView, onNavigate, onLogout, currentUser
         if (onLogout) onLogout();
     };
 
-    const width = expanded ? '220px' : '64px';
+    const width = expanded ? '220px' : '126px';
 
     const items = [
         { view: 'orders', icon: Bell, label: 'Gestão de Pedidos' },
@@ -35,16 +35,17 @@ export default function Sidebar({ currentView, onNavigate, onLogout, currentUser
                 width,
                 transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 overflow: 'hidden',
-                minHeight: '100vh',
+                minHeight: '806px',
                 backgroundColor: '#03071e',
                 borderRadius: '30px',
                 margin: '12px',
-                height: 'calc(100vh - 24px)',
-                padding: '20px 10px',
+                height: '806px',
+                padding: '24px 16px',
                 boxSizing: 'border-box',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
+                alignItems: 'flex-start',
                 boxShadow: '8px 0 30px rgba(0, 0, 0, 0.25)',
                 zIndex: 10
             }}
