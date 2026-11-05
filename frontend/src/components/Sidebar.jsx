@@ -51,7 +51,7 @@ export default function Sidebar({ currentView, onNavigate, onLogout, currentUser
             }}
         >
             {/* Topo: Logótipo da House Burguer */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', alignSelf: 'center', marginBottom: '20px', transition: 'all 0.3s' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', alignSelf: 'center', marginTop: '24px', marginBottom: '20px', transition: 'all 0.3s' }}>
                 <img 
                     src={logo} 
                     alt="House Burguer" 
