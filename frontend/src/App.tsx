@@ -4,6 +4,10 @@ import Home from './pages/Home';
 import AdminPanel from './pages/AdminPanel';
 import Profile from './pages/Profile';
 import Sidebar from './components/Sidebar';
+import Orders from './pages/Orders';
+import History from './pages/History';
+import Products from './pages/Products';
+import Reports from './pages/Reports';
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -50,7 +54,13 @@ export default function App() {
     <div style={{ display: 'flex' }}>
       <Sidebar currentView={view} onNavigate={setView} onLogout={handleLogout} currentUser={currentUser} />
       <main style={{ flex: 1, minWidth: 0, padding: '24px' }}>
-        {view === 'profile' ? <Profile /> : view === 'admin' ? <AdminPanel /> : <Home />}
+        {view === 'orders' && <Orders />}
+        {view === 'history' && <History />}
+        {view === 'menu' && <Products />}
+        {view === 'reports' && <Reports />}
+        {view === 'profile' && <Profile />}
+        {view === 'admin' && <AdminPanel />}
+        {view === 'home' && <Home />}
       </main>
     </div>
   );
