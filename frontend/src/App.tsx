@@ -4,6 +4,7 @@ import Home from './pages/Home';
 import AdminPanel from './pages/AdminPanel';
 import Profile from './pages/Profile';
 import Sidebar from './components/Sidebar';
+import ProfileButton from './components/ProfileButton';
 import Orders from './pages/Orders';
 import History from './pages/History';
 import Products from './pages/Products';
@@ -54,6 +55,7 @@ export default function App() {
     <div style={{ display: 'flex' }}>
       <Sidebar currentView={view} onNavigate={setView} onLogout={handleLogout} currentUser={currentUser} />
       <main style={{ flex: 1, minWidth: 0, padding: '24px' }}>
+        <ProfileButton onNavigate={setView} currentUser={currentUser} />
         {view === 'orders' && <Orders />}
         {view === 'history' && <History />}
         {view === 'menu' && <Products />}
