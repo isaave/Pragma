@@ -51,7 +51,7 @@ export default function Sidebar({ currentView, onNavigate, onLogout, currentUser
             }}
         >
             {/* Topo: Logótipo da House Burguer */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '20px', transition: 'all 0.3s' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', alignSelf: 'center', marginBottom: '20px', transition: 'all 0.3s' }}>
                 <img 
                     src={logo} 
                     alt="House Burguer" 
@@ -66,8 +66,8 @@ export default function Sidebar({ currentView, onNavigate, onLogout, currentUser
                 />
             </div>
 
-            {/* Menu de Navegação */}
-            <nav style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
+            {/* Menu de Navegação (centralizado verticalmente) */}
+            <nav style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%', flex: 1, justifyContent: 'center' }}>
                 {items.map(({ view, icon: Icon, label }) => {
                     const isActive = currentView === view;
                     return (
