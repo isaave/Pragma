@@ -32,6 +32,8 @@ export default function Sidebar({ currentView, onNavigate, onLogout, currentUser
             onMouseEnter={() => setExpanded(true)}
             onMouseLeave={() => setExpanded(false)}
             style={{
+                position: 'sticky',
+                top: '12px',
                 width,
                 transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 overflow: 'hidden',

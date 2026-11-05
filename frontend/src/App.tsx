@@ -47,9 +47,11 @@ export default function App() {
   }
 
   return (
-    <div>
+    <div style={{ display: 'flex' }}>
       <Sidebar currentView={view} onNavigate={setView} onLogout={handleLogout} currentUser={currentUser} />
-      {view === 'profile' ? <Profile /> : view === 'admin' ? <AdminPanel /> : <Home />}
+      <main style={{ flex: 1, minWidth: 0, padding: '24px' }}>
+        {view === 'profile' ? <Profile /> : view === 'admin' ? <AdminPanel /> : <Home />}
+      </main>
     </div>
   );
 }
