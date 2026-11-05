@@ -15,6 +15,7 @@ export default function ProfileButton({ onNavigate, currentUser }) {
             ) : (
                 <UserCircle size={28} />
             )}
+            <span>Perfil do Usuário</span>
         </button>
     );
 };
