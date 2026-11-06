@@ -15,7 +15,7 @@ const styles = {
         borderRadius: '999px',
         boxSizing: 'border-box',
         cursor: 'pointer',
-        alignSelf: 'flex-start',
+        alignSelf: 'flex-end',
         marginBottom: '24px',
         fontFamily: FONT,
         textAlign: 'left',
