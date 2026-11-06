@@ -93,18 +93,23 @@ const styles = {
         boxSizing: 'border-box',
         outline: 'none',
     },
+    inputWrap: {
+        position: 'relative',
+        width: '100%',
+    },
     inputIcon: {
         position: 'absolute',
         left: '14px',
         top: '50%',
-        transform: 'translateY(-42%)',
+        transform: 'translateY(-50%)',
         color: '#94a3b8',
         pointerEvents: 'none',
     },
     inputToggle: {
         position: 'absolute',
         right: '12px',
-        bottom: '10px',
+        top: '50%',
+        transform: 'translateY(-50%)',
         background: 'none',
         border: 'none',
         cursor: 'pointer',
@@ -321,36 +326,40 @@ export default function Login({ onLoginSuccess }) {
                             <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                                 <label style={styles.fieldLabel}>
                                     Email
-                                    <span style={styles.inputIcon}><Mail size={18} /></span>
-                                    <input
-                                        type="email"
-                                        style={styles.input}
-                                        placeholder="username@gmail.com"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        required
-                                    />
+                                    <div style={styles.inputWrap}>
+                                        <span style={styles.inputIcon}><Mail size={18} /></span>
+                                        <input
+                                            type="email"
+                                            style={styles.input}
+                                            placeholder="username@gmail.com"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            required
+                                        />
+                                    </div>
                                 </label>
 
                                 <label style={styles.fieldLabel}>
                                     Senha
-                                    <span style={styles.inputIcon}><Lock size={18} /></span>
-                                    <input
-                                        type={showPassword ? 'text' : 'password'}
-                                        style={{ ...styles.input, paddingRight: '44px' }}
-                                        placeholder="••••••••"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        required
-                                    />
-                                    <button
-                                        type="button"
-                                        style={styles.inputToggle}
-                                        onClick={() => setShowPassword(!showPassword)}
-                                        title={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
-                                    >
-                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                    </button>
+                                    <div style={styles.inputWrap}>
+                                        <span style={styles.inputIcon}><Lock size={18} /></span>
+                                        <input
+                                            type={showPassword ? 'text' : 'password'}
+                                            style={{ ...styles.input, paddingLeft: '42px' }}
+                                            placeholder="••••••••"
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            required
+                                        />
+                                        <button
+                                            type="button"
+                                            style={styles.inputToggle}
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            title={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                                        >
+                                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                        </button>
+                                    </div>
                                 </label>
 
                                 <button
@@ -379,15 +388,17 @@ export default function Login({ onLoginSuccess }) {
                         <form onSubmit={handleForgot} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                             <label style={styles.fieldLabel}>
                                 Email
-                                <span style={styles.inputIcon}><Mail size={18} /></span>
-                                <input
-                                    type="email"
-                                    style={styles.input}
-                                    placeholder="username@gmail.com"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    required
-                                />
+                                <div style={styles.inputWrap}>
+                                    <span style={styles.inputIcon}><Mail size={18} /></span>
+                                    <input
+                                        type="email"
+                                        style={styles.input}
+                                        placeholder="username@gmail.com"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        required
+                                    />
+                                </div>
                             </label>
                             <button type="submit" style={styles.submit} disabled={loading}>
                                 {loading ? 'A enviar...' : 'Enviar código'}
@@ -426,27 +437,31 @@ export default function Login({ onLoginSuccess }) {
                         <form onSubmit={handleReset} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                             <label style={styles.fieldLabel}>
                                 Nova senha
-                                <span style={styles.inputIcon}><Lock size={18} /></span>
-                                <input
-                                    type={showPassword ? 'text' : 'password'}
-                                    style={styles.input}
-                                    placeholder="••••••••"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    required
-                                />
+                                <div style={styles.inputWrap}>
+                                    <span style={styles.inputIcon}><Lock size={18} /></span>
+                                    <input
+                                        type={showPassword ? 'text' : 'password'}
+                                        style={styles.input}
+                                        placeholder="••••••••"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        required
+                                    />
+                                </div>
                             </label>
                             <label style={styles.fieldLabel}>
                                 Confirmar senha
-                                <span style={styles.inputIcon}><Lock size={18} /></span>
-                                <input
-                                    type={showPassword ? 'text' : 'password'}
-                                    style={styles.input}
-                                    placeholder="••••••••"
-                                    value={confirmPassword}
-                                    onChange={(e) => setConfirmPassword(e.target.value)}
-                                    required
-                                />
+                                <div style={styles.inputWrap}>
+                                    <span style={styles.inputIcon}><Lock size={18} /></span>
+                                    <input
+                                        type={showPassword ? 'text' : 'password'}
+                                        style={styles.input}
+                                        placeholder="••••••••"
+                                        value={confirmPassword}
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                        required
+                                    />
+                                </div>
                             </label>
                             <button type="submit" style={styles.submit} disabled={loading}>
                                 {loading ? 'A redefinir...' : 'Redefinir'}
