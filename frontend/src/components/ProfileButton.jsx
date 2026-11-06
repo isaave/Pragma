@@ -59,8 +59,11 @@ const styles = {
 
 export default function ProfileButton({ onNavigate, currentUser }) {
     const raw = currentUser?.avatar_url || currentUser?.avatar;
+    // A API pode devolver o caminho cru (avatars/xxx.png) — a URL pública é /storage/avatars/xxx.png
     const avatarUrl = raw
-        ? (raw.startsWith('http') ? `${raw}?t=${Date.now()}` : `${BACKEND_URL}${raw.startsWith('/') ? '' : '/'}${raw}?t=${Date.now()}`)
+        ? (raw.startsWith('http')
+            ? `${raw}?t=${Date.now()}`
+            : `${BACKEND_URL}/storage/${raw.replace(/^\/?storage\//, '')}?t=${Date.now()}`)
         : null;
 
     return (
