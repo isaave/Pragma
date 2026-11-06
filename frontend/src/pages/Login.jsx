@@ -14,7 +14,7 @@ const styles = {
     // LADO ESQUERDO — Onboarding (gradiente azul → roxo)
     left: {
         flex: 1,
-        background: 'linear-gradient(160deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%)',
+        background: 'linear-gradient(160deg, #60a5fa 0%, #1e3a8a 50%, #8b5cf6 100%)',
         color: 'white',
         padding: '48px 56px',
         display: 'flex',
