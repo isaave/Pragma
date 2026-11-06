@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, Pencil, Eye, EyeOff } from 'lucide-react';
+import { User, ShieldCheck, ChefHat, Pencil, Eye, EyeOff } from 'lucide-react';
 import api from '../Services/api';
-import UserSummary from './UserSummary';
 
 const BACKEND_URL = 'http://127.0.0.1:8000';
 const FONT = "'Helvetica Neue', Helvetica, Arial, sans-serif";
@@ -49,6 +48,28 @@ const styles = {
         alignItems: 'center',
         gap: '18px',
         flexWrap: 'wrap',
+    },
+    avatar: {
+        width: '72px',
+        height: '72px',
+        borderRadius: '50%',
+        objectFit: 'cover',
+        background: '#e8edf5',
+        flexShrink: 0,
+    },
+    userName: { fontSize: '20px', fontWeight: 700, color: '#0f172e', margin: 0 },
+    badgeRow: { display: 'flex', gap: '10px', marginTop: '8px', flexWrap: 'wrap' },
+    badge: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '6px',
+        fontSize: '12px',
+        fontWeight: 600,
+        color: '#1d4ed8',
+        background: '#eff6ff',
+        border: '1px solid #dbeafe',
+        borderRadius: '999px',
+        padding: '6px 12px',
     },
     badgeDark: {
         display: 'inline-flex',
@@ -259,17 +280,24 @@ export default function UserProfile() {
             <div style={styles.card}>
                 {/* Cabeçalho do utilizador */}
                 <div style={styles.userHeader}>
-                    <UserSummary
-                        name={nomeCompleto}
-                        role={user?.role || 'Sem cargo'}
-                        avatar={avatarUrl}
-                        color="#1d4ed8"
-                        size={64}
-                    />
-                    <span style={styles.badgeDark}>
-                        <ShieldCheck size={14} />
-                        {user?.access_level ? `Acesso ${user.access_level}` : 'Acesso definido pelo responsável'}
-                    </span>
+                    {avatarUrl ? (
+                        <img src={avatarUrl} alt="Avatar" style={styles.avatar} />
+                    ) : (
+                        <User size={72} color="#94a3b8" style={styles.avatar} />
+                    )}
+                    <div>
+                        <h2 style={styles.userName}>{nomeCompleto}</h2>
+                        <div style={styles.badgeRow}>
+                            <span style={styles.badge}>
+                                <ChefHat size={14} />
+                                {user?.role || 'Sem cargo'}
+                            </span>
+                            <span style={styles.badgeDark}>
+                                <ShieldCheck size={14} />
+                                {user?.access_level ? `Acesso ${user.access_level}` : 'Acesso definido pelo responsável'}
+                            </span>
+                        </div>
+                    </div>
                 </div>
 
                 {error && <p style={styles.alertError}>{error}</p>}
