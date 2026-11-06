@@ -14,6 +14,7 @@ const styles = {
         background: '#ffffff',
         fontFamily: FONT,
         display: 'flex',
+        flexDirection: 'column',
         boxSizing: 'border-box',
     },
     card: {
@@ -34,6 +35,10 @@ const styles = {
     },
 
     // Cabeçalho do cartão
+    // Cabeçalho fora do cartão
+    titleBlock: {
+        padding: '40px 40px 0',
+    },
     title: { fontSize: '28px', fontWeight: 700, color: '#03071e', margin: 0 },
     subtitle: { fontSize: '14px', color: '#94a3b8', margin: '6px 0 0' },
 
@@ -266,13 +271,13 @@ export default function UserProfile() {
 
     return (
         <div style={styles.page}>
-            <div style={styles.card}>
-                {/* Cabeçalho do cartão */}
-                <div>
-                    <h1 style={styles.title}>Meu Perfil pessoal</h1>
-                    <p style={styles.subtitle}>Gerencie suas informações, cargo e credenciais de segurança</p>
-                </div>
+            {/* Cabeçalho fora do cartão */}
+            <div style={styles.titleBlock}>
+                <h1 style={styles.title}>Meu Perfil pessoal</h1>
+                <p style={styles.subtitle}>Gerencie suas informações, cargo e credenciais de segurança</p>
+            </div>
 
+            <div style={styles.card}>
                 {/* Cabeçalho do utilizador */}
                 <div style={styles.userHeader}>
                     {avatarUrl ? (
