@@ -66,7 +66,7 @@ export default function App() {
     <div style={{ display: 'flex', minHeight: '100vh' }}>
       <Sidebar currentView={view} onNavigate={setView} onLogout={handleLogout} currentUser={currentUser} />
       <main style={{ flex: 1, minWidth: 0, padding: '24px', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
-        <ProfileButton onNavigate={setView} currentUser={currentUser} />
+        {view !== 'profile' && <ProfileButton onNavigate={setView} currentUser={currentUser} />}
         {view === 'orders' && <Orders />}
         {view === 'history' && <History />}
         {view === 'menu' && <Products />}
