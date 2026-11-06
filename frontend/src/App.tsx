@@ -3,6 +3,7 @@ import Login from './pages/Login';
 import Home from './pages/Home';
 import AdminPanel from './pages/AdminPanel';
 import Profile from './pages/Profile';
+import UserProfile from './components/UserProfile';
 import Sidebar from './components/Sidebar';
 import ProfileButton from './components/ProfileButton';
 import Orders from './pages/Orders';
@@ -70,7 +71,7 @@ export default function App() {
         {view === 'history' && <History />}
         {view === 'menu' && <Products />}
         {view === 'reports' && <Reports />}
-        {view === 'profile' && <Profile />}
+        {view === 'profile' && <UserProfile />}
         {view === 'admin' && <AdminPanel />}
         {view === 'home' && <Home />}
       </main>
