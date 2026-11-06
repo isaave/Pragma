@@ -7,16 +7,30 @@ import logoSemEscrita from '../assets/LogoSemEscrita.png';
 // ---- Estilos organizados ----
 const styles = {
     root: {
-        display: 'flex',
         minHeight: '100vh',
         width: '100%',
+        background: '#eef1f6',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '24px',
+        boxSizing: 'border-box',
         fontFamily: 'system-ui, sans-serif',
+    },
+    // Moldura da tela de login (menor, centralizada)
+    frame: {
         position: 'relative',
+        display: 'flex',
+        width: 'min(980px, 92vw)',
+        height: 'min(620px, 90vh)',
+        borderRadius: '24px',
+        overflow: 'hidden',
+        boxShadow: '0 20px 60px rgba(3, 7, 30, 0.18)',
     },
     cornerLogo: {
         position: 'absolute',
-        right: '24px',
-        bottom: '24px',
+        right: '20px',
+        bottom: '20px',
         width: '64px',
         height: '64px',
         objectFit: 'contain',
@@ -302,8 +316,9 @@ export default function Login({ onLoginSuccess }) {
 
     return (
         <div style={styles.root}>
-            <img src={logoSemEscrita} alt="House Burguer" style={styles.cornerLogo} />
-            {/* ===== LADO ESQUERDO: Onboarding ===== */}
+            <div style={styles.frame}>
+                <img src={logoSemEscrita} alt="House Burguer" style={styles.cornerLogo} />
+                {/* ===== LADO ESQUERDO: Onboarding ===== */}
             <div style={styles.left}>
                 <div>
                     <h1 style={styles.welcomeTitle}>Seja bem-vindo(a) ao</h1>
@@ -476,6 +491,7 @@ export default function Login({ onLoginSuccess }) {
                         </form>
                     )}
                 </div>
+            </div>
             </div>
         </div>
     );
