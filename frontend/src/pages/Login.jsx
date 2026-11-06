@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ClipboardList, History, Package, BarChart3, Users } from 'lucide-react';
 import api from '../Services/api';
 import logo from '../assets/LogoHouseBurguer.png';
-import onboardingBg from '../assets/Onboarding.png';
 
 // ---- Estilos organizados ----
 const styles = {
@@ -12,21 +11,38 @@ const styles = {
         width: '100%',
         fontFamily: 'system-ui, sans-serif',
     },
-    // LADO ESQUERDO — Onboarding (imagem do assets)
+    // LADO ESQUERDO — Onboarding (gradiente azul → roxo)
     left: {
         flex: 1,
-        position: 'relative',
-        overflow: 'hidden',
-        minHeight: '100vh',
+        background: 'linear-gradient(160deg, #1e3a8a 0%, #4338ca 50%, #7c3aed 100%)',
+        color: 'white',
+        padding: '48px 56px',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        gap: '28px',
+        boxSizing: 'border-box',
     },
-    onboardingImg: {
-        position: 'absolute',
-        inset: 0,
-        width: '100%',
-        height: '100%',
-        objectFit: 'cover',
-        objectPosition: 'center',
+    welcomeTitle: { fontSize: '34px', fontWeight: 700, margin: 0, lineHeight: 1.2 },
+    welcomeSubtitle: { fontSize: '16px', color: 'rgba(255,255,255,0.75)', margin: '8px 0 0', maxWidth: '480px' },
+    featureGrid: {
+        display: 'grid',
+        gridTemplateColumns: 'repeat(2, 1fr)',
+        gap: '14px',
+        maxWidth: '560px',
     },
+    featureCard: {
+        background: 'rgba(255,255,255,0.12)',
+        border: '1px solid rgba(255,255,255,0.22)',
+        borderRadius: '16px',
+        padding: '16px 18px',
+        backdropFilter: 'blur(8px)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '8px',
+    },
+    featureTitle: { fontSize: '15px', fontWeight: 600, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' },
+    featureDesc: { fontSize: '13px', color: 'rgba(255,255,255,0.75)', margin: 0, lineHeight: 1.4 },
 
     // LADO DIREITO — Card de autenticação
     right: {
@@ -158,6 +174,14 @@ const styles = {
     },
 };
 
+const features = [
+    { icon: ClipboardList, title: 'Pedidos', desc: 'Gerencie pedidos e acompanhe cada etapa.' },
+    { icon: History, title: 'Histórico', desc: 'Acesse registros anteriores e acompanhe a evolução do seu negócio.' },
+    { icon: Package, title: 'Estoque', desc: 'Consulte produtos e acompanhe seu estoque.' },
+    { icon: BarChart3, title: 'Relatórios', desc: 'Visualize métricas e insights para tomar decisões informadas.' },
+    { icon: Users, title: 'Gestão de Usuários', desc: 'Cadastre usuários e organize sua equipe.' },
+];
+
 export default function Login({ onLoginSuccess }) {
     const [view, setView] = useState('login'); // login | forgot | verify | reset
     const [email, setEmail] = useState('');
@@ -263,9 +287,26 @@ export default function Login({ onLoginSuccess }) {
 
     return (
         <div style={styles.root}>
-            {/* ===== LADO ESQUERDO: Onboarding (imagem do assets) ===== */}
+            {/* ===== LADO ESQUERDO: Onboarding ===== */}
             <div style={styles.left}>
-                <img src={onboardingBg} alt="Seja bem-vindo(a) ao Pragma" style={styles.onboardingImg} />
+                <div>
+                    <h1 style={styles.welcomeTitle}>Seja bem-vindo(a) ao Pragma</h1>
+                    <p style={styles.welcomeSubtitle}>
+                        O sistema de gestão da House Burguer — tudo o que a sua casa precisa em um só lugar.
+                    </p>
+                </div>
+
+                <div style={styles.featureGrid}>
+                    {features.map(({ icon: Icon, title, desc }) => (
+                        <div key={title} style={styles.featureCard}>
+                            <h3 style={styles.featureTitle}>
+                                <Icon size={18} />
+                                {title}
+                            </h3>
+                            <p style={styles.featureDesc}>{desc}</p>
+                        </div>
+                    ))}
+                </div>
             </div>
 
             {/* ===== LADO DIREITO: Autenticação ===== */}
