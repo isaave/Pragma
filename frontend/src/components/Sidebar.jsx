@@ -18,6 +18,8 @@ export default function Sidebar({ currentView, onNavigate, onLogout, currentUser
     };
 
     const width = expanded ? '220px' : '126px';
+    // Altura responsiva: 806px no máx., mas nunca maior que a tela
+    const sbHeight = 'min(806px, calc(100vh - 24px))';
 
     const items = [
         { view: 'orders', icon: Bell, label: 'Gestão de Pedidos' },
@@ -33,15 +35,16 @@ export default function Sidebar({ currentView, onNavigate, onLogout, currentUser
             onMouseLeave={() => setExpanded(false)}
             style={{
                 position: 'sticky',
-                top: '12px',
+                // Centraliza verticalmente na tela (com folga mínima de 12px)
+                top: `max(12px, calc((100vh - ${sbHeight}) / 2))`,
                 width,
                 transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 overflow: 'hidden',
-                minHeight: '806px',
                 backgroundColor: '#03071e',
                 borderRadius: '30px',
                 margin: '12px',
-                height: '806px',
+                height: sbHeight,
+                alignSelf: 'center',
                 padding: '24px 16px',
                 boxSizing: 'border-box',
                 display: 'flex',
