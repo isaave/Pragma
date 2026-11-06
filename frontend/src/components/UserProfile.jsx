@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { User, ShieldCheck, ChefHat, Pencil, Eye, EyeOff } from 'lucide-react';
+import { ShieldCheck, Pencil, Eye, EyeOff } from 'lucide-react';
 import api from '../Services/api';
+import UserSummary from './UserSummary';
 
 const BACKEND_URL = 'http://127.0.0.1:8000';
 const FONT = "'Helvetica Neue', Helvetica, Arial, sans-serif";
@@ -280,24 +281,17 @@ export default function UserProfile() {
             <div style={styles.card}>
                 {/* Cabeçalho do utilizador */}
                 <div style={styles.userHeader}>
-                    {avatarUrl ? (
-                        <img src={avatarUrl} alt="Avatar" style={styles.avatar} />
-                    ) : (
-                        <User size={72} color="#94a3b8" style={styles.avatar} />
-                    )}
-                    <div>
-                        <h2 style={styles.userName}>{nomeCompleto}</h2>
-                        <div style={styles.badgeRow}>
-                            <span style={styles.badge}>
-                                <ChefHat size={14} />
-                                {user?.role || 'Sem cargo'}
-                            </span>
-                            <span style={styles.badgeDark}>
-                                <ShieldCheck size={14} />
-                                {user?.access_level ? `Acesso ${user.access_level}` : 'Acesso definido pelo responsável'}
-                            </span>
-                        </div>
-                    </div>
+                    <UserSummary
+                        name={nomeCompleto}
+                        role={user?.role || 'Sem cargo'}
+                        avatar={avatarUrl}
+                        color="#1d4ed8"
+                        size={64}
+                    />
+                    <span style={styles.badgeDark}>
+                        <ShieldCheck size={14} />
+                        {user?.access_level ? `Acesso ${user.access_level}` : 'Acesso definido pelo responsável'}
+                    </span>
                 </div>
 
                 {error && <p style={styles.alertError}>{error}</p>}
