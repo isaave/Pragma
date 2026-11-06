@@ -23,7 +23,8 @@ const styles = {
         gap: '28px',
         boxSizing: 'border-box',
     },
-    welcomeTitle: { fontSize: '34px', fontWeight: 700, margin: 0, lineHeight: 1.2 },
+    welcomeTitle: { fontSize: '34px', margin: 0, lineHeight: 1.2, fontWeight: 300 },
+    welcomeTitleStrong: { fontWeight: 700 },
     featureGrid: {
         display: 'grid',
         gridTemplateColumns: 'repeat(2, 1fr)',
@@ -289,7 +290,7 @@ export default function Login({ onLoginSuccess }) {
             {/* ===== LADO ESQUERDO: Onboarding ===== */}
             <div style={styles.left}>
                 <div>
-                    <h1 style={styles.welcomeTitle}>Seja bem-vindo(a) ao Pragma</h1>
+                    <h1 style={styles.welcomeTitle}>Seja bem-vindo(a) ao <span style={styles.welcomeTitleStrong}>Pragma</span></h1>
                 </div>
 
                 <div style={styles.featureGrid}>
