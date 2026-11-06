@@ -130,7 +130,7 @@ const styles = {
         display: 'flex',
     },
     forgotLink: {
-        alignSelf: 'flex-end',
+        alignSelf: 'flex-start',
         background: 'none',
         border: 'none',
         color: '#2563eb',
