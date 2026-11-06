@@ -65,8 +65,8 @@ const styles = {
         gap: '18px',
     },
     logo: {
-        width: '88px',
-        height: '88px',
+        width: '110px',
+        height: '110px',
         borderRadius: '50%',
         objectFit: 'cover',
         alignSelf: 'center',
