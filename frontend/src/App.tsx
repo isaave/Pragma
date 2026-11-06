@@ -63,9 +63,9 @@ export default function App() {
   }
 
   return (
-    <div style={{ display: 'flex' }}>
+    <div style={{ display: 'flex', minHeight: '100vh' }}>
       <Sidebar currentView={view} onNavigate={setView} onLogout={handleLogout} currentUser={currentUser} />
-      <main style={{ flex: 1, minWidth: 0, padding: '24px' }}>
+      <main style={{ flex: 1, minWidth: 0, padding: '24px', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
         <ProfileButton onNavigate={setView} currentUser={currentUser} />
         {view === 'orders' && <Orders />}
         {view === 'history' && <History />}

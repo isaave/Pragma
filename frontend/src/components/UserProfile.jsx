@@ -7,18 +7,18 @@ const FONT = "'Helvetica Neue', Helvetica, Arial, sans-serif";
 
 // ---- Estilos organizados ----
 const styles = {
+    // Ocupa toda a área disponível (sem scroll)
     page: {
-        minHeight: '100vh',
+        flex: 1,
+        width: '100%',
         background: '#f4f6fa',
         fontFamily: FONT,
         display: 'flex',
-        alignItems: 'flex-start',
-        justifyContent: 'center',
-        padding: '40px 24px',
         boxSizing: 'border-box',
     },
     card: {
-        width: 'min(680px, 100%)',
+        flex: 1,
+        width: '100%',
         background: '#ffffff',
         borderRadius: '24px',
         boxShadow: '0 12px 40px rgba(3, 7, 30, 0.07)',
@@ -27,6 +27,7 @@ const styles = {
         display: 'flex',
         flexDirection: 'column',
         gap: '28px',
+        overflow: 'hidden',
     },
 
     // Cabeçalho do cartão
