@@ -22,12 +22,14 @@ const styles = {
         background: '#ffffff',
         borderRadius: '24px',
         boxShadow: '0 12px 40px rgba(3, 7, 30, 0.07)',
-        padding: '36px 40px 32px',
+        padding: '40px',
         boxSizing: 'border-box',
         display: 'flex',
         flexDirection: 'column',
         gap: '28px',
         overflow: 'hidden',
+        // Distribui as secções de forma uniforme (título em cima, rodapé em baixo)
+        justifyContent: 'space-between',
     },
 
     // Cabeçalho do cartão
@@ -116,7 +118,7 @@ const styles = {
     grid2: {
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-        gap: '16px',
+        gap: '18px',
     },
 
     // Alertas
