@@ -344,7 +344,7 @@ export default function Login({ onLoginSuccess }) {
                                         <input
                                             type="email"
                                             style={styles.input}
-                                            placeholder="username@gmail.com"
+                                            placeholder="exemplo@gmail.com"
                                             value={email}
                                             onChange={(e) => setEmail(e.target.value)}
                                             required
@@ -399,7 +399,7 @@ export default function Login({ onLoginSuccess }) {
                                     <input
                                         type="email"
                                         style={styles.input}
-                                        placeholder="username@gmail.com"
+                                        placeholder="exemplo@gmail.com"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                         required
