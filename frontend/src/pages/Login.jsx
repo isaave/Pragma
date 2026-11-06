@@ -79,10 +79,8 @@ const styles = {
     logo: {
         width: '180px',
         height: '180px',
-        borderRadius: '50%',
-        objectFit: 'cover',
+        objectFit: 'contain',
         alignSelf: 'center',
-        boxShadow: '0 4px 16px rgba(3, 7, 30, 0.12)',
     },
     cardTitle: { fontSize: '24px', fontWeight: 700, margin: 0, textAlign: 'center', color: '#03071e' },
     fieldLabel: {
