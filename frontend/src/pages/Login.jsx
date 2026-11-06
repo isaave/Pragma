@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff, ClipboardList, History, Package, BarChart3, Users } from 'lucide-react';
 import api from '../Services/api';
 import logo from '../assets/LogoHouseBurguer.png';
+import logoSemEscrita from '../assets/LogoSemEscrita.png';
 
 // ---- Estilos organizados ----
 const styles = {
@@ -10,6 +11,17 @@ const styles = {
         minHeight: '100vh',
         width: '100%',
         fontFamily: 'system-ui, sans-serif',
+        position: 'relative',
+    },
+    cornerLogo: {
+        position: 'absolute',
+        right: '24px',
+        bottom: '24px',
+        width: '64px',
+        height: '64px',
+        objectFit: 'contain',
+        opacity: 0.9,
+        zIndex: 10,
     },
     // LADO ESQUERDO — Onboarding (gradiente azul → roxo)
     left: {
@@ -292,6 +304,7 @@ export default function Login({ onLoginSuccess }) {
 
     return (
         <div style={styles.root}>
+            <img src={logoSemEscrita} alt="House Burguer" style={styles.cornerLogo} />
             {/* ===== LADO ESQUERDO: Onboarding ===== */}
             <div style={styles.left}>
                 <div>
