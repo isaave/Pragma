@@ -24,7 +24,6 @@ const styles = {
         boxSizing: 'border-box',
     },
     welcomeTitle: { fontSize: '34px', fontWeight: 700, margin: 0, lineHeight: 1.2 },
-    welcomeSubtitle: { fontSize: '16px', color: 'rgba(255,255,255,0.75)', margin: '8px 0 0', maxWidth: '480px' },
     featureGrid: {
         display: 'grid',
         gridTemplateColumns: 'repeat(2, 1fr)',
@@ -291,9 +290,6 @@ export default function Login({ onLoginSuccess }) {
             <div style={styles.left}>
                 <div>
                     <h1 style={styles.welcomeTitle}>Seja bem-vindo(a) ao Pragma</h1>
-                    <p style={styles.welcomeSubtitle}>
-                        O sistema de gestão da House Burguer — tudo o que a sua casa precisa em um só lugar.
-                    </p>
                 </div>
 
                 <div style={styles.featureGrid}>
