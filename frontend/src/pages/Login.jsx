@@ -21,8 +21,8 @@ const styles = {
     frame: {
         position: 'relative',
         display: 'flex',
-        width: 'min(1300px, 96vw)',
-        height: 'min(800px, 96vh)',
+        width: 'min(1480px, 97vw)',
+        height: 'min(880px, 97vh)',
         borderRadius: '24px',
         overflow: 'hidden',
         boxShadow: '0 20px 60px rgba(3, 7, 30, 0.18)',
