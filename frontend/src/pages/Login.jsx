@@ -290,7 +290,8 @@ export default function Login({ onLoginSuccess }) {
             {/* ===== LADO ESQUERDO: Onboarding ===== */}
             <div style={styles.left}>
                 <div>
-                    <h1 style={styles.welcomeTitle}>Seja bem-vindo(a) ao <span style={styles.welcomeTitleStrong}>Pragma</span></h1>
+                    <h1 style={styles.welcomeTitle}>Seja bem-vindo(a) ao</h1>
+                    <h1 style={{ ...styles.welcomeTitle, ...styles.welcomeTitleStrong }}>Pragma</h1>
                 </div>
 
                 <div style={styles.featureGrid}>
