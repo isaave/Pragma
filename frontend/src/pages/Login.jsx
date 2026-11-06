@@ -374,13 +374,6 @@ export default function Login({ onLoginSuccess }) {
                                     {loading ? 'A entrar...' : 'Entrar'}
                                 </button>
                             </form>
-
-                            <p style={styles.firstAccess}>
-                                Esse é seu primeiro acesso?{' '}
-                                <button type="button" style={styles.firstAccessLink} onClick={() => go('forgot')}>
-                                    Clique aqui.
-                                </button>
-                            </p>
                         </>
                     )}
 
