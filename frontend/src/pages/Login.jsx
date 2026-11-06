@@ -179,7 +179,7 @@ const features = [
     { icon: History, title: 'Histórico', desc: 'Acesse registros anteriores e acompanhe a evolução do seu negócio.' },
     { icon: Package, title: 'Estoque', desc: 'Consulte produtos e acompanhe seu estoque.' },
     { icon: BarChart3, title: 'Relatórios', desc: 'Visualize métricas e insights para tomar decisões informadas.' },
-    { icon: Users, title: 'Gestão de Usuários', desc: 'Cadastre usuários e organize sua equipe.' },
+    { icon: Users, title: 'Gestão de Usuários', desc: 'Cadastre usuários e organize sua equipe.', wide: true },
 ];
 
 export default function Login({ onLoginSuccess }) {
@@ -297,8 +297,8 @@ export default function Login({ onLoginSuccess }) {
                 </div>
 
                 <div style={styles.featureGrid}>
-                    {features.map(({ icon: Icon, title, desc }) => (
-                        <div key={title} style={styles.featureCard}>
+                    {features.map(({ icon: Icon, title, desc, wide }) => (
+                        <div key={title} style={{ ...styles.featureCard, gridColumn: wide ? 'span 2' : undefined }}>
                             <h3 style={styles.featureTitle}>
                                 <Icon size={18} />
                                 {title}
