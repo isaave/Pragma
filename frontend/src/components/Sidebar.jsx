@@ -63,8 +63,8 @@ export default function Sidebar({ currentView, onNavigate, onLogout, currentUser
                     src={logo} 
                     alt="House Burguer" 
                     style={{ 
-                        width: '78px', 
-                        height: '78px', 
+                        width: expanded ? '120px' : '78px', 
+                        height: expanded ? '120px' : '78px', 
                         flexShrink: 0,
                         aspectRatio: '1 / 1',
                         borderRadius: '50%', 
