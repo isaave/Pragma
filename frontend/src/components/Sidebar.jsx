@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { Bell, History, Utensils, BarChart3, Users, LogOut } from 'lucide-react';
 import api from '../Services/api';
 import logo from '../assets/LogoHouseBurguer.png';
+import LegalModal from './LegalModal';
 
 export default function Sidebar({ currentView, onNavigate, onLogout, currentUser }) {
     const [expanded, setExpanded] = useState(false);
+    const [legalDoc, setLegalDoc] = useState(null); // null | 'terms' | 'privacy'
 
     const handleLogout = async () => {
         try {
@@ -110,8 +112,44 @@ export default function Sidebar({ currentView, onNavigate, onLogout, currentUser
                 })}
             </nav>
 
-            {/* Parte Inferior: Botão Logout */}
+            {/* Parte Inferior: termos, políticas e botão Logout */}
             <div style={{ marginTop: 'auto', paddingTop: '20px', width: '100%' }}>
+                {expanded && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '12px' }}>
+                        <button
+                            type="button"
+                            onClick={() => setLegalDoc('terms')}
+                            style={{
+                                background: 'none',
+                                border: 'none',
+                                color: 'rgba(255, 255, 255, 0.55)',
+                                fontSize: '11px',
+                                textAlign: 'left',
+                                cursor: 'pointer',
+                                padding: '2px 4px',
+                                whiteSpace: 'nowrap',
+                            }}
+                        >
+                            Termos de Uso
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setLegalDoc('privacy')}
+                            style={{
+                                background: 'none',
+                                border: 'none',
+                                color: 'rgba(255, 255, 255, 0.55)',
+                                fontSize: '11px',
+                                textAlign: 'left',
+                                cursor: 'pointer',
+                                padding: '2px 4px',
+                                whiteSpace: 'nowrap',
+                            }}
+                        >
+                            Política de Privacidade
+                        </button>
+                    </div>
+                )}
                 <button
                     type="button"
                     onClick={handleLogout}
@@ -141,6 +179,8 @@ export default function Sidebar({ currentView, onNavigate, onLogout, currentUser
                     )}
                 </button>
             </div>
+
+            {legalDoc && <LegalModal type={legalDoc} onClose={() => setLegalDoc(null)} />}
         </aside>
     );
 }
