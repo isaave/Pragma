@@ -46,7 +46,7 @@ const styles = {
     userHeader: {
         display: 'flex',
         alignItems: 'center',
-        gap: '10px',
+        gap: '6px',
         flexWrap: 'wrap',
     },
     avatar: {
