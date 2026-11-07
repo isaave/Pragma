@@ -15,7 +15,7 @@ const styles = {
         justifyContent: 'center',
         padding: '24px',
         boxSizing: 'border-box',
-        fontFamily: 'system-ui, sans-serif',
+        fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
     },
     // Moldura da tela de login (menor, centralizada)
     frame: {

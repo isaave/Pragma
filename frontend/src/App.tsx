@@ -3,6 +3,7 @@ import Login from './pages/Login';
 import Home from './pages/Home';
 import AdminPanel from './pages/AdminPanel';
 import Profile from './pages/Profile';
+import UserProfile from './components/UserProfile';
 import Sidebar from './components/Sidebar';
 import ProfileButton from './components/ProfileButton';
 import Orders from './pages/Orders';
@@ -62,15 +63,15 @@ export default function App() {
   }
 
   return (
-    <div style={{ display: 'flex' }}>
+    <div style={{ display: 'flex', minHeight: '100vh' }}>
       <Sidebar currentView={view} onNavigate={setView} onLogout={handleLogout} currentUser={currentUser} />
-      <main style={{ flex: 1, minWidth: 0, padding: '24px' }}>
-        <ProfileButton onNavigate={setView} currentUser={currentUser} />
+      <main style={{ flex: 1, minWidth: 0, padding: '24px', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
+        {view !== 'profile' && <ProfileButton onNavigate={setView} currentUser={currentUser} />}
         {view === 'orders' && <Orders />}
         {view === 'history' && <History />}
         {view === 'menu' && <Products />}
         {view === 'reports' && <Reports />}
-        {view === 'profile' && <Profile />}
+        {view === 'profile' && <UserProfile />}
         {view === 'admin' && <AdminPanel />}
         {view === 'home' && <Home />}
       </main>
