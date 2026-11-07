@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { User, ShieldCheck, ChefHat, Pencil, Eye, EyeOff } from 'lucide-react';
 import api from '../Services/api';
 
@@ -56,6 +56,32 @@ const styles = {
         objectFit: 'cover',
         background: '#e8edf5',
         flexShrink: 0,
+    },
+    avatarBtn: {
+        position: 'relative',
+        width: '96px',
+        height: '96px',
+        padding: 0,
+        border: 'none',
+        background: 'transparent',
+        cursor: 'pointer',
+        flexShrink: 0,
+        display: 'flex',
+    },
+    avatarEdit: {
+        position: 'absolute',
+        right: '-2px',
+        bottom: '-2px',
+        width: '28px',
+        height: '28px',
+        borderRadius: '50%',
+        background: '#1d4ed8',
+        color: '#ffffff',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        border: '2px solid #ffffff',
+        boxSizing: 'border-box',
     },
     userName: { fontSize: '24px', fontWeight: 700, color: '#0f172e', margin: 0 },
     badgeRow: { display: 'flex', gap: '10px', marginTop: '10px', flexWrap: 'wrap' },
@@ -210,6 +236,8 @@ export default function UserProfile() {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [loadingSave, setLoadingSave] = useState(false);
+    const [uploadingAvatar, setUploadingAvatar] = useState(false);
+    const fileInputRef = useRef(null);
 
     // Carrega os dados do perfil autenticado
     useEffect(() => {
@@ -232,6 +260,36 @@ export default function UserProfile() {
     const avatarUrl = user?.avatar_url
         ? `${BACKEND_URL}${user.avatar_url.startsWith('/') ? '' : '/'}${user.avatar_url}?t=${Date.now()}`
         : null;
+
+    // Upload de nova foto de perfil
+    const handleAvatarChange = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setError('');
+        setSuccess('');
+        setUploadingAvatar(true);
+        try {
+            const formData = new FormData();
+            formData.append('avatar', file);
+            const res = await api.post('/profile/avatar', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            });
+            setUser((prev) => ({ ...prev, avatar: res.data.avatar, avatar_url: res.data.avatar_url }));
+            setSuccess(res.data.message || 'Imagem de perfil atualizada!');
+
+            const stored = localStorage.getItem('pragma_user');
+            if (stored) {
+                const u = JSON.parse(stored);
+                localStorage.setItem('pragma_user', JSON.stringify({ ...u, avatar: res.data.avatar, avatar_url: res.data.avatar_url }));
+                window.dispatchEvent(new Event('pragma:user'));
+            }
+        } catch (err) {
+            setError(err.response?.data?.message || 'Erro ao enviar imagem.');
+        } finally {
+            setUploadingAvatar(false);
+            e.target.value = '';
+        }
+    };
 
     const handleCancel = () => {
         setName(user?.name || '');
@@ -286,11 +344,29 @@ export default function UserProfile() {
             <div style={styles.card}>
                 {/* Cabeçalho do utilizador */}
                 <div style={styles.userHeader}>
-                    {avatarUrl ? (
-                        <img src={avatarUrl} alt="Avatar" style={styles.avatar} />
-                    ) : (
-                        <User size={72} color="#94a3b8" style={styles.avatar} />
-                    )}
+                    <button
+                        type="button"
+                        style={styles.avatarBtn}
+                        onClick={() => fileInputRef.current?.click()}
+                        title="Alterar foto de perfil"
+                    >
+                        {avatarUrl ? (
+                            <img src={avatarUrl} alt="Avatar" style={styles.avatar} />
+                        ) : (
+                            <User size={96} color="#94a3b8" style={styles.avatar} />
+                        )}
+                        <span style={styles.avatarEdit}>
+                            <Pencil size={14} />
+                        </span>
+                    </button>
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleAvatarChange}
+                        style={{ display: 'none' }}
+                    />
+                    {uploadingAvatar && <span style={styles.footerNote}>A enviar imagem…</span>}
                     <div>
                         <h2 style={styles.userName}>{nomeCompleto}</h2>
                         <div style={styles.badgeRow}>
