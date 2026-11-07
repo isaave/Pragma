@@ -89,7 +89,7 @@ const styles = {
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        gap: '18px',
+        gap: '10px',
     },
     fieldLabel: {
         display: 'flex',
