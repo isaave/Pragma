@@ -114,8 +114,8 @@ const styles = {
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'space-between',
-        gap: '10px',
+        justifyContent: 'flex-start',
+        gap: '14px',
     },
     fieldLabel: {
         display: 'flex',
@@ -188,6 +188,7 @@ const styles = {
         flexWrap: 'wrap',
         borderTop: '1px solid #eef2f7',
         paddingTop: '20px',
+        marginTop: 'auto',
     },
     footerNote: { fontSize: '12px', color: '#94a3b8', margin: 0 },
     footerActions: { display: 'flex', gap: '10px', flexWrap: 'wrap' },
