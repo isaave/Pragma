@@ -28,10 +28,10 @@ const styles = {
         boxSizing: 'border-box',
         display: 'flex',
         flexDirection: 'column',
-        gap: '28px',
+        gap: '18px',
         overflow: 'hidden',
-        // Distribui as secções de forma uniforme (título em cima, rodapé em baixo)
-        justifyContent: 'space-between',
+        // Conteúdo agrupado no topo (cabeçalho + formulário juntos)
+        justifyContent: 'flex-start',
     },
 
     // Cabeçalho do cartão
