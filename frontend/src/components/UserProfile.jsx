@@ -28,10 +28,10 @@ const styles = {
         boxSizing: 'border-box',
         display: 'flex',
         flexDirection: 'column',
-        gap: '18px',
+        gap: '24px',
         overflow: 'hidden',
-        // Conteúdo agrupado no topo (cabeçalho + formulário juntos)
-        justifyContent: 'flex-start',
+        // Distribui hierarquicamente: cabeçalho no topo, formulário no meio, rodapé em baixo
+        justifyContent: 'space-between',
     },
 
     // Cabeçalho do cartão
@@ -84,7 +84,13 @@ const styles = {
     },
 
     // Formulário
-    form: { display: 'flex', flexDirection: 'column', gap: '18px' },
+    form: {
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        gap: '18px',
+    },
     fieldLabel: {
         display: 'flex',
         flexDirection: 'column',
