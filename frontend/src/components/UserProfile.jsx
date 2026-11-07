@@ -37,7 +37,7 @@ const styles = {
     // Cabeçalho do cartão
     // Cabeçalho fora do cartão
     titleBlock: {
-        padding: '40px 40px 0',
+        padding: '40px 40px 24px',
     },
     title: { fontSize: '28px', fontWeight: 700, color: '#03071e', margin: 0 },
     subtitle: { fontSize: '14px', color: '#94a3b8', margin: '6px 0 0' },
