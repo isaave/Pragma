@@ -338,7 +338,7 @@ export default function UserProfile() {
         <div style={styles.page}>
             {/* Cabeçalho fora do cartão */}
             <div style={styles.titleBlock}>
-                <h1 style={styles.title}>Meu Perfil pessoal</h1>
+                <h1 style={styles.title}>Meu perfil pessoal</h1>
                 <p style={styles.subtitle}>Gerencie suas informações, cargo e credenciais de segurança</p>
             </div>
 
