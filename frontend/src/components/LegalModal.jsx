@@ -55,6 +55,7 @@ const styles = {
     paragraph: { margin: '0 0 10px' },
     list: { margin: '0 0 10px', paddingLeft: '20px' },
     contact: { margin: '16px 0 0', fontWeight: 600, color: '#1d4ed8' },
+    link: { color: '#1d4ed8', textDecoration: 'underline' },
 };
 
 const terms = [
@@ -144,7 +145,6 @@ const privacy = [
         title: '6. Contacto',
         paragraphs: [
             'Para esclarecimentos de dúvidas sobre esta Política de Privacidade ou para o exercício de direitos relativos aos seus dados pessoais, o utilizador deverá contactar o administrador do sistema ou o responsável de privacidade da empresa/estabelecimento onde presta serviço.',
-            'Suporte e demais dúvidas: ippsolutionpragma@gmail.com',
         ],
     },
 ];
@@ -186,9 +186,12 @@ export default function LegalModal({ type, onClose }) {
                             )}
                         </div>
                     ))}
-                    {type === 'terms' && (
-                        <p style={styles.contact}>Suporte e demais dúvidas: ippsolutionpragma@gmail.com</p>
-                    )}
+                    <p style={styles.contact}>
+                        Suporte e demais dúvidas:{' '}
+                        <a href="mailto:ippsolutionpragma@gmail.com" style={styles.link}>
+                            ippsolutionpragma@gmail.com
+                        </a>
+                    </p>
                 </div>
             </div>
         </div>
