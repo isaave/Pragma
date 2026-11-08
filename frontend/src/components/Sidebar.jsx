@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bell, History, Utensils, BarChart3, Users, LogOut } from 'lucide-react';
+import { Bell, History, Utensils, Package, BarChart3, Users, LogOut } from 'lucide-react';
 import api from '../Services/api';
 import logo from '../assets/LogoHouseBurguer.png';
 import LegalModal from './LegalModal';
@@ -29,6 +29,7 @@ export default function Sidebar({ currentView, onNavigate, onLogout, currentUser
         { view: 'menu', icon: Utensils, label: 'Produtos' },
         { view: 'reports', icon: BarChart3, label: 'Relatórios' },
         { view: 'admin', icon: Users, label: 'Usuários' },
+        { view: 'stock', icon: Package, label: 'Estoque' },
     ];
 
     return (
