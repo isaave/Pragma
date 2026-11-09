@@ -67,6 +67,10 @@ class IngredientController extends Controller
     // Excluir ingrediente
     public function destroy(Ingredient $ingredient)
     {
+                // Não deixa excluir um ingrediente que faz parte da receita de algum produto
+        if (\Illuminate\Support\Facades\DB::table('ingredient_product')->where('ingredient_id', $ingredient->id)->exists()) {
+            return response()->json(['message' => 'Este ingrediente é usado em produtos e não pode ser excluído.'], 422);
+        }
         $ingredient->delete();
 
         return response()->json(['message' => 'Ingrediente excluído com sucesso!']);

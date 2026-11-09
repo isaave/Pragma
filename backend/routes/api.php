@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\IngredientController;
+use App\Http\Controllers\ProductController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -35,4 +36,5 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('ingredients', IngredientController::class);
     Route::post('/ingredients/{ingredient}/restock', [IngredientController::class, 'restock']);
+    Route::apiResource('products', ProductController::class);
 });
