@@ -10,6 +10,7 @@ import Orders from './pages/Orders';
 import History from './pages/History';
 import Products from './pages/Products';
 import Reports from './pages/Reports';
+import Stock from './pages/Stock';
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -74,6 +75,7 @@ export default function App() {
         {view === 'profile' && <UserProfile />}
         {view === 'admin' && <AdminPanel />}
         {view === 'home' && <Home />}
+        {view === 'stock' && <Stock />}
       </main>
     </div>
   );
