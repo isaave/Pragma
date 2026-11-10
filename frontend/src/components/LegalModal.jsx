@@ -60,19 +60,25 @@ const styles = {
 
 const terms = [
     {
-        title: '1. Aceitação dos Termos',
+        title: 'Data efetiva',
+        paragraphs: [
+            'Estes Termos de Uso entram em vigor a partir de 10 de novembro de 2026.',
+        ],
+    },
+    {
+        title: '2. Aceitação dos Termos',
         paragraphs: [
             'Ao aceder e utilizar o sistema Pragma ("Sistema"), concorda expressamente com os presentes Termos de Uso. Caso não concorde com qualquer disposição aqui descrita, deverá cessar imediatamente a utilização da plataforma.',
         ],
     },
     {
-        title: '2. Descrição do Serviço',
+        title: '3. Descrição do Serviço',
         paragraphs: [
             'O Pragma é uma ferramenta de gestão administrativa em formato SaaS (Software as a Service), que inclui controlo de pedidos, cardápio, estoque, relatórios e administração de utilizadores, destinada ao uso operacional e gerencial por estabelecimentos comerciais devidamente licenciados.',
         ],
     },
     {
-        title: '3. Contas de Utilizador, Acesso e Credenciais',
+        title: '4. Contas de Utilizador, Acesso e Credenciais',
         list: [
             'Credenciais Individuais: cada utilizador recebe um acesso pessoal e intransmissível (e-mail e senha inicial). É expressamente proibida a partilha de credenciais com terceiros.',
             'Hierarquia e Permissões: o sistema opera com base em papéis e níveis de acesso definidos pela administração (ex.: Chefe/Gestor e Atendente). O utilizador compromete-se a operar estritamente dentro das permissões atribuídas ao seu cargo.',
@@ -80,7 +86,7 @@ const terms = [
         ],
     },
     {
-        title: '4. Uso Aceitável',
+        title: '5. Uso Aceitável',
         paragraphs: ['O utilizador compromete-se a abster-se de:'],
         list: [
             'Utilizar a plataforma para fins ilegais, fraudulentos ou não autorizados.',
@@ -89,13 +95,13 @@ const terms = [
         ],
     },
     {
-        title: '5. Propriedade Intelectual',
+        title: '6. Propriedade Intelectual',
         paragraphs: [
             'Todos os direitos de propriedade intelectual, códigos-fonte, design, arquitetura e logótipos associados ao Pragma pertencem exclusivamente aos seus desenvolvedores. O uso do sistema não transfere nenhum direito de propriedade sobre o software ao estabelecimento ou aos seus colaboradores.',
         ],
     },
     {
-        title: '6. Modificações dos Termos',
+        title: '7. Modificações dos Termos',
         paragraphs: [
             'Estes termos poderão ser atualizados periodicamente para refletir melhorias ou novas funcionalidades do sistema. O uso continuado da plataforma após a publicação de alterações implica a aceitação automática dos novos termos.',
         ],

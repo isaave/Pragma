@@ -7,6 +7,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\IngredientController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\AiController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -44,4 +45,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/products/{product}/addons/{addon}', [ProductController::class, 'destroyProductAddon']);
     Route::apiResource('orders', OrderController::class);
     Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus']);
+    Route::post('/ai/ask', [AiController::class, 'ask']);
 });
