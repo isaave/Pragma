@@ -22,7 +22,6 @@ const FILTERS = [
 const EMPTY_FORM = {
     name: '',
     category: 'hamburguer',
-    description: '',
     price: '',
     is_active: 'true',
     notes: '',
@@ -110,7 +109,6 @@ export default function Products() {
             values: {
                 name: product.name,
                 category: product.category,
-                description: product.description || '',
                 price: String(product.price),
                 is_active: product.is_active ? 'true' : 'false',
                 notes: product.notes || '',
@@ -230,11 +228,6 @@ export default function Products() {
                                 ))}
                             </select>
                         </div>
-                    </div>
-
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '4px', fontWeight: 600 }}>Descrição</label>
-                        <input type="text" value={form.values.description} onChange={(e) => changeForm('description', e.target.value)} style={{ width: '100%', padding: '8px' }} />
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
