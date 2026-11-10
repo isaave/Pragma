@@ -263,11 +263,12 @@ export default function Products() {
                                 type="number"
                                 min="0.01"
                                 step="0.01"
-                                placeholder="Qtd"
+                                placeholder="Qtd do ingrediente (ex: 200g)"
                                 value={pick.quantity}
                                 onChange={(e) => setPick((p) => ({ ...p, quantity: e.target.value }))}
-                                style={{ padding: '8px', width: '120px' }}
+                                style={{ padding: '8px', width: '140px' }}
                             />
+                            <span style={{ fontSize: '12px', color: '#666' }}>qtd usada no produto</span>
                             <button type="button" onClick={addToRecipe} style={{ padding: '8px 12px' }}>Adicionar ingrediente</button>
                         </div>
                         {form.recipe.length === 0 && <p style={{ fontSize: '13px', color: '#666' }}>Nenhum ingrediente na receita.</p>}
