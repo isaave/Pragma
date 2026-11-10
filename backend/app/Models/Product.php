@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Product extends Model
 {
@@ -21,7 +22,8 @@ class Product extends Model
     ];
 
     // Sempre carrega os ingredientes (necessário para calcular "available" e "recipe")
-    protected $with = ['ingredients'];
+    // e os adicionais (para exibir no cardápio e no PDV)
+    protected $with = ['ingredients', 'addons'];
 
     // Em vez de devolver "ingredients" com o pivot cru, a API devolve "recipe" (mais limpo)
     protected $hidden = ['ingredients'];
@@ -39,6 +41,12 @@ class Product extends Model
     public function ingredients(): BelongsToMany
     {
         return $this->belongsToMany(Ingredient::class)->withPivot('quantity');
+    }
+
+    // Adicionais disponíveis para este produto (ex.: bacon extra, queijo extra)
+    public function addons(): HasMany
+    {
+        return $this->hasMany(ProductAddon::class);
     }
 
     // Lista simples da receita: [{ingredient_id, name, unit, quantity}]

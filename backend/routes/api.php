@@ -37,4 +37,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('ingredients', IngredientController::class);
     Route::post('/ingredients/{ingredient}/restock', [IngredientController::class, 'restock']);
     Route::apiResource('products', ProductController::class);
+    Route::get('/products/{product}/addons', [ProductController::class, 'productAddons']);
+    Route::post('/products/{product}/addons', [ProductController::class, 'addProductAddon']);
+    Route::put('/products/{product}/addons/{addon}', [ProductController::class, 'updateProductAddon']);
+    Route::delete('/products/{product}/addons/{addon}', [ProductController::class, 'destroyProductAddon']);
+    Route::apiResource('orders', OrderController::class);
+    Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus']);
 });

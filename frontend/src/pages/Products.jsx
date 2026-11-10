@@ -23,7 +23,7 @@ const EMPTY_FORM = {
     category: 'hamburguer',
     description: '',
     price: '',
-    is_active: 'true', // vem de um <select>, por isso texto; vira boolean ao salvar
+    is_active: 'true',
     notes: '',
 };
 
@@ -33,9 +33,8 @@ const categoryLabel = (key) => {
 };
 
 const formatPrice = (value) =>
-    Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    Number(value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-// Junta as mensagens de validação (422) ou usa a mensagem geral da API
 const getErrorMessage = (err, fallback) => {
     const data = err.response && err.response.data;
     if (data && data.errors) return Object.values(data.errors).flat().join(' ');
@@ -45,7 +44,7 @@ const getErrorMessage = (err, fallback) => {
 
 export default function Products() {
     const [products, setProducts] = useState([]);
-    const [stockItems, setStockItems] = useState([]); // ingredientes do estoque (para montar a receita)
+    const [stockItems, setStockItems] = useState([]); // ingredientes do estoque (receita)
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [info, setInfo] = useState('');
@@ -53,9 +52,7 @@ export default function Products() {
     const [filter, setFilter] = useState('all');
     const [search, setSearch] = useState('');
 
-    // form: null (fechado) ou { id: número|null, values: {...}, recipe: [{ingredient_id, name, unit, quantity}] }
-    const [form, setForm] = useState(null);
-    // ingrediente escolhido para adicionar à receita
+    const [form, setForm] = useState(null); // null ou { id, values, recipe, addons }
     const [pick, setPick] = useState({ ingredientId: '', quantity: '' });
 
     const loadProducts = useCallback(async () => {
@@ -74,7 +71,6 @@ export default function Products() {
         }
     }, [filter, search]);
 
-    // Recarrega ao trocar de categoria ou ao digitar na busca (com pequena espera)
     useEffect(() => {
         const timer = setTimeout(loadProducts, 300);
         return () => clearTimeout(timer);
@@ -89,14 +85,18 @@ export default function Products() {
         }
     };
 
-    // ---------- Cadastro / edição ----------
+    // ---------- Cadastro / edição de produto ----------
 
     const openCreate = () => {
         setError('');
         setInfo('');
         setPick({ ingredientId: '', quantity: '' });
         loadStockItems();
-        setForm({ id: null, values: { ...EMPTY_FORM }, recipe: [] });
+        setForm({
+            id: null,
+            values: { ...EMPTY_FORM },
+            recipe: [],
+        });
     };
 
     const openEdit = (product) => {
@@ -114,7 +114,7 @@ export default function Products() {
                 is_active: product.is_active ? 'true' : 'false',
                 notes: product.notes || '',
             },
-            recipe: product.recipe.map((r) => ({ ...r })),
+            recipe: (product.recipe || []).map((r) => ({ ...r })),
         });
     };
 
@@ -133,7 +133,6 @@ export default function Products() {
         }
         setError('');
         setForm((prev) => {
-            // Se o ingrediente já está na receita, só atualiza a quantidade
             const others = prev.recipe.filter((r) => r.ingredient_id !== item.id);
             return {
                 ...prev,
@@ -147,7 +146,7 @@ export default function Products() {
         setForm((prev) => ({ ...prev, recipe: prev.recipe.filter((r) => r.ingredient_id !== ingredientId) }));
     };
 
-    // ---------- Salvar ----------
+    // ---------- Salvar produto ----------
 
     const saveForm = async (e) => {
         e.preventDefault();
@@ -170,7 +169,7 @@ export default function Products() {
         }
     };
 
-    // ---------- Exclusão ----------
+    // ---------- Excluir produto ----------
 
     const deleteProduct = async (product) => {
         if (!window.confirm(`Excluir "${product.name}" do cardápio?`)) return;
@@ -185,101 +184,113 @@ export default function Products() {
         }
     };
 
-    // ---------- Tela ----------
-
     return (
         <div>
             <h1>Produtos</h1>
-            <p>Gerencie produtos, preços e disponibilidade</p>
+            <p>Gerencie produtos, preços, receitas e adicionais</p>
 
-            {error && <p>{error}</p>}
-            {info && <p>{info}</p>}
+            {error && <p style={{ color: '#b91c1c' }}>{error}</p>}
+            {info && <p style={{ color: '#15803d' }}>{info}</p>}
 
-            {/* Categorias, busca e botão de novo produto */}
-            <div>
+            {/* Filtros e busca */}
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
                 {FILTERS.map((f) => (
                     <button key={f.key} type="button" disabled={filter === f.key} onClick={() => setFilter(f.key)}>
                         {f.label}
                     </button>
                 ))}
             </div>
-            <div>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
                 <input
                     type="text"
                     placeholder="Buscar produto"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
+                    style={{ flex: 1, padding: '8px' }}
                 />
                 <button type="button" onClick={openCreate}>Novo produto</button>
             </div>
 
             {/* Formulário de cadastro / edição */}
             {form && (
-                <form onSubmit={saveForm}>
+                <form onSubmit={saveForm} style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxWidth: '700px' }}>
                     <h2>{form.id ? 'Editar produto' : 'Novo produto'}</h2>
-                    <div>
-                        <label>Nome </label>
-                        <input type="text" required value={form.values.name} onChange={(e) => changeForm('name', e.target.value)} />
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                        <div>
+                            <label style={{ display: 'block', marginBottom: '4px', fontWeight: 600 }}>Nome</label>
+                            <input type="text" required value={form.values.name} onChange={(e) => changeForm('name', e.target.value)} style={{ width: '100%', padding: '8px' }} />
+                        </div>
+                        <div>
+                            <label style={{ display: 'block', marginBottom: '4px', fontWeight: 600 }}>Categoria</label>
+                            <select value={form.values.category} onChange={(e) => changeForm('category', e.target.value)} style={{ width: '100%', padding: '8px' }}>
+                                {CATEGORIES.map((c) => (
+                                    <option key={c.key} value={c.key}>{c.label}</option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
+
                     <div>
-                        <label>Categoria </label>
-                        <select value={form.values.category} onChange={(e) => changeForm('category', e.target.value)}>
-                            {CATEGORIES.map((c) => (
-                                <option key={c.key} value={c.key}>{c.label}</option>
-                            ))}
-                        </select>
+                        <label style={{ display: 'block', marginBottom: '4px', fontWeight: 600 }}>Descrição</label>
+                        <input type="text" value={form.values.description} onChange={(e) => changeForm('description', e.target.value)} style={{ width: '100%', padding: '8px' }} />
                     </div>
-                    <div>
-                        <label>Descrição </label>
-                        <input type="text" value={form.values.description} onChange={(e) => changeForm('description', e.target.value)} />
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                        <div>
+                            <label style={{ display: 'block', marginBottom: '4px', fontWeight: 600 }}>Valor (R$)</label>
+                            <input type="number" required min="0" step="0.01" value={form.values.price} onChange={(e) => changeForm('price', e.target.value)} style={{ width: '100%', padding: '8px' }} />
+                        </div>
+                        <div>
+                            <label style={{ display: 'block', marginBottom: '4px', fontWeight: 600 }}>Status</label>
+                            <select value={form.values.is_active} onChange={(e) => changeForm('is_active', e.target.value)} style={{ width: '100%', padding: '8px' }}>
+                                <option value="true">Ativo</option>
+                                <option value="false">Inativo</option>
+                            </select>
+                        </div>
                     </div>
+
                     <div>
-                        <label>Valor (R$) </label>
-                        <input type="number" required min="0" step="0.01" value={form.values.price} onChange={(e) => changeForm('price', e.target.value)} />
-                    </div>
-                    <div>
-                        <label>Status </label>
-                        <select value={form.values.is_active} onChange={(e) => changeForm('is_active', e.target.value)}>
-                            <option value="true">Ativo</option>
-                            <option value="false">Inativo</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label>Observações </label>
-                        <input type="text" value={form.values.notes} onChange={(e) => changeForm('notes', e.target.value)} />
+                        <label style={{ display: 'block', marginBottom: '4px', fontWeight: 600 }}>Observações</label>
+                        <input type="text" value={form.values.notes} onChange={(e) => changeForm('notes', e.target.value)} style={{ width: '100%', padding: '8px' }} />
                     </div>
 
                     {/* Receita: ingredientes do estoque usados no produto */}
-                    <h3>Ingredientes</h3>
-                    <div>
-                        <select value={pick.ingredientId} onChange={(e) => setPick((p) => ({ ...p, ingredientId: e.target.value }))}>
-                            <option value="">Selecione um ingrediente</option>
-                            {stockItems.map((s) => (
-                                <option key={s.id} value={s.id}>{s.name} ({s.unit})</option>
+                    <div style={{ borderTop: '1px solid #ddd', paddingTop: '12px' }}>
+                        <h3 style={{ margin: '0 0 8px' }}>Receita — Ingredientes do estoque</h3>
+                        <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
+                            <select value={pick.ingredientId} onChange={(e) => setPick((p) => ({ ...p, ingredientId: e.target.value }))} style={{ padding: '8px', flex: 1 }}>
+                                <option value="">Selecione um ingrediente</option>
+                                {stockItems.map((s) => (
+                                    <option key={s.id} value={s.id}>{s.name} ({s.unit})</option>
+                                ))}
+                            </select>
+                            <input
+                                type="number"
+                                min="0.01"
+                                step="0.01"
+                                placeholder="Qtd"
+                                value={pick.quantity}
+                                onChange={(e) => setPick((p) => ({ ...p, quantity: e.target.value }))}
+                                style={{ padding: '8px', width: '120px' }}
+                            />
+                            <button type="button" onClick={addToRecipe} style={{ padding: '8px 12px' }}>Adicionar ingrediente</button>
+                        </div>
+                        {form.recipe.length === 0 && <p style={{ fontSize: '13px', color: '#666' }}>Nenhum ingrediente na receita.</p>}
+                        <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                            {form.recipe.map((r) => (
+                                <li key={r.ingredient_id} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px', border: '1px solid #eee', borderRadius: '6px', marginBottom: '6px' }}>
+                                    <span>{r.quantity} {r.unit} - {r.name}</span>
+                                    <button type="button" onClick={() => removeFromRecipe(r.ingredient_id)} style={{ color: '#b91c1c' }}>Remover</button>
+                                </li>
                             ))}
-                        </select>
-                        <input
-                            type="number"
-                            min="0.01"
-                            step="0.01"
-                            placeholder="Qtd"
-                            value={pick.quantity}
-                            onChange={(e) => setPick((p) => ({ ...p, quantity: e.target.value }))}
-                        />
-                        <button type="button" onClick={addToRecipe}>Adicionar ingrediente</button>
+                        </ul>
                     </div>
-                    {form.recipe.length === 0 && <p>Nenhum ingrediente na receita.</p>}
-                    <ul>
-                        {form.recipe.map((r) => (
-                            <li key={r.ingredient_id}>
-                                {r.quantity} {r.unit} - {r.name}{' '}
-                                <button type="button" onClick={() => removeFromRecipe(r.ingredient_id)}>Remover</button>
-                            </li>
-                        ))}
-                    </ul>
 
-                    <button type="submit">Salvar</button>
-                    <button type="button" onClick={() => setForm(null)}>Cancelar</button>
+                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '12px' }}>
+                        <button type="button" onClick={() => setForm(null)} style={{ padding: '10px 20px', border: '1px solid #ddd', background: '#fff', cursor: 'pointer', borderRadius: '6px' }}>Cancelar</button>
+                        <button type="submit" style={{ padding: '10px 20px', background: '#1d4ed8', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}>Salvar</button>
+                    </div>
                 </form>
             )}
 
@@ -288,17 +299,15 @@ export default function Products() {
             {!loading && products.length === 0 && <p>Nenhum produto encontrado.</p>}
 
             {products.length > 0 && (
-                <table border="1" cellPadding="4">
+                <table border="1" cellPadding="4" style={{ width: '100%', borderCollapse: 'collapse', marginTop: '16px' }}>
                     <thead>
                         <tr>
                             <th>Nome</th>
                             <th>Categoria</th>
-                            <th>Descrição</th>
                             <th>Valor</th>
                             <th>Ingredientes</th>
                             <th>Disponibilidade</th>
                             <th>Status</th>
-                            <th>Observações</th>
                             <th>Ações</th>
                         </tr>
                     </thead>
@@ -307,19 +316,15 @@ export default function Products() {
                             <tr key={p.id}>
                                 <td>{p.name}</td>
                                 <td>{categoryLabel(p.category)}</td>
-                                <td>{p.description || '-'}</td>
                                 <td>{formatPrice(p.price)}</td>
-                                <td>
-                                    {p.recipe.length === 0
-                                        ? '-'
-                                        : p.recipe.map((r) => `${r.quantity} ${r.name}`).join(', ')}
+                                <td style={{ fontSize: '13px' }}>
+                                    {p.recipe.length === 0 ? '-' : p.recipe.map((r) => `${r.quantity} ${r.unit} ${r.name}`).join(', ')}
                                 </td>
                                 <td>{p.available ? 'Disponível' : 'Indisponível'}</td>
                                 <td>{p.is_active ? 'Ativo' : 'Inativo'}</td>
-                                <td>{p.notes || '-'}</td>
                                 <td>
-                                    <button type="button" onClick={() => openEdit(p)}>Editar</button>
-                                    <button type="button" onClick={() => deleteProduct(p)}>Excluir</button>
+                                    <button type="button" onClick={() => openEdit(p)} style={{ marginRight: '6px' }}>Editar</button>
+                                    <button type="button" onClick={() => deleteProduct(p)} style={{ color: '#b91c1c' }}>Excluir</button>
                                 </td>
                             </tr>
                         ))}

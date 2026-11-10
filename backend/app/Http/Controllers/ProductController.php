@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\ProductAddon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -99,5 +100,62 @@ class ProductController extends Controller
             'ingredients.*.id' => 'required|integer|distinct|exists:ingredients,id',
             'ingredients.*.quantity' => 'required|numeric|gt:0|max:99999999',
         ];
+    }
+
+    // ---------- Adicionais do produto ----------
+
+    // Listar adicionais de um produto
+    public function productAddons(Product $product)
+    {
+        return response()->json($product->addons()->orderBy('name')->get());
+    }
+
+    // Cadastrar adicional para um produto
+    public function addProductAddon(Request $request, Product $product)
+    {
+        $data = $request->validate([
+            'name'     => ['required', 'string', 'max:255', Rule::unique('product_addons', 'name')->where('product_id', $product->id)],
+            'price'    => 'required|numeric|min:0|max:99999.99',
+            'quantity' => 'nullable|integer|min:0|max:99999999',
+            'is_active'=> 'required|boolean',
+        ]);
+
+        $addon = $product->addons()->create([
+            'name'     => $data['name'],
+            'price'    => $data['price'],
+            'quantity' => $data['quantity'] ?? 0,
+            'is_active'=> $data['is_active'],
+        ]);
+
+        return response()->json([
+            'message' => 'Adicional cadastrado com sucesso!',
+            'addon'   => $addon->fresh(),
+        ], 201);
+    }
+
+    // Atualizar adicional
+    public function updateProductAddon(Request $request, Product $product, ProductAddon $addon)
+    {
+        $data = $request->validate([
+            'name'     => ['sometimes', 'string', 'max:255', Rule::unique('product_addons', 'name')->where('product_id', $product->id)->ignore($addon->id)],
+            'price'    => 'sometimes|numeric|min:0|max:99999.99',
+            'quantity' => 'sometimes|integer|min:0|max:99999999',
+            'is_active'=> 'sometimes|boolean',
+        ]);
+
+        $addon->update($data);
+
+        return response()->json([
+            'message' => 'Adicional atualizado com sucesso!',
+            'addon'   => $addon->fresh(),
+        ]);
+    }
+
+    // Excluir adicional
+    public function destroyProductAddon(Product $product, ProductAddon $addon)
+    {
+        $addon->delete();
+
+        return response()->json(['message' => 'Adicional excluído com sucesso!']);
     }
 }
