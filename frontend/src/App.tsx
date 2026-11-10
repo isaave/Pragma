@@ -6,7 +6,6 @@ import Profile from './pages/Profile';
 import UserProfile from './components/UserProfile';
 import Sidebar from './components/Sidebar';
 import ProfileButton from './components/ProfileButton';
-import Dashboard from './components/Dashboard';
 import History from './pages/History';
 import Products from './pages/Products';
 import Reports from './pages/Reports';
@@ -14,7 +13,7 @@ import Stock from './pages/Stock';
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [view, setView] = useState('dashboard'); // dashboard | home | admin | profile
+  const [view, setView] = useState('home'); // home | admin | profile
   const [currentUser, setCurrentUser] = useState(null);
 
   // Verifica se já existe um token guardado quando a aplicação arranca
@@ -68,7 +67,6 @@ export default function App() {
       <Sidebar currentView={view} onNavigate={setView} onLogout={handleLogout} currentUser={currentUser} />
       <main style={{ flex: 1, minWidth: 0, padding: '24px', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
         {view !== 'profile' && <ProfileButton onNavigate={setView} currentUser={currentUser} />}
-        {view === 'dashboard' && <Dashboard />}
         {view === 'orders' && null}
         {view === 'history' && <History />}
         {view === 'menu' && <Products />}
