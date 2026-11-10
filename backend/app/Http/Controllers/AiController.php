@@ -21,41 +21,46 @@ class AiController extends Controller
         $question = trim($data['question']);
         $context  = $this->buildBusinessContext();
 
-        $apiKey = env('OPENAI_API_KEY');
-        $model  = env('OPENAI_MODEL', 'gpt-4o-mini');
+        $apiKey = env('GEMINI_API_KEY');
+        $model  = env('GEMINI_MODEL', 'gemini-1.5-flash');
 
         if (empty($apiKey)) {
             // Modo offline: devolve um resumo simples sem IA
             return response()->json([
-                'answer'  => "Ainda não configurei uma chave de IA. Defina OPENAI_API_KEY no .env do backend.\n\n" .
+                'answer'  => "Ainda não configurei uma chave de IA. Defina GEMINI_API_KEY no .env do backend.\n\n" .
                              "Enquanto isso, aqui está um resumo dos dados:\n\n" . $context,
                 'offline' => true,
             ]);
         }
 
         try {
-            $response = Http::withToken($apiKey)
-                ->timeout(30)
-                ->post('https://api.openai.com/v1/chat/completions', [
-                    'model' => $model,
-                    'messages' => [
-                        [
-                            'role'    => 'system',
-                            'content' => "Você é o assistente de IA do sistema Pragma (House Burguer). " .
-                                         "Responda em português de Portugal, de forma clara, objetiva e profissional. " .
-                                         "Use os dados abaixo para responder às perguntas do gestor sobre vendas, " .
-                                         "movimentação de dinheiro, estoque, produtos e pedidos. " .
-                                         "Se a resposta não puder ser calculada com os dados fornecidos, diga isso.\n\n" .
-                                         "DADOS DO NEGÓCIO:\n" . $context,
-                        ],
-                        [
-                            'role'    => 'user',
-                            'content' => $question,
+            // API do Google Gemini (Generative Language API)
+            $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}";
+
+            $response = Http::timeout(30)->post($url, [
+                'systemInstruction' => [
+                    'parts' => [
+                        ['text' => "Você é o assistente de IA do sistema Pragma (House Burguer). " .
+                                   "Responda em português de Portugal, de forma clara, objetiva e profissional. " .
+                                   "Use os dados abaixo para responder às perguntas do gestor sobre vendas, " .
+                                   "movimentação de dinheiro, estoque, produtos e pedidos. " .
+                                   "Se a resposta não puder ser calculada com os dados fornecidos, diga isso.\n\n" .
+                                   "DADOS DO NEGÓCIO:\n" . $context],
+                    ],
+                ],
+                'contents' => [
+                    [
+                        'role'  => 'user',
+                        'parts' => [
+                            ['text' => $question],
                         ],
                     ],
-                    'temperature' => 0.3,
-                    'max_tokens'  => 600,
-                ]);
+                ],
+                'generationConfig' => [
+                    'temperature'     => 0.3,
+                    'maxOutputTokens' => 600,
+                ],
+            ]);
 
             if (!$response->successful()) {
                 return response()->json([
@@ -64,7 +69,7 @@ class AiController extends Controller
                 ], 502);
             }
 
-            $answer = $response->json('choices.0.message.content', 'Sem resposta.');
+            $answer = $response->json('candidates.0.content.parts.0.text', 'Sem resposta.');
 
             return response()->json([
                 'answer'  => $answer,
