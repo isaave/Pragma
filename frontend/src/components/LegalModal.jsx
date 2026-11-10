@@ -104,13 +104,19 @@ const terms = [
 
 const privacy = [
     {
+        title: 'Data efetiva',
+        paragraphs: [
+            'Esta Política de Privacidade entra em vigor a partir de 10 de novembro de 2026.',
+        ],
+    },
+    {
         title: '1. Compromisso com a Privacidade',
         paragraphs: [
             'O Pragma respeita a privacidade dos seus utilizadores e está comprometido com a proteção dos dados pessoais, agindo em total conformidade com as diretrizes da Lei Geral de Proteção de Dados (LGPD — Lei n.º 13.709/2018) e demais normativas aplicáveis.',
         ],
     },
     {
-        title: '2. Dados Recolhidos',
+        title: '3. Dados Recolhidos',
         paragraphs: ['Para o funcionamento adequado da plataforma, recolhemos e processamos as seguintes categorias de dados:'],
         list: [
             'Dados de Identificação: nome completo e endereço de e-mail corporativo ou pessoal fornecido no momento do registo.',
@@ -119,7 +125,7 @@ const privacy = [
         ],
     },
     {
-        title: '3. Finalidade do Tratamento de Dados',
+        title: '4. Finalidade do Tratamento de Dados',
         paragraphs: ['Os dados recolhidos são estritamente necessários para:'],
         list: [
             'Autenticação segura de utilizadores e gestão de sessões via tokens de acesso.',
@@ -128,7 +134,7 @@ const privacy = [
         ],
     },
     {
-        title: '4. Partilha e Segurança da Informação',
+        title: '5. Partilha e Segurança da Informação',
         list: [
             'Os dados processados pelo Pragma não são comercializados, alugados ou cedidos a terceiros para fins publicitários ou comerciais.',
             'O acesso aos dados operacionais de cada estabelecimento é estritamente restrito aos administradores autorizados pela própria empresa cliente.',
@@ -136,13 +142,13 @@ const privacy = [
         ],
     },
     {
-        title: '5. Retenção e Eliminação de Dados',
+        title: '6. Retenção e Eliminação de Dados',
         paragraphs: [
             'Os dados pessoais serão armazenados durante o período em que o utilizador mantiver vínculo ativo com a empresa cliente. Após a desativação da conta, os dados poderão ser eliminados ou anonimizados, respeitando os prazos legais de retenção aplicáveis à atividade comercial.',
         ],
     },
     {
-        title: '6. Contacto',
+        title: '7. Contacto',
         paragraphs: [
             'Para esclarecimentos de dúvidas sobre esta Política de Privacidade ou para o exercício de direitos relativos aos seus dados pessoais, o utilizador deverá contactar o administrador do sistema ou o responsável de privacidade da empresa/estabelecimento onde presta serviço.',
         ],
