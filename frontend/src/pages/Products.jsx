@@ -7,6 +7,7 @@ const CATEGORIES = [
     { key: 'acompanhamento', label: 'Acompanhamento' },
     { key: 'bebida', label: 'Bebida' },
     { key: 'sobremesa', label: 'Sobremesa' },
+    { key: 'adicional', label: 'Adicional' },
 ];
 
 const FILTERS = [

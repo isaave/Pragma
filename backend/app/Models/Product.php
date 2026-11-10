@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Product extends Model
 {
-    public const CATEGORIES = ['hamburguer', 'combo', 'acompanhamento', 'bebida', 'sobremesa'];
+    public const CATEGORIES = ['hamburguer', 'combo', 'acompanhamento', 'bebida', 'sobremesa', 'adicional'];
 
     protected $fillable = [
         'name',
