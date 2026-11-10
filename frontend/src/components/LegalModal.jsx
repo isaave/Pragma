@@ -35,7 +35,7 @@ const styles = {
         padding: '24px 28px 16px',
         borderBottom: '1px solid #eef2f7',
     },
-    title: { fontSize: '20px', fontWeight: 700, color: '#03071e', margin: 0 },
+    title: { fontSize: '20px', fontWeight: 700, color: 'var(--text-primary)', margin: 0 },
     close: {
         background: 'none',
         border: 'none',
@@ -47,11 +47,11 @@ const styles = {
     content: {
         padding: '20px 28px 28px',
         overflowY: 'auto',
-        color: '#334155',
+        color: 'var(--text-secondary)',
         fontSize: '13.5px',
         lineHeight: 1.6,
     },
-    sectionTitle: { fontSize: '14px', fontWeight: 700, color: '#0f172e', margin: '18px 0 6px' },
+    sectionTitle: { fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', margin: '18px 0 6px' },
     paragraph: { margin: '0 0 10px' },
     list: { margin: '0 0 10px', paddingLeft: '20px' },
     contact: { margin: '16px 0 0', fontWeight: 600, color: '#1d4ed8' },
