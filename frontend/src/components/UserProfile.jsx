@@ -11,7 +11,7 @@ const styles = {
     page: {
         flex: 1,
         width: '100%',
-        background: '#ffffff',
+        background: 'var(--bg-primary)',
         fontFamily: FONT,
         display: 'flex',
         flexDirection: 'column',
@@ -20,8 +20,8 @@ const styles = {
     card: {
         flex: 1,
         width: '100%',
-        background: 'transparent',
-        border: '1px solid #e2e8f0',
+        background: 'var(--card-bg)',
+        border: '1px solid var(--border-color)',
         borderRadius: '24px',
         boxShadow: 'none',
         padding: '40px',
@@ -39,8 +39,8 @@ const styles = {
     titleBlock: {
         padding: '40px 40px 24px',
     },
-    title: { fontSize: '28px', fontWeight: 700, color: '#03071e', margin: 0 },
-    subtitle: { fontSize: '14px', color: '#94a3b8', margin: '6px 0 0' },
+    title: { fontSize: '28px', fontWeight: 700, color: 'var(--text-primary)', margin: 0 },
+    subtitle: { fontSize: '14px', color: 'var(--text-muted)', margin: '6px 0 0' },
 
     // Cabeçalho do utilizador
     userHeader: {
@@ -125,7 +125,7 @@ const styles = {
         fontWeight: 700,
         letterSpacing: '0.06em',
         textTransform: 'uppercase',
-        color: '#64748b',
+        color: 'var(--text-muted)',
         width: '100%',
     },
     inputWrap: { position: 'relative', width: '100%' },
@@ -133,10 +133,10 @@ const styles = {
         width: '100%',
         padding: '13px 44px 13px 16px',
         borderRadius: '12px',
-        border: '1px solid #e2e8f0',
-        background: '#fafbfd',
+        border: '1px solid var(--border-color)',
+        background: 'var(--input-bg)',
         fontSize: '14px',
-        color: '#0f172e',
+        color: 'var(--text-primary)',
         fontFamily: FONT,
         boxSizing: 'border-box',
         outline: 'none',
@@ -161,18 +161,18 @@ const styles = {
 
     // Alertas
     alertSuccess: {
-        background: '#f0fdf4',
-        color: '#15803d',
-        border: '1px solid #bbf7d0',
+        background: 'var(--card-bg)',
+        color: 'var(--success)',
+        border: '1px solid var(--success)',
         borderRadius: '10px',
         padding: '10px 14px',
         fontSize: '13px',
         margin: 0,
     },
     alertError: {
-        background: '#fef2f2',
-        color: '#b91c1c',
-        border: '1px solid #fecaca',
+        background: 'var(--card-bg)',
+        color: 'var(--danger)',
+        border: '1px solid var(--danger)',
         borderRadius: '10px',
         padding: '10px 14px',
         fontSize: '13px',

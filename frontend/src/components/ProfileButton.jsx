@@ -10,8 +10,8 @@ const styles = {
         alignItems: 'center',
         gap: '14px',
         padding: '8px 24px 8px 8px',
-        background: '#ffffff',
-        border: '1px solid #e6eaf0',
+        background: 'var(--card-bg)',
+        border: '1px solid var(--border-color)',
         borderRadius: '999px',
         boxSizing: 'border-box',
         cursor: 'pointer',
@@ -27,7 +27,7 @@ const styles = {
         objectFit: 'cover',
         flexShrink: 0,
         display: 'block',
-        background: '#1d4ed8',
+        background: 'var(--accent)',
     },
     textBlock: {
         display: 'flex',
@@ -38,7 +38,7 @@ const styles = {
     name: {
         fontSize: '15px',
         fontWeight: 700,
-        color: '#0f172e',
+        color: 'var(--text-primary)',
         lineHeight: 1.2,
         whiteSpace: 'nowrap',
         overflow: 'hidden',
@@ -48,7 +48,7 @@ const styles = {
     role: {
         fontSize: '12px',
         fontWeight: 500,
-        color: '#6366f1',
+        color: 'var(--accent)',
         lineHeight: 1.2,
         whiteSpace: 'nowrap',
         overflow: 'hidden',

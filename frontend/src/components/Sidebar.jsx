@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { Bell, History, Utensils, Package, BarChart3, Users, LogOut } from 'lucide-react';
+import { Bell, History, Utensils, Package, BarChart3, Users, LogOut, Sun, Moon } from 'lucide-react';
 import api from '../Services/api';
 import logo from '../assets/LogoHouseBurguer.png';
 import LegalModal from './LegalModal';
+import { useTheme } from '../contexts/ThemeContext';
 
 export default function Sidebar({ currentView, onNavigate, onLogout, currentUser }) {
     const [expanded, setExpanded] = useState(false);
     const [legalDoc, setLegalDoc] = useState(null); // null | 'terms' | 'privacy'
+    const { isDark, toggleTheme } = useTheme();
 
     const handleLogout = async () => {
         try {
@@ -58,8 +60,8 @@ export default function Sidebar({ currentView, onNavigate, onLogout, currentUser
                 zIndex: 10
             }}
         >
-            {/* Topo: Logótipo da House Burguer */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', alignSelf: 'center', marginTop: '24px', marginBottom: '20px', transition: 'all 0.3s' }}>
+            {/* Topo: Logótipo da House Burguer + Toggle de tema */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', alignSelf: 'center', marginTop: '24px', marginBottom: '20px', transition: 'all 0.3s', width: '100%' }}>
                 <img 
                     src={logo} 
                     alt="House Burguer" 
@@ -74,6 +76,31 @@ export default function Sidebar({ currentView, onNavigate, onLogout, currentUser
                         transition: 'width 0.3s, height 0.3s'
                     }} 
                 />
+                {expanded && (
+                    <button
+                        type="button"
+                        onClick={toggleTheme}
+                        title={isDark ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
+                        style={{
+                            marginTop: '12px',
+                            background: 'rgba(255, 255, 255, 0.08)',
+                            border: '1px solid rgba(255, 255, 255, 0.12)',
+                            color: 'white',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            cursor: 'pointer',
+                            padding: '8px 12px',
+                            borderRadius: '12px',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            transition: 'all 0.2s',
+                        }}
+                    >
+                        {isDark ? <Sun size={16} /> : <Moon size={16} />}
+                        {isDark ? 'Tema claro' : 'Tema escuro'}
+                    </button>
+                )}
             </div>
 
             {/* Menu de Navegação (centralizado verticalmente) */}
