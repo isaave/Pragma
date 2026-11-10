@@ -33,53 +33,141 @@ class AiController extends Controller
             ]);
         }
 
-        try {
-            // API do Google Gemini (Generative Language API)
-            $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}";
+        // Lista de modelos a tentar (em ordem de preferência)
+        $modelsToTry = [$model, 'gemini-3.8-flash', 'gemma-4-26b-a4b-it'];
 
-            $response = Http::timeout(30)->post($url, [
-                'systemInstruction' => [
-                    'parts' => [
-                        ['text' => "Você é o assistente de IA do sistema Pragma (House Burguer). " .
-                                   "Responda em português de Portugal, de forma clara, objetiva e profissional. " .
-                                   "Use os dados abaixo para responder às perguntas do gestor sobre vendas, " .
-                                   "movimentação de dinheiro, estoque, produtos e pedidos. " .
-                                   "Se a resposta não puder ser calculada com os dados fornecidos, diga isso.\n\n" .
-                                   "DADOS DO NEGÓCIO:\n" . $context],
-                    ],
-                ],
-                'contents' => [
-                    [
-                        'role'  => 'user',
+        foreach ($modelsToTry as $tryModel) {
+            try {
+                // API do Google Gemini (Generative Language API)
+                $url = "https://generativelanguage.googleapis.com/v1beta/models/{$tryModel}:generateContent?key={$apiKey}";
+
+                $payload = [
+                    'systemInstruction' => [
                         'parts' => [
-                            ['text' => $question],
+                            ['text' => "Você é o assistente de IA do sistema Pragma (House Burguer). " .
+                                       "Responda em português de Portugal, de forma clara, objetiva e profissional. " .
+                                       "Use os dados abaixo para responder às perguntas do gestor sobre vendas, " .
+                                       "movimentação de dinheiro, estoque, produtos e pedidos. " .
+                                       "Se a resposta não puder ser calculada com os dados fornecidos, diga isso. " .
+                                       "IMPORTANTE: Responda APENAS com a resposta final, sem incluir raciocínio, " .
+                                       "pensamento ou análise intermediária. Não mostre o seu processo de pensamento.\n\n" .
+                                       "DADOS DO NEGÓCIO:\n" . $context],
                         ],
                     ],
-                ],
-                'generationConfig' => [
-                    'temperature'     => 0.3,
-                    'maxOutputTokens' => 600,
-                ],
-            ]);
+                    'contents' => [
+                        [
+                            'role'  => 'user',
+                            'parts' => [
+                                ['text' => $question],
+                            ],
+                        ],
+                    ],
+                    'generationConfig' => [
+                        'temperature'     => 0.3,
+                        'maxOutputTokens' => 600,
+                    ],
+                ];
 
-            if (!$response->successful()) {
+                // thinkingConfig só para modelos que suportam (gemini-3.8-flash)
+                if (str_contains($tryModel, 'gemini')) {
+                    $payload['generationConfig']['thinkingConfig'] = [
+                        'thinkingBudget' => 0,
+                    ];
+                }
+
+                $response = Http::timeout(30)->post($url, $payload);
+
+                if (!$response->successful()) {
+                    // Se for erro de alta demanda ou modelo indisponível, tenta o próximo
+                    $errorMsg = $response->json('error.message', '');
+                    if (str_contains($errorMsg, 'high demand') || str_contains($errorMsg, 'not found') || str_contains($errorMsg, 'not available')) {
+                        continue;
+                    }
+                    return response()->json([
+                        'answer' => 'Não consegui consultar a IA agora. Tente novamente em instantes.',
+                        'error'  => $errorMsg,
+                    ], 502);
+                }
+
+                $answer = $response->json('candidates.0.content.parts.0.text', 'Sem resposta.');
+
+                // Processar a resposta do modelo gemma para remover raciocínio interno
+                if (str_contains($tryModel, 'gemma')) {
+                    $answer = $this->cleanGemmaResponse($answer);
+                }
+
                 return response()->json([
-                    'answer' => 'Não consegui consultar a IA agora. Tente novamente em instantes.',
-                    'error'  => $response->json('error.message', 'erro desconhecido'),
-                ], 502);
+                    'answer'  => $answer,
+                    'offline' => false,
+                ]);
+            } catch (\Throwable $e) {
+                continue;
+            }
+        }
+
+        return response()->json([
+            'answer' => 'Não consegui consultar a IA agora. Tente novamente em instantes.',
+        ], 502);
+    }
+
+    // Limpa a resposta do gemma para remover o raciocínio interno
+    private function cleanGemmaResponse(string $answer): string
+    {
+        // Procura por padrões de resposta final (frases que começam com "A receita", "A resposta", etc.)
+        // O gemma mostra raciocínio com "*" e depois a resposta final entre aspas
+        $lines = explode("\n", $answer);
+        $finalLines = [];
+        $inFinal = false;
+
+        foreach ($lines as $line) {
+            $trimmed = trim($line);
+            if (empty($trimmed)) {
+                if ($inFinal) {
+                    $finalLines[] = $line;
+                }
+                continue;
             }
 
-            $answer = $response->json('candidates.0.content.parts.0.text', 'Sem resposta.');
+            // Se a linha parece ser parte do raciocínio (começa com * ou - ou contém "User asks", "Context:", etc.)
+            if (preg_match('/^\*|^--|User asks:|Context:|Constraint:|Language:|Tone:|Data Source:|Assistant for/i', $trimmed)) {
+                continue;
+            }
 
-            return response()->json([
-                'answer'  => $answer,
-                'offline' => false,
-            ]);
-        } catch (\Throwable $e) {
-            return response()->json([
-                'answer' => 'Ocorreu um erro ao consultar a IA: ' . $e->getMessage(),
-            ], 500);
+            // Se a linha contém aspas com a resposta final (ex.: "A receita total é R$ 2.362,50.")
+            if (preg_match('/^"(.+)"$/', $trimmed, $matches)) {
+                $finalLines = [$matches[1]];
+                $inFinal = true;
+                break;
+            }
+
+            // Se a linha parece ser uma resposta final (contém "R$" ou "receita" ou "produto" ou "pedido")
+            if (preg_match('/R\$|receita|produto|pedido|estoque|ingrediente/i', $trimmed)) {
+                $finalLines[] = $line;
+                $inFinal = true;
+            } elseif ($inFinal) {
+                $finalLines[] = $line;
+            }
         }
+
+        $result = trim(implode("\n", $finalLines));
+
+        // Limpar asteriscos e espaços extras do início
+        $result = preg_replace('/^\*+\s*/', '', $result);
+        $result = trim($result);
+
+        // Se não conseguiu extrair nada, tenta extrair a última frase que contém "R$"
+        if (empty($result)) {
+            $lastMatch = '';
+            foreach ($lines as $line) {
+                if (preg_match('/R\$\s*[\d.,]+/', $line, $m)) {
+                    $lastMatch = trim($line);
+                    $lastMatch = preg_replace('/^\*+\s*/', '', $lastMatch);
+                }
+            }
+            $result = $lastMatch ?: $answer;
+        }
+
+        return $result;
     }
 
     // Reúne um resumo dos dados de negócio para dar contexto à IA
