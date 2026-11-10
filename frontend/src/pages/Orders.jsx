@@ -4,6 +4,7 @@ import api from '../Services/api';
 const FILTERS = [
     { key: 'all', label: 'Todos' },
     { key: 'pending', label: 'Pendente' },
+    { key: 'development', label: 'Em desenvolvimento' },
     { key: 'preparing', label: 'Preparando' },
     { key: 'ready', label: 'Pronto' },
     { key: 'delivered', label: 'Entregue' },
@@ -497,10 +498,13 @@ export default function Orders() {
                                                         ? '#fef3c7'
                                                         : o.status === 'preparing'
                                                         ? '#bfdbfe'
+                                                        : o.status === 'development'
+                                                        ? '#fef9c3'
                                                         : '#fff',
                                             }}
                                         >
                                             <option value="pending">Pendente</option>
+                                            <option value="development">Em desenvolvimento</option>
                                             <option value="preparing">Preparando</option>
                                             <option value="ready">Pronto</option>
                                             <option value="delivered">Entregue</option>
