@@ -269,7 +269,6 @@ export default function Products() {
                                 onChange={(e) => setPick((p) => ({ ...p, quantity: e.target.value }))}
                                 style={{ padding: '8px', width: '140px' }}
                             />
-                            <span style={{ fontSize: '12px', color: '#666' }}>qtd usada no produto</span>
                             <button type="button" onClick={addToRecipe} style={{ padding: '8px 12px' }}>Adicionar ingrediente</button>
                         </div>
                         {form.recipe.length === 0 && <p style={{ fontSize: '13px', color: '#666' }}>Nenhum ingrediente na receita.</p>}
