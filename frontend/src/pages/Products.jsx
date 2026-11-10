@@ -23,7 +23,7 @@ const EMPTY_FORM = {
     name: '',
     category: 'hamburguer',
     price: '',
-    is_active: 'true',
+    status: 'ativo',
     notes: '',
 };
 
@@ -110,7 +110,7 @@ export default function Products() {
                 name: product.name,
                 category: product.category,
                 price: String(product.price),
-                is_active: product.is_active ? 'true' : 'false',
+                status: product.status || 'ativo',
                 notes: product.notes || '',
             },
             recipe: (product.recipe || []).map((r) => ({ ...r })),
@@ -237,9 +237,10 @@ export default function Products() {
                         </div>
                         <div>
                             <label style={{ display: 'block', marginBottom: '4px', fontWeight: 600 }}>Status</label>
-                            <select value={form.values.is_active} onChange={(e) => changeForm('is_active', e.target.value)} style={{ width: '100%', padding: '8px' }}>
-                                <option value="true">Ativo</option>
-                                <option value="false">Inativo</option>
+                            <select value={form.values.status || 'ativo'} onChange={(e) => changeForm('status', e.target.value)} style={{ width: '100%', padding: '8px' }}>
+                                <option value="ativo">Ativo</option>
+                                <option value="inativo">Inativo</option>
+                                <option value="desenvolvimento">Em desenvolvimento</option>
                             </select>
                         </div>
                     </div>
@@ -316,7 +317,24 @@ export default function Products() {
                                     {p.recipe.length === 0 ? '-' : p.recipe.map((r) => `${r.quantity} ${r.unit} ${r.name}`).join(', ')}
                                 </td>
                                 <td>{p.available ? 'Disponível' : 'Indisponível'}</td>
-                                <td>{p.is_active ? 'Ativo' : 'Inativo'}</td>
+                                <td style={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase' }}>
+                                    <span
+                                        style={{
+                                            padding: '2px 6px',
+                                            borderRadius: '10px',
+                                            background:
+                                                p.status === 'ativo' ? '#dcfce7' :
+                                                p.status === 'inativo' ? '#fee2e2' :
+                                                '#fef9c3',
+                                            color:
+                                                p.status === 'ativo' ? '#15803d' :
+                                                p.status === 'inativo' ? '#b91c1c' :
+                                                '#92400e',
+                                        }}
+                                    >
+                                        {p.status === 'ativo' ? 'Ativo' : p.status === 'inativo' ? 'Inativo' : 'Em desenvolvimento'}
+                                    </span>
+                                </td>
                                 <td>
                                     <button type="button" onClick={() => openEdit(p)} style={{ marginRight: '6px' }}>Editar</button>
                                     <button type="button" onClick={() => deleteProduct(p)} style={{ color: '#b91c1c' }}>Excluir</button>

@@ -74,7 +74,14 @@ class ProductController extends Controller
     // Só os campos da tabela products (sem a lista de ingredientes)
     private function productFields(array $data): array
     {
-        return collect($data)->except('ingredients')->all();
+        $fields = collect($data)->except('ingredients')->all();
+
+        // Se status foi enviado mas is_active não, derivamos is_active do status
+        if (!array_key_exists('is_active', $fields) && array_key_exists('status', $fields)) {
+            $fields['is_active'] = $fields['status'] === 'ativo';
+        }
+
+        return $fields;
     }
 
     // Substitui a receita do produto pela lista recebida: [{id, quantity}, ...]
@@ -94,7 +101,8 @@ class ProductController extends Controller
             'category' => ['required', Rule::in(Product::CATEGORIES)],
             'description' => 'nullable|string|max:255',
             'price' => 'required|numeric|min:0|max:99999.99',
-            'is_active' => 'required|boolean',
+            'is_active' => 'sometimes|boolean',
+            'status' => 'sometimes|string|in:ativo,inativo,desenvolvimento',
             'notes' => 'nullable|string|max:1000',
             'ingredients' => 'nullable|array',
             'ingredients.*.id' => 'required|integer|distinct|exists:ingredients,id',

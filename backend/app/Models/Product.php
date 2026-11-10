@@ -18,6 +18,7 @@ class Product extends Model
         'description',
         'price',
         'is_active',
+        'status',
         'notes',
     ];
 
@@ -34,6 +35,7 @@ class Product extends Model
         return [
             'price' => 'float',
             'is_active' => 'boolean',
+            'status' => 'string',
         ];
     }
 
@@ -62,11 +64,11 @@ class Product extends Model
         });
     }
 
-    // "Disponível" = produto ativo E todos os ingredientes da receita têm estoque suficiente
+    // "Disponível" = produto ativo, status não é "inativo" nem "desenvolvimento" E todos os ingredientes da receita têm estoque suficiente
     protected function available(): Attribute
     {
         return Attribute::get(function () {
-            if (!$this->is_active) {
+            if (!$this->is_active || in_array($this->status, ['inativo', 'desenvolvimento'])) {
                 return false;
             }
             foreach ($this->ingredients as $ingredient) {
@@ -83,5 +85,10 @@ class Product extends Model
         return in_array($category, self::CATEGORIES, true)
             ? $query->where('category', $category)
             : $query;
+    }
+
+    public function scopeStatus(Builder $query, ?string $status): Builder
+    {
+        return $status ? $query->where('status', $status) : $query;
     }
 }
