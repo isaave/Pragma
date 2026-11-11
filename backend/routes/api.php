@@ -4,6 +4,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\IngredientController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\AiController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -29,4 +33,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/users', [UserController::class, 'store']);
     Route::put('/users/{id}', [UserController::class, 'update']);
     Route::delete('/users/{id}', [UserController::class, 'destroy']);
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::apiResource('ingredients', IngredientController::class);
+    Route::post('/ingredients/{ingredient}/restock', [IngredientController::class, 'restock']);
+    Route::apiResource('products', ProductController::class);
+    Route::get('/products/{product}/addons', [ProductController::class, 'productAddons']);
+    Route::post('/products/{product}/addons', [ProductController::class, 'addProductAddon']);
+    Route::put('/products/{product}/addons/{addon}', [ProductController::class, 'updateProductAddon']);
+    Route::delete('/products/{product}/addons/{addon}', [ProductController::class, 'destroyProductAddon']);
+    Route::apiResource('orders', OrderController::class);
+    Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus']);
+    Route::post('/ai/ask', [AiController::class, 'ask']);
 });

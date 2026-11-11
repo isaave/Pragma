@@ -81,17 +81,6 @@ export default function AdminPanel() {
 
     const isChefe = (currentUser?.role || '').toLowerCase() === 'chefe';
 
-    const handleLogout = async () => {
-        try {
-            await api.post('/logout');
-        } catch (error) {
-            // ignora erros de rede; limpa sessão local na mesma
-        }
-        localStorage.removeItem('pragma_token');
-        localStorage.removeItem('pragma_user');
-        window.dispatchEvent(new Event('pragma:logout'));
-    };
-
     return (
         <div>
         
@@ -99,7 +88,6 @@ export default function AdminPanel() {
             <main>
                 <h1>Gestão de Utilizadores</h1>
                 <p>Bem-vindo, {currentUser?.name} ({currentUser?.role})</p>
-                <button type="button" onClick={handleLogout}>Sair</button>
 
                 {isChefe && (
                     <form onSubmit={handleSubmit}>
@@ -147,7 +135,8 @@ export default function AdminPanel() {
                     </form>
                 )}
 
-                <table>
+                <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
                         <tr>
                             <th>Nome</th>
@@ -177,6 +166,7 @@ export default function AdminPanel() {
                         ))}
                     </tbody>
                 </table>
+                </div>
             </main>
         </div>
     );
