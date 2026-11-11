@@ -215,7 +215,7 @@ export default function Products() {
                 <form onSubmit={saveForm} style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxWidth: '700px' }}>
                     <h2>{form.id ? 'Editar produto' : 'Novo produto'}</h2>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
                         <div>
                             <label style={{ display: 'block', marginBottom: '4px', fontWeight: 600 }}>Nome</label>
                             <input type="text" required value={form.values.name} onChange={(e) => changeForm('name', e.target.value)} style={{ width: '100%', padding: '8px' }} />
@@ -230,7 +230,7 @@ export default function Products() {
                         </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
                         <div>
                             <label style={{ display: 'block', marginBottom: '4px', fontWeight: 600 }}>Valor (R$)</label>
                             <input type="number" required min="0" step="0.01" value={form.values.price} onChange={(e) => changeForm('price', e.target.value)} style={{ width: '100%', padding: '8px' }} />
@@ -294,6 +294,7 @@ export default function Products() {
             {!loading && products.length === 0 && <p>Nenhum produto encontrado.</p>}
 
             {products.length > 0 && (
+                <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                 <table border="1" cellPadding="4" style={{ width: '100%', borderCollapse: 'collapse', marginTop: '16px' }}>
                     <thead>
                         <tr>
@@ -342,6 +343,7 @@ export default function Products() {
                         ))}
                     </tbody>
                 </table>
+                </div>
             )}
         </div>
     );

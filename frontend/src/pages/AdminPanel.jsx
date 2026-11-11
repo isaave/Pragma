@@ -135,7 +135,8 @@ export default function AdminPanel() {
                     </form>
                 )}
 
-                <table>
+                <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
                         <tr>
                             <th>Nome</th>
@@ -165,6 +166,7 @@ export default function AdminPanel() {
                         ))}
                     </tbody>
                 </table>
+                </div>
             </main>
         </div>
     );

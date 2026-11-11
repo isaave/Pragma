@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { User, ShieldCheck, ChefHat, Pencil, Eye, EyeOff } from 'lucide-react';
 import api from '../Services/api';
+import useIsMobile from '../hooks/useIsMobile';
 
 const BACKEND_URL = 'http://127.0.0.1:8000';
 const FONT = "'Helvetica Neue', Helvetica, Arial, sans-serif";
@@ -229,6 +230,7 @@ function formatUpdatedAt(value) {
 }
 
 export default function UserProfile() {
+    const isMobile = useIsMobile(900);
     const [user, setUser] = useState(null);
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -337,12 +339,12 @@ export default function UserProfile() {
     return (
         <div style={styles.page}>
             {/* Cabeçalho fora do cartão */}
-            <div style={styles.titleBlock}>
+            <div style={isMobile ? { ...styles.titleBlock, padding: '24px 20px 16px' } : styles.titleBlock}>
                 <h1 style={styles.title}>Meu perfil pessoal</h1>
                 <p style={styles.subtitle}>Gerencie suas informações, cargo e credenciais de segurança</p>
             </div>
 
-            <div style={styles.card}>
+            <div style={isMobile ? { ...styles.card, padding: '24px 20px' } : styles.card}>
                 {/* Cabeçalho do utilizador */}
                 <div style={styles.userHeader}>
                     <button

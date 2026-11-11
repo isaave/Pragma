@@ -4,6 +4,7 @@ import api from '../Services/api';
 import logo from '../assets/LogoHouseBurguer.png';
 import logoSemEscrita from '../assets/LogoSemEscrita.png';
 import { useTheme } from '../contexts/ThemeContext';
+import useIsMobile from '../hooks/useIsMobile';
 
 // ---- Estilos organizados ----
 const styles = {
@@ -231,6 +232,7 @@ const features = [
 
 export default function Login({ onLoginSuccess }) {
     const { isDark, toggleTheme } = useTheme();
+    const isMobile = useIsMobile(900);
     const [view, setView] = useState('login'); // login | forgot | verify | reset
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -338,9 +340,14 @@ export default function Login({ onLoginSuccess }) {
             <button type="button" style={styles.themeToggle} onClick={toggleTheme} title={isDark ? 'Mudar para tema claro' : 'Mudar para tema escuro'}>
                 {isDark ? <Sun size={18} /> : <Moon size={18} />}
             </button>
-            <div style={styles.frame}>
-                <img src={logoSemEscrita} alt="House Burguer" style={styles.cornerLogo} />
-                {/* ===== LADO ESQUERDO: Onboarding ===== */}
+            <div
+                style={isMobile
+                    ? { ...styles.frame, width: '100%', height: 'auto', minHeight: 'calc(100vh - 32px)', borderRadius: '0', boxShadow: 'none', flexDirection: 'column' }
+                    : styles.frame}
+            >
+                {!isMobile && <img src={logoSemEscrita} alt="House Burguer" style={styles.cornerLogo} />}
+                {/* ===== LADO ESQUERDO: Onboarding (apenas em telas grandes) ===== */}
+            {!isMobile && (
             <div style={styles.left}>
                 <div>
                     <h1 style={styles.welcomeTitle}>Seja bem-vindo(a) ao</h1>
@@ -359,11 +366,16 @@ export default function Login({ onLoginSuccess }) {
                     ))}
                 </div>
             </div>
+            )}
 
             {/* ===== LADO DIREITO: Autenticação ===== */}
-            <div style={styles.right}>
-                <div style={styles.card}>
-                    <img src={logo} alt="House Burguer" style={styles.logo} />
+            <div style={{ ...styles.right, ...(isMobile ? { flex: '1 1 auto', padding: '16px' } : {}) }}>
+                <div style={{ ...styles.card, ...(isMobile ? { padding: '28px 20px', borderRadius: '20px' } : {}) }}>
+                    <img
+                        src={logo}
+                        alt="House Burguer"
+                        style={isMobile ? { ...styles.logo, width: '120px', height: '120px' } : styles.logo}
+                    />
                     <h2 style={styles.cardTitle}>{titles[view]}</h2>
 
                     {error && <p style={styles.alertError}>{error}</p>}

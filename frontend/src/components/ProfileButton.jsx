@@ -20,9 +20,33 @@ const styles = {
         fontFamily: FONT,
         textAlign: 'left',
     },
+    pillCompact: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '10px',
+        padding: '5px 14px 5px 5px',
+        background: 'var(--card-bg)',
+        border: '1px solid var(--border-color)',
+        borderRadius: '999px',
+        boxSizing: 'border-box',
+        cursor: 'pointer',
+        alignSelf: 'center',
+        marginBottom: 0,
+        fontFamily: FONT,
+        textAlign: 'left',
+    },
     avatar: {
         width: '44px',
         height: '44px',
+        borderRadius: '50%',
+        objectFit: 'cover',
+        flexShrink: 0,
+        display: 'block',
+        background: 'var(--accent)',
+    },
+    avatarCompact: {
+        width: '34px',
+        height: '34px',
         borderRadius: '50%',
         objectFit: 'cover',
         flexShrink: 0,
@@ -45,6 +69,16 @@ const styles = {
         textOverflow: 'ellipsis',
         maxWidth: '220px',
     },
+    nameCompact: {
+        fontSize: '13px',
+        fontWeight: 700,
+        color: 'var(--text-primary)',
+        lineHeight: 1.2,
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        maxWidth: '140px',
+    },
     role: {
         fontSize: '12px',
         fontWeight: 500,
@@ -55,9 +89,19 @@ const styles = {
         textOverflow: 'ellipsis',
         maxWidth: '220px',
     },
+    roleCompact: {
+        fontSize: '11px',
+        fontWeight: 500,
+        color: 'var(--accent)',
+        lineHeight: 1.2,
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        maxWidth: '140px',
+    },
 };
 
-export default function ProfileButton({ onNavigate, currentUser }) {
+export default function ProfileButton({ onNavigate, currentUser, compact = false }) {
     const raw = currentUser?.avatar_url || currentUser?.avatar;
     // A API pode devolver o caminho cru (avatars/xxx.png) — a URL pública é /storage/avatars/xxx.png
     const avatarUrl = raw
@@ -71,16 +115,16 @@ export default function ProfileButton({ onNavigate, currentUser }) {
             type="button"
             onClick={() => onNavigate('profile')}
             title="Ir para o teu perfil"
-            style={styles.pill}
+            style={compact ? styles.pillCompact : styles.pill}
         >
             {avatarUrl ? (
-                <img src={avatarUrl} alt={currentUser?.name || 'Avatar'} style={styles.avatar} />
+                <img src={avatarUrl} alt={currentUser?.name || 'Avatar'} style={compact ? styles.avatarCompact : styles.avatar} />
             ) : (
-                <span aria-hidden="true" style={styles.avatar} />
+                <span aria-hidden="true" style={compact ? styles.avatarCompact : styles.avatar} />
             )}
             <span style={styles.textBlock}>
-                <span style={styles.name}>{currentUser?.name || 'Utilizador'}</span>
-                <span style={styles.role}>{currentUser?.role || 'Sem cargo'}</span>
+                <span style={compact ? styles.nameCompact : styles.name}>{currentUser?.name || 'Utilizador'}</span>
+                <span style={compact ? styles.roleCompact : styles.role}>{currentUser?.role || 'Sem cargo'}</span>
             </span>
         </button>
     );

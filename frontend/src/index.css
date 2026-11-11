@@ -68,3 +68,17 @@ body {
 *, *::before, *::after {
     transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
+
+/* ===== Responsivo (celular/tablet) ===== */
+
+/* Evita scroll horizontal acidental */
+html, body {
+    overflow-x: hidden;
+}
+
+/* Em telas pequenas: inputs com 16px evitam o zoom automático do iOS Safari */
+@media (max-width: 900px) {
+    input, select, textarea {
+        font-size: 16px !important;
+    }
+}

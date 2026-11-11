@@ -271,7 +271,8 @@ export default function Stock() {
             {!loading && items.length === 0 && <p>Nenhum ingrediente encontrado.</p>}
 
             {items.length > 0 && (
-                <table border="1" cellPadding="4">
+                <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                <table border="1" cellPadding="4" style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
                         <tr>
                             <th>Nome</th>
@@ -306,6 +307,7 @@ export default function Stock() {
                         ))}
                     </tbody>
                 </table>
+                </div>
             )}
         </div>
     );

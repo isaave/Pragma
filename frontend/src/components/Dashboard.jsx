@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { LayoutDashboard, DollarSign, Package, ShoppingCart, AlertTriangle, Send, Sparkles } from 'lucide-react';
 import api from '../Services/api';
+import useIsMobile from '../hooks/useIsMobile';
 
 const FONT = "'Helvetica Neue', Helvetica, Arial, sans-serif";
 
@@ -117,6 +118,7 @@ const styles = {
 const formatPrice = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
 export default function Dashboard() {
+    const isMobile = useIsMobile(900);
     const [loading, setLoading] = useState(true);
     const [kpis, setKpis] = useState({ revenueToday: 0, revenueTotal: 0, ordersCount: 0, productsActive: 0, lowStock: 0 });
     const [question, setQuestion] = useState('');
@@ -237,15 +239,15 @@ export default function Dashboard() {
                     ))}
                 </div>
 
-                <div style={styles.chatInputRow}>
+                <div style={{ ...styles.chatInputRow, ...(isMobile ? { flexDirection: 'column', alignItems: 'stretch' } : {}) }}>
                     <textarea
-                        style={styles.chatInput}
+                        style={{ ...styles.chatInput, ...(isMobile ? { minHeight: '60px' } : {}) }}
                         placeholder="Ex.: Qual foi a receita total de hoje? Quais produtos mais vendem?"
                         value={question}
                         onChange={(e) => setQuestion(e.target.value)}
                         onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ask(); } }}
                     />
-                    <button type="button" style={styles.sendBtn} onClick={() => ask()} disabled={thinking}>
+                    <button type="button" style={{ ...styles.sendBtn, ...(isMobile ? { justifyContent: 'center' } : {}) }} onClick={() => ask()} disabled={thinking}>
                         <Send size={16} />
                         {thinking ? 'A pensar...' : 'Enviar'}
                     </button>
