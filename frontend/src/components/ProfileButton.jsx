@@ -1,26 +1,131 @@
 import React from 'react';
-import { UserCircle } from 'lucide-react';
 
 const BACKEND_URL = 'http://127.0.0.1:8000';
+const FONT = "'Helvetica Neue', Helvetica, Arial, sans-serif";
 
-export default function ProfileButton({ onNavigate, currentUser }) {
+// ---- Estilos organizados ----
+const styles = {
+    pill: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '14px',
+        padding: '8px 24px 8px 8px',
+        background: 'var(--card-bg)',
+        border: '1px solid var(--border-color)',
+        borderRadius: '999px',
+        boxSizing: 'border-box',
+        cursor: 'pointer',
+        alignSelf: 'flex-end',
+        marginBottom: '24px',
+        fontFamily: FONT,
+        textAlign: 'left',
+    },
+    pillCompact: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '10px',
+        padding: '5px 14px 5px 5px',
+        background: 'var(--card-bg)',
+        border: '1px solid var(--border-color)',
+        borderRadius: '999px',
+        boxSizing: 'border-box',
+        cursor: 'pointer',
+        alignSelf: 'center',
+        marginBottom: 0,
+        fontFamily: FONT,
+        textAlign: 'left',
+    },
+    avatar: {
+        width: '44px',
+        height: '44px',
+        borderRadius: '50%',
+        objectFit: 'cover',
+        flexShrink: 0,
+        display: 'block',
+        background: 'var(--accent)',
+    },
+    avatarCompact: {
+        width: '34px',
+        height: '34px',
+        borderRadius: '50%',
+        objectFit: 'cover',
+        flexShrink: 0,
+        display: 'block',
+        background: 'var(--accent)',
+    },
+    textBlock: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '1px',
+        minWidth: 0,
+    },
+    name: {
+        fontSize: '15px',
+        fontWeight: 700,
+        color: 'var(--text-primary)',
+        lineHeight: 1.2,
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        maxWidth: '220px',
+    },
+    nameCompact: {
+        fontSize: '13px',
+        fontWeight: 700,
+        color: 'var(--text-primary)',
+        lineHeight: 1.2,
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        maxWidth: '140px',
+    },
+    role: {
+        fontSize: '12px',
+        fontWeight: 500,
+        color: 'var(--accent)',
+        lineHeight: 1.2,
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        maxWidth: '220px',
+    },
+    roleCompact: {
+        fontSize: '11px',
+        fontWeight: 500,
+        color: 'var(--accent)',
+        lineHeight: 1.2,
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        maxWidth: '140px',
+    },
+};
+
+export default function ProfileButton({ onNavigate, currentUser, compact = false }) {
     const raw = currentUser?.avatar_url || currentUser?.avatar;
+    // A API pode devolver o caminho cru (avatars/xxx.png) — a URL pública é /storage/avatars/xxx.png
     const avatarUrl = raw
-        ? (raw.startsWith('http') ? `${raw}?t=${Date.now()}` : `${BACKEND_URL}${raw.startsWith('/') ? '' : '/'}${raw}?t=${Date.now()}`)
+        ? (raw.startsWith('http')
+            ? `${raw}?t=${Date.now()}`
+            : `${BACKEND_URL}/storage/${raw.replace(/^\/?storage\//, '')}?t=${Date.now()}`)
         : null;
 
     return (
         <button
             type="button"
             onClick={() => onNavigate('profile')}
-            title="Ir para teu perfil"
+            title="Ir para o teu perfil"
+            style={compact ? styles.pillCompact : styles.pill}
         >
             {avatarUrl ? (
-                <img src={avatarUrl} alt="Avatar" width="28" height="28" />
+                <img src={avatarUrl} alt={currentUser?.name || 'Avatar'} style={compact ? styles.avatarCompact : styles.avatar} />
             ) : (
-                <UserCircle size={28} />
+                <span aria-hidden="true" style={compact ? styles.avatarCompact : styles.avatar} />
             )}
-            <span>Perfil do Usuário</span>
+            <span style={styles.textBlock}>
+                <span style={compact ? styles.nameCompact : styles.name}>{currentUser?.name || 'Utilizador'}</span>
+                <span style={compact ? styles.roleCompact : styles.role}>{currentUser?.role || 'Sem cargo'}</span>
+            </span>
         </button>
     );
-};
+}

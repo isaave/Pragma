@@ -1,3 +1,84 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Reset básico para telas sem scroll (login fullscreen) */
+html, body, #root {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* Fonte padrão do projeto */
+html, body, #root, button, input, select, textarea, h1, h2, h3, h4, p, span, label {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+/* ===== Variáveis de tema ===== */
+:root, [data-theme="light"] {
+    --bg-primary: #f4f6fa;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #f8fafc;
+    --text-primary: #03071e;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    --border-color: #e2e8f0;
+    --card-bg: #ffffff;
+    --card-shadow: 0 4px 16px rgba(3, 7, 30, 0.05);
+    --accent: #1d4ed8;
+    --accent-light: #eff6ff;
+    --danger: #b91c1c;
+    --success: #15803d;
+    --warning: #92400e;
+    --warning-bg: #fef9c3;
+    --input-bg: #fafbfd;
+    --sidebar-bg: #03071e;
+    --sidebar-text: #ffffff;
+}
+
+[data-theme="dark"] {
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-tertiary: #334155;
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --text-muted: #64748b;
+    --border-color: #334155;
+    --card-bg: #1e293b;
+    --card-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    --accent: #3b82f6;
+    --accent-light: #1e3a5f;
+    --danger: #f87171;
+    --success: #4ade80;
+    --warning: #fbbf24;
+    --warning-bg: #422006;
+    --input-bg: #0f172a;
+    --sidebar-bg: #03071e;
+    --sidebar-text: #ffffff;
+}
+
+body {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+/* Transição suave para todos os elementos com variáveis de tema */
+*, *::before, *::after {
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+/* ===== Responsivo (celular/tablet) ===== */
+
+/* Evita scroll horizontal acidental */
+html, body {
+    overflow-x: hidden;
+}
+
+/* Em telas pequenas: inputs com 16px evitam o zoom automático do iOS Safari */
+@media (max-width: 900px) {
+    input, select, textarea {
+        font-size: 16px !important;
+    }
+}
