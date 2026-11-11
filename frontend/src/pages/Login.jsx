@@ -1,21 +1,39 @@
 import React, { useState } from 'react';
-import { Mail, Lock, Eye, EyeOff, ClipboardList, History, Package, BarChart3, Users } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ClipboardList, History, Package, BarChart3, Users, Sun, Moon } from 'lucide-react';
 import api from '../Services/api';
 import logo from '../assets/LogoHouseBurguer.png';
 import logoSemEscrita from '../assets/LogoSemEscrita.png';
+import { useTheme } from '../contexts/ThemeContext';
 
 // ---- Estilos organizados ----
 const styles = {
     root: {
         minHeight: '100vh',
         width: '100%',
-        background: '#eef1f6',
+        background: 'var(--bg-primary)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         padding: '24px',
         boxSizing: 'border-box',
         fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+        position: 'relative',
+    },
+    themeToggle: {
+        position: 'absolute',
+        top: '16px',
+        left: '16px',
+        zIndex: 30,
+        width: '40px',
+        height: '40px',
+        borderRadius: '12px',
+        background: 'var(--card-bg)',
+        border: '1px solid var(--border-color)',
+        color: 'var(--text-primary)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: 'pointer',
     },
     // Moldura da tela de login (menor, centralizada)
     frame: {
@@ -212,6 +230,7 @@ const features = [
 ];
 
 export default function Login({ onLoginSuccess }) {
+    const { isDark, toggleTheme } = useTheme();
     const [view, setView] = useState('login'); // login | forgot | verify | reset
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -316,6 +335,9 @@ export default function Login({ onLoginSuccess }) {
 
     return (
         <div style={styles.root}>
+            <button type="button" style={styles.themeToggle} onClick={toggleTheme} title={isDark ? 'Mudar para tema claro' : 'Mudar para tema escuro'}>
+                {isDark ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
             <div style={styles.frame}>
                 <img src={logoSemEscrita} alt="House Burguer" style={styles.cornerLogo} />
                 {/* ===== LADO ESQUERDO: Onboarding ===== */}
