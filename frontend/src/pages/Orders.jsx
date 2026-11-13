@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import api from '../Services/api';
 import {
     FILTERS,
@@ -169,6 +169,7 @@ export default function Orders() {
     const [orderNotes, setOrderNotes] = useState('');
     const [selectedProductId, setSelectedProductId] = useState('');
     const [cart, setCart] = useState([]); // [{ product, quantity, notes }]
+    const formRef = useRef(null);
 
     // Filtros da lista
     const [filter, setFilter] = useState('all');
@@ -207,6 +208,16 @@ export default function Orders() {
         };
         init();
     }, [loadProducts, loadOrders]);
+
+    /* ---------------- Novo pedido ---------------- */
+
+    const focusNewOrder = () => {
+        formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const select = document.getElementById('product-select');
+        const target =
+            select && !select.disabled ? select : document.getElementById('customer-name');
+        target?.focus();
+    };
 
     /* ---------------- Carrinho ---------------- */
 
@@ -453,6 +464,11 @@ export default function Orders() {
                     Crie pedidos com os produtos cadastrados, imprima, copie para o WhatsApp e
                     acompanhe cada alteração de status.
                 </p>
+                <p>
+                    <button type="button" onClick={focusNewOrder}>
+                        + Novo pedido
+                    </button>
+                </p>
             </header>
 
             {error && <p role="alert">{error}</p>}
@@ -472,7 +488,7 @@ export default function Orders() {
             )}
 
             {/* ================= CRIAÇÃO ================= */}
-            <section>
+            <section ref={formRef}>
                 <h2>Novo pedido</h2>
 
                 <form onSubmit={finishOrder}>
