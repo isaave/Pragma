@@ -1,8 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
     ShoppingCart,
-    Plus,
-    Minus,
     Trash2,
     Printer,
     Copy,
@@ -279,8 +277,6 @@ export default function Orders() {
         (sum, entry) => sum + Number(entry.product.price) * entry.quantity,
         0
     );
-
-    const cartCount = cart.reduce((sum, entry) => sum + entry.quantity, 0);
 
     /* ---------------- Criar pedido ---------------- */
 
@@ -560,173 +556,125 @@ export default function Orders() {
             )}
 
             {/* ================= CRIAÇÃO ================= */}
-            <section className="panel">
-                <div className="panel-head">
-                    <div>
-                        <h2 className="panel-title">
-                            <ShoppingCart size={18} /> Novo pedido
-                        </h2>
-                        <p className="panel-sub">
-                            {cartCount === 0
-                                ? 'Selecione os produtos e monte o pedido.'
-                                : `${cartCount} item(ns) no pedido.`}
-                        </p>
-                    </div>
-                </div>
+            <section>
+                <h2>Novo pedido</h2>
 
-                <form onSubmit={finishOrder} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                    <div className="picker-row">
-                        <div className="field">
-                            <label htmlFor="product-select">Adicionar produto</label>
-                            <select
-                                id="product-select"
-                                className="select"
-                                value={selectedProductId}
-                                onChange={(e) => setSelectedProductId(e.target.value)}
-                                disabled={loading || products.length === 0}
-                            >
-                                <option value="">
-                                    {loading
-                                        ? 'A carregar produtos...'
-                                        : products.length === 0
-                                          ? 'Nenhum produto cadastrado'
-                                          : 'Selecione um produto...'}
+                <form onSubmit={finishOrder}>
+                    <p>
+                        <label htmlFor="product-select">Adicionar produto</label>{' '}
+                        <select
+                            id="product-select"
+                            value={selectedProductId}
+                            onChange={(e) => setSelectedProductId(e.target.value)}
+                            disabled={loading || products.length === 0}
+                        >
+                            <option value="">
+                                {loading
+                                    ? 'A carregar produtos...'
+                                    : products.length === 0
+                                      ? 'Nenhum produto cadastrado'
+                                      : 'Selecione um produto...'}
+                            </option>
+                            {products.map((product) => (
+                                <option
+                                    key={product.id}
+                                    value={product.id}
+                                    disabled={!product.available}
+                                >
+                                    {product.name} — {formatPrice(product.price)}
+                                    {product.available ? '' : ' (indisponível)'}
                                 </option>
-                                {products.map((product) => (
-                                    <option
-                                        key={product.id}
-                                        value={product.id}
-                                        disabled={!product.available}
-                                    >
-                                        {product.name} — {formatPrice(product.price)}
-                                        {product.available ? '' : ' (indisponível)'}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
+                            ))}
+                        </select>{' '}
                         <button
                             type="button"
-                            className="btn btn-primary"
                             onClick={addSelectedProduct}
                             disabled={!selectedProductId}
                         >
-                            <Plus size={16} /> Adicionar
+                            Adicionar
                         </button>
-                    </div>
+                    </p>
 
-                    <div className="field">
-                        <label htmlFor="customer-name">Cliente</label>
+                    <p>
+                        <label htmlFor="customer-name">Cliente</label>{' '}
                         <input
                             id="customer-name"
-                            className="input"
                             type="text"
                             placeholder="Nome do cliente (opcional)"
                             maxLength={120}
                             value={customerName}
                             onChange={(e) => setCustomerName(e.target.value)}
                         />
-                    </div>
+                    </p>
 
-                        {cart.length === 0 ? (
-                            <div className="empty">
-                                <ShoppingCart size={26} />
-                                Selecione um produto acima para começar.
-                            </div>
-                        ) : (
-                            <div className="cart-list">
-                                {cart.map((entry, index) => (
-                                    <div className="cart-item" key={entry.product.id}>
-                                        <div className="cart-item-top">
-                                            <span className="cart-item-name">{entry.product.name}</span>
-                                            <span className="cart-item-price">
-                                                {formatPrice(entry.product.price * entry.quantity)}
-                                            </span>
-                                        </div>
-
-                                        <div className="cart-item-row">
-                                            <div className="qty-controls">
-                                                <button
-                                                    type="button"
-                                                    className="qty-btn"
-                                                    aria-label={`Diminuir ${entry.product.name}`}
-                                                    onClick={() => changeQuantity(index, -1)}
-                                                >
-                                                    <Minus size={14} />
-                                                </button>
-                                                <span className="qty-value">{entry.quantity}</span>
-                                                <button
-                                                    type="button"
-                                                    className="qty-btn"
-                                                    aria-label={`Aumentar ${entry.product.name}`}
-                                                    onClick={() => changeQuantity(index, 1)}
-                                                >
-                                                    <Plus size={14} />
-                                                </button>
-                                                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                                                    × {formatPrice(entry.product.price)}
-                                                </span>
-                                            </div>
-                                            <button
-                                                type="button"
-                                                className="btn btn-danger btn-sm"
-                                                onClick={() => removeItem(index)}
-                                            >
-                                                <Trash2 size={13} /> Remover
-                                            </button>
-                                        </div>
-
-                                        <div className="field">
-                                            <label htmlFor={`item-note-${index}`}>
-                                                Observação do item
-                                            </label>
-                                            <input
-                                                id={`item-note-${index}`}
-                                                className="input cart-note"
-                                                type="text"
-                                                maxLength={1000}
-                                                placeholder="Ex.: salada sem cebola"
-                                                value={entry.notes}
-                                                onChange={(e) => changeItemNote(index, e.target.value)}
-                                            />
-                                        </div>
+                    {cart.length === 0 ? (
+                        <p>Selecione um produto acima para começar.</p>
+                    ) : (
+                        <ul>
+                            {cart.map((entry, index) => (
+                                <li key={entry.product.id}>
+                                    {entry.product.name} —{' '}
+                                    {formatPrice(entry.product.price * entry.quantity)}
+                                    <div>
+                                        <button
+                                            type="button"
+                                            aria-label={`Diminuir ${entry.product.name}`}
+                                            onClick={() => changeQuantity(index, -1)}
+                                        >
+                                            -
+                                        </button>
+                                        <span>{entry.quantity}</span>
+                                        <button
+                                            type="button"
+                                            aria-label={`Aumentar ${entry.product.name}`}
+                                            onClick={() => changeQuantity(index, 1)}
+                                        >
+                                            +
+                                        </button>
+                                        <span>× {formatPrice(entry.product.price)}</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => removeItem(index)}
+                                        >
+                                            Remover
+                                        </button>
                                     </div>
-                                ))}
-                            </div>
-                        )}
 
-                        <div className="field">
-                            <label htmlFor="order-notes">Observações do pedido</label>
-                            <textarea
-                                id="order-notes"
-                                className="textarea"
-                                rows={2}
-                                maxLength={1000}
-                                placeholder="Ex.: entregar na portaria, ponto da carne..."
-                                value={orderNotes}
-                                onChange={(e) => setOrderNotes(e.target.value)}
-                            />
-                        </div>
+                                    <p>
+                                        <label htmlFor={`item-note-${index}`}>
+                                            Observação do item
+                                        </label>{' '}
+                                        <input
+                                            id={`item-note-${index}`}
+                                            type="text"
+                                            maxLength={1000}
+                                            placeholder="Ex.: salada sem cebola"
+                                            value={entry.notes}
+                                            onChange={(e) => changeItemNote(index, e.target.value)}
+                                        />
+                                    </p>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
 
-                        <div className="cart-total">
-                            <span className="cart-total-label">Total do pedido</span>
-                            <span className="cart-total-value">{formatPrice(cartTotal)}</span>
-                        </div>
+                    <p>
+                        <label htmlFor="order-notes">Observações do pedido</label>{' '}
+                        <textarea
+                            id="order-notes"
+                            rows={2}
+                            maxLength={1000}
+                            placeholder="Ex.: entregar na portaria, ponto da carne..."
+                            value={orderNotes}
+                            onChange={(e) => setOrderNotes(e.target.value)}
+                        />
+                    </p>
 
-                        <button
-                            type="submit"
-                            className="btn btn-success btn-block"
-                            disabled={cart.length === 0 || submitting}
-                        >
-                            {submitting ? (
-                                <>
-                                    <Loader2 size={16} className="spin" /> A finalizar...
-                                </>
-                            ) : (
-                                <>
-                                    <CheckCircle2 size={16} /> Finalizar pedido
-                                </>
-                            )}
-                        </button>
+                    <p>Total do pedido: {formatPrice(cartTotal)}</p>
+
+                    <button type="submit" disabled={cart.length === 0 || submitting}>
+                        {submitting ? 'A finalizar...' : 'Finalizar pedido'}
+                    </button>
                 </form>
             </section>
 
