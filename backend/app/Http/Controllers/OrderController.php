@@ -58,7 +58,6 @@ class OrderController extends Controller
 
         try {
             $user = $request->user();
-            $total = 0;
 
             // 1) Validar estoque de TODOS os ingredientes antes de criar qualquer coisa
             foreach ($data['items'] as $item) {
@@ -92,51 +91,9 @@ class OrderController extends Controller
             ]);
 
             // 3) Criar itens, adicionais e baixar estoque
-            foreach ($data['items'] as $item) {
-                $product = Product::with('ingredients')->findOrFail($item['product_id']);
-                $unitPrice = (float) $product->price;
-                $subtotal  = $unitPrice * (int) $item['quantity'];
-                $total    += $subtotal;
+            $total = $this->applyItems($order, $data['items']);
 
-                $orderItem = $order->items()->create([
-                    'product_id' => $product->id,
-                    'quantity'   => (int) $item['quantity'],
-                    'unit_price' => $unitPrice,
-                    'subtotal'   => $subtotal,
-                    'notes'      => $item['notes'] ?? null,
-                ]);
-
-                // Adicionais do item
-                foreach ($item['addons'] ?? [] as $addonItem) {
-                    $addon = ProductAddon::findOrFail($addonItem['product_addon_id']);
-                    $addonPrice = (float) $addon->price;
-                    $addonSubtotal = $addonPrice * (int) $addonItem['quantity'];
-                    $total += $addonSubtotal;
-
-                    $orderItem->addons()->create([
-                        'product_addon_id' => $addon->id,
-                        'quantity'         => (int) $addonItem['quantity'],
-                        'unit_price'       => $addonPrice,
-                    ]);
-                }
-
-                // 4) Baixar estoque dos ingredientes da receita deste produto
-                foreach ($product->ingredients as $ingredient) {
-                    $used = (float) $ingredient->pivot->quantity * (int) $item['quantity'];
-
-                    $ingredient->decrement('quantity', $used);
-
-                    IngredientMovement::create([
-                        'ingredient_id' => $ingredient->id,
-                        'order_item_id' => $orderItem->id,
-                        'type'          => 'sale',
-                        'quantity'      => $used,
-                        'notes'         => "Venda de {$product->name} — pedido #{$order->id}",
-                    ]);
-                }
-            }
-
-            // 5) Salvar total
+            // 4) Salvar total
             $order->update(['total' => $total]);
 
             DB::commit();
@@ -205,6 +162,157 @@ class OrderController extends Controller
             'message' => 'Status do pedido atualizado!',
             'order'   => $order->fresh()->load('items.product', 'items.addons.addon', 'user', 'statusHistory.user'),
         ]);
+    }
+
+    // Editar pedido (cliente, observações e itens) enquanto não estiver entregue/cancelado
+    public function update(Request $request, Order $order)
+    {
+        if (in_array($order->status, ['delivered', 'cancelled'], true)) {
+            return response()->json([
+                'message' => 'Não é possível editar um pedido já entregue ou cancelado.',
+            ], 422);
+        }
+
+        $data = $request->validate([
+            'customer_name'      => 'nullable|string|max:120',
+            'items'              => 'required|array|min:1',
+            'items.*.product_id' => 'required|integer|exists:products,id',
+            'items.*.quantity'   => 'required|integer|min:1|max:999',
+            'items.*.notes'      => 'nullable|string|max:1000',
+            'items.*.addons'     => 'nullable|array',
+            'items.*.addons.*.product_addon_id' => 'required|integer|exists:product_addons,id',
+            'items.*.addons.*.quantity'         => 'required|integer|min:1|max:999',
+            'notes'              => 'nullable|string|max:1000',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            $order->load('items.product.ingredients');
+
+            // 1) Calcular o que os novos itens consomem e o que será devolvido ao estoque
+            $usage = [];
+            foreach ($data['items'] as $item) {
+                $product = Product::with('ingredients')->findOrFail($item['product_id']);
+                foreach ($product->ingredients as $ingredient) {
+                    $usage[$ingredient->id] = ($usage[$ingredient->id] ?? 0)
+                        + (float) $ingredient->pivot->quantity * (int) $item['quantity'];
+                }
+            }
+
+            $restore = [];
+            foreach ($order->items as $item) {
+                $product = $item->product;
+                if (!$product) {
+                    continue;
+                }
+                foreach ($product->ingredients as $ingredient) {
+                    $restore[$ingredient->id] = ($restore[$ingredient->id] ?? 0)
+                        + (float) $ingredient->pivot->quantity * (int) $item->quantity;
+                }
+            }
+
+            foreach ($usage as $ingredientId => $needed) {
+                $ingredient = Ingredient::findOrFail($ingredientId);
+                $available = (float) $ingredient->quantity + ($restore[$ingredientId] ?? 0);
+                if ($available < $needed) {
+                    throw new \Exception(
+                        "Estoque insuficiente de {$ingredient->name} ({$ingredient->unit}). " .
+                        "Disponível: {$available} {$ingredient->unit}."
+                    );
+                }
+            }
+
+            // 2) Devolver ao estoque o que o pedido antigo consumia e limpar os itens antigos
+            foreach ($order->items as $item) {
+                $product = $item->product;
+                if ($product) {
+                    foreach ($product->ingredients as $ingredient) {
+                        $ingredient->increment(
+                            'quantity',
+                            (float) $ingredient->pivot->quantity * (int) $item->quantity
+                        );
+                    }
+                }
+                $item->addons()->delete();
+            }
+
+            IngredientMovement::whereIn('order_item_id', $order->items->pluck('id'))->delete();
+            $order->items()->delete();
+
+            // 3) Recriar os itens e dar baixa no estoque novamente
+            $total = $this->applyItems($order, $data['items']);
+
+            $order->update([
+                'customer_name' => $data['customer_name'] ?? null,
+                'notes'         => $data['notes'] ?? null,
+                'total'         => $total,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Pedido atualizado com sucesso!',
+                'order'   => $order->fresh()->load('items.product', 'items.addons.addon', 'user', 'statusHistory.user'),
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    // Criar itens do pedido, adicionais e dar baixa no estoque; devolve o total
+    private function applyItems(Order $order, array $items): float
+    {
+        $total = 0.0;
+
+        foreach ($items as $item) {
+            $product = Product::with('ingredients')->findOrFail($item['product_id']);
+            $unitPrice = (float) $product->price;
+            $subtotal = $unitPrice * (int) $item['quantity'];
+            $total += $subtotal;
+
+            $orderItem = $order->items()->create([
+                'product_id' => $product->id,
+                'quantity'   => (int) $item['quantity'],
+                'unit_price' => $unitPrice,
+                'subtotal'   => $subtotal,
+                'notes'      => $item['notes'] ?? null,
+            ]);
+
+            // Adicionais do item
+            foreach ($item['addons'] ?? [] as $addonItem) {
+                $addon = ProductAddon::findOrFail($addonItem['product_addon_id']);
+                $addonPrice = (float) $addon->price;
+                $total += $addonPrice * (int) $addonItem['quantity'];
+
+                $orderItem->addons()->create([
+                    'product_addon_id' => $addon->id,
+                    'quantity'         => (int) $addonItem['quantity'],
+                    'unit_price'       => $addonPrice,
+                ]);
+            }
+
+            // Baixar estoque dos ingredientes da receita deste produto
+            foreach ($product->ingredients as $ingredient) {
+                $used = (float) $ingredient->pivot->quantity * (int) $item['quantity'];
+
+                $ingredient->decrement('quantity', $used);
+
+                IngredientMovement::create([
+                    'ingredient_id' => $ingredient->id,
+                    'order_item_id' => $orderItem->id,
+                    'type'          => 'sale',
+                    'quantity'      => $used,
+                    'notes'         => "Venda de {$product->name} — pedido #{$order->id}",
+                ]);
+            }
+        }
+
+        return $total;
     }
 
     // Excluir pedido (só se ainda não estiver entregue/cancelado)
