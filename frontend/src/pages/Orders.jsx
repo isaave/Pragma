@@ -168,7 +168,9 @@ export default function Orders() {
     const [customerName, setCustomerName] = useState('');
     const [orderNotes, setOrderNotes] = useState('');
     const [selectedProductId, setSelectedProductId] = useState('');
-    const [cart, setCart] = useState([]); // [{ product, quantity, notes }]
+    const [cart, setCart] = useState([]); // [{ product, quantity, notes, addons }]
+    const [showNewOrder, setShowNewOrder] = useState(false);
+    const [editingOrder, setEditingOrder] = useState(null);
     const formRef = useRef(null);
 
     // Filtros da lista
@@ -209,14 +211,60 @@ export default function Orders() {
         init();
     }, [loadProducts, loadOrders]);
 
-    /* ---------------- Novo pedido ---------------- */
+    /* ---------------- Novo pedido / edição ---------------- */
 
-    const focusNewOrder = () => {
+    useEffect(() => {
+        if (!showNewOrder) return;
         formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         const select = document.getElementById('product-select');
         const target =
             select && !select.disabled ? select : document.getElementById('customer-name');
         target?.focus();
+    }, [showNewOrder, editingOrder]);
+
+    const resetForm = () => {
+        setEditingOrder(null);
+        setCart([]);
+        setCustomerName('');
+        setOrderNotes('');
+        setSelectedProductId('');
+    };
+
+    const closeNewOrder = () => {
+        setShowNewOrder(false);
+        resetForm();
+    };
+
+    const toggleNewOrder = () => {
+        if (showNewOrder) {
+            closeNewOrder();
+        } else {
+            resetForm();
+            setShowNewOrder(true);
+        }
+    };
+
+    const startEditOrder = (order) => {
+        setEditingOrder(order);
+        setCustomerName(order.customer_name || '');
+        setOrderNotes(order.notes || '');
+        setSelectedProductId('');
+        setCart(
+            (order.items || []).map((item) => ({
+                product: item.product,
+                quantity: item.quantity,
+                notes: item.notes || '',
+                addons: (item.addons || []).map((addon) => ({
+                    product_addon_id: addon.product_addon_id,
+                    quantity: addon.quantity,
+                    name: addon.addon?.name || 'Adicional',
+                    price: addon.unit_price,
+                })),
+            }))
+        );
+        setError('');
+        setSuccess('');
+        setShowNewOrder(true);
     };
 
     /* ---------------- Carrinho ---------------- */
@@ -233,7 +281,7 @@ export default function Orders() {
                         : entry
                 );
             }
-            return [...prev, { product, quantity: 1, notes: '' }];
+            return [...prev, { product, quantity: 1, notes: '', addons: [] }];
         });
     };
 
@@ -265,12 +313,15 @@ export default function Orders() {
         setCart((prev) => prev.filter((_, i) => i !== index));
     };
 
-    const cartTotal = cart.reduce(
-        (sum, entry) => sum + Number(entry.product.price) * entry.quantity,
-        0
-    );
+    const cartTotal = cart.reduce((sum, entry) => {
+        const addons = (entry.addons || []).reduce(
+            (addonSum, addon) => addonSum + Number(addon.price) * addon.quantity,
+            0
+        );
+        return sum + Number(entry.product.price) * entry.quantity + addons;
+    }, 0);
 
-    /* ---------------- Criar pedido ---------------- */
+    /* ---------------- Guardar pedido ---------------- */
 
     const finishOrder = async (event) => {
         event.preventDefault();
@@ -291,19 +342,38 @@ export default function Orders() {
                     product_id: entry.product.id,
                     quantity: entry.quantity,
                     notes: entry.notes.trim() || null,
+                    addons: (entry.addons || []).map((addon) => ({
+                        product_addon_id: addon.product_addon_id,
+                        quantity: addon.quantity,
+                    })),
                 })),
             };
 
-            const res = await api.post('/orders', payload);
-            setLastCreated(res.data.order);
-            setSuccess(`Pedido ${orderNumber(res.data.order.id)} criado com sucesso!`);
-            setCart([]);
-            setCustomerName('');
-            setOrderNotes('');
+            if (editingOrder) {
+                const res = await api.put(`/orders/${editingOrder.id}`, payload);
+                setSuccess(res.data.message);
+                setShowNewOrder(false);
+                resetForm();
+            } else {
+                const res = await api.post('/orders', payload);
+                setLastCreated(res.data.order);
+                setSuccess(`Pedido ${orderNumber(res.data.order.id)} criado com sucesso!`);
+                setCart([]);
+                setCustomerName('');
+                setOrderNotes('');
+            }
+
             await loadOrders();
             await loadProducts();
         } catch (err) {
-            setError(getErrorMessage(err, 'Erro ao finalizar o pedido.'));
+            setError(
+                getErrorMessage(
+                    err,
+                    editingOrder
+                        ? 'Erro ao atualizar o pedido.'
+                        : 'Erro ao finalizar o pedido.'
+                )
+            );
         } finally {
             setSubmitting(false);
         }
@@ -465,8 +535,13 @@ export default function Orders() {
                     acompanhe cada alteração de status.
                 </p>
                 <p>
-                    <button type="button" onClick={focusNewOrder}>
-                        + Novo pedido
+                    <button
+                        type="button"
+                        onClick={toggleNewOrder}
+                        aria-expanded={showNewOrder}
+                        aria-controls="new-order-form"
+                    >
+                        {showNewOrder ? '− Fechar novo pedido' : '+ Novo pedido'}
                     </button>
                 </p>
             </header>
@@ -487,128 +562,163 @@ export default function Orders() {
                 </p>
             )}
 
-            {/* ================= CRIAÇÃO ================= */}
-            <section ref={formRef}>
-                <h2>Novo pedido</h2>
-
-                <form onSubmit={finishOrder}>
-                    <p>
-                        <label htmlFor="product-select">Adicionar produto</label>{' '}
-                        <select
-                            id="product-select"
-                            value={selectedProductId}
-                            onChange={(e) => setSelectedProductId(e.target.value)}
-                            disabled={loading || products.length === 0}
-                        >
-                            <option value="">
-                                {loading
-                                    ? 'A carregar produtos...'
-                                    : products.length === 0
-                                      ? 'Nenhum produto cadastrado'
-                                      : 'Selecione um produto...'}
-                            </option>
-                            {products.map((product) => (
-                                <option
-                                    key={product.id}
-                                    value={product.id}
-                                    disabled={!product.available}
-                                >
-                                    {product.name} — {formatPrice(product.price)}
-                                    {product.available ? '' : ' (indisponível)'}
+            {/* ================= CRIAÇÃO / EDIÇÃO ================= */}
+            {showNewOrder && (
+                <section id="new-order-form" ref={formRef}>
+                    <h2>
+                        {editingOrder
+                            ? `Editar pedido ${orderNumber(editingOrder.id)}`
+                            : 'Novo pedido'}
+                    </h2>
+                    <form onSubmit={finishOrder}>
+                        <p>
+                            <label htmlFor="product-select">Adicionar produto</label>{' '}
+                            <select
+                                id="product-select"
+                                value={selectedProductId}
+                                onChange={(e) => setSelectedProductId(e.target.value)}
+                                disabled={loading || products.length === 0}
+                            >
+                                <option value="">
+                                    {loading
+                                        ? 'A carregar produtos...'
+                                        : products.length === 0
+                                          ? 'Nenhum produto cadastrado'
+                                          : 'Selecione um produto...'}
                                 </option>
-                            ))}
-                        </select>{' '}
-                        <button
-                            type="button"
-                            onClick={addSelectedProduct}
-                            disabled={!selectedProductId}
-                        >
-                            Adicionar
+                                {products.map((product) => (
+                                    <option
+                                        key={product.id}
+                                        value={product.id}
+                                        disabled={!product.available}
+                                    >
+                                        {product.name} — {formatPrice(product.price)}
+                                        {product.available ? '' : ' (indisponível)'}
+                                    </option>
+                                ))}
+                            </select>{' '}
+                            <button
+                                type="button"
+                                onClick={addSelectedProduct}
+                                disabled={!selectedProductId}
+                            >
+                                Adicionar
+                            </button>
+                        </p>
+
+                        <p>
+                            <label htmlFor="customer-name">Cliente</label>{' '}
+                            <input
+                                id="customer-name"
+                                type="text"
+                                placeholder="Nome do cliente (opcional)"
+                                maxLength={120}
+                                value={customerName}
+                                onChange={(e) => setCustomerName(e.target.value)}
+                            />
+                        </p>
+
+                        {cart.length === 0 ? (
+                            <p>Selecione um produto acima para começar.</p>
+                        ) : (
+                            <ul>
+                                {cart.map((entry, index) => (
+                                    <li key={entry.product.id}>
+                                        {entry.product.name} —{' '}
+                                        {formatPrice(
+                                            Number(entry.product.price) * entry.quantity +
+                                                (entry.addons || []).reduce(
+                                                    (sum, addon) =>
+                                                        sum + Number(addon.price) * addon.quantity,
+                                                    0
+                                                )
+                                        )}
+                                        <div>
+                                            <button
+                                                type="button"
+                                                aria-label={`Diminuir ${entry.product.name}`}
+                                                onClick={() => changeQuantity(index, -1)}
+                                            >
+                                                -
+                                            </button>
+                                            <span>{entry.quantity}</span>
+                                            <button
+                                                type="button"
+                                                aria-label={`Aumentar ${entry.product.name}`}
+                                                onClick={() => changeQuantity(index, 1)}
+                                            >
+                                                +
+                                            </button>
+                                            <span>× {formatPrice(entry.product.price)}</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => removeItem(index)}
+                                            >
+                                                Remover
+                                            </button>
+                                        </div>
+
+                                        {(entry.addons || []).map((addon, addonIndex) => (
+                                            <div key={`${addon.product_addon_id}-${addonIndex}`}>
+                                                + {addon.quantity}× {addon.name} —{' '}
+                                                {formatPrice(Number(addon.price) * addon.quantity)}
+                                            </div>
+                                        ))}
+
+                                        <p>
+                                            <label htmlFor={`item-note-${index}`}>
+                                                Observação do item
+                                            </label>{' '}
+                                            <input
+                                                id={`item-note-${index}`}
+                                                type="text"
+                                                maxLength={1000}
+                                                placeholder="Ex.: salada sem cebola"
+                                                value={entry.notes}
+                                                onChange={(e) => changeItemNote(index, e.target.value)}
+                                            />
+                                        </p>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+
+                        <p>
+                            <label htmlFor="order-notes">Observações do pedido</label>{' '}
+                            <textarea
+                                id="order-notes"
+                                rows={2}
+                                maxLength={1000}
+                                placeholder="Ex.: entregar na portaria, ponto da carne..."
+                                value={orderNotes}
+                                onChange={(e) => setOrderNotes(e.target.value)}
+                            />
+                        </p>
+
+                        <p>Total do pedido: {formatPrice(cartTotal)}</p>
+
+                        <button type="submit" disabled={cart.length === 0 || submitting}>
+                            {submitting
+                                ? 'A guardar...'
+                                : editingOrder
+                                  ? 'Guardar alterações'
+                                  : 'Finalizar pedido'}
                         </button>
-                    </p>
-
-                    <p>
-                        <label htmlFor="customer-name">Cliente</label>{' '}
-                        <input
-                            id="customer-name"
-                            type="text"
-                            placeholder="Nome do cliente (opcional)"
-                            maxLength={120}
-                            value={customerName}
-                            onChange={(e) => setCustomerName(e.target.value)}
-                        />
-                    </p>
-
-                    {cart.length === 0 ? (
-                        <p>Selecione um produto acima para começar.</p>
-                    ) : (
-                        <ul>
-                            {cart.map((entry, index) => (
-                                <li key={entry.product.id}>
-                                    {entry.product.name} —{' '}
-                                    {formatPrice(entry.product.price * entry.quantity)}
-                                    <div>
-                                        <button
-                                            type="button"
-                                            aria-label={`Diminuir ${entry.product.name}`}
-                                            onClick={() => changeQuantity(index, -1)}
-                                        >
-                                            -
-                                        </button>
-                                        <span>{entry.quantity}</span>
-                                        <button
-                                            type="button"
-                                            aria-label={`Aumentar ${entry.product.name}`}
-                                            onClick={() => changeQuantity(index, 1)}
-                                        >
-                                            +
-                                        </button>
-                                        <span>× {formatPrice(entry.product.price)}</span>
-                                        <button
-                                            type="button"
-                                            onClick={() => removeItem(index)}
-                                        >
-                                            Remover
-                                        </button>
-                                    </div>
-
-                                    <p>
-                                        <label htmlFor={`item-note-${index}`}>
-                                            Observação do item
-                                        </label>{' '}
-                                        <input
-                                            id={`item-note-${index}`}
-                                            type="text"
-                                            maxLength={1000}
-                                            placeholder="Ex.: salada sem cebola"
-                                            value={entry.notes}
-                                            onChange={(e) => changeItemNote(index, e.target.value)}
-                                        />
-                                    </p>
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-
-                    <p>
-                        <label htmlFor="order-notes">Observações do pedido</label>{' '}
-                        <textarea
-                            id="order-notes"
-                            rows={2}
-                            maxLength={1000}
-                            placeholder="Ex.: entregar na portaria, ponto da carne..."
-                            value={orderNotes}
-                            onChange={(e) => setOrderNotes(e.target.value)}
-                        />
-                    </p>
-
-                    <p>Total do pedido: {formatPrice(cartTotal)}</p>
-
-                    <button type="submit" disabled={cart.length === 0 || submitting}>
-                        {submitting ? 'A finalizar...' : 'Finalizar pedido'}
-                    </button>
-                </form>
-            </section>
+                        {editingOrder && (
+                            <>
+                                {' '}
+                                <button
+                                    type="button"
+                                    onClick={closeNewOrder}
+                                    disabled={submitting}
+                                >
+                                    Cancelar edição
+                                </button>
+                            </>
+                        )}
+                    </form>
+                </section>
+            )}
 
             {/* ================= LISTA ================= */}
             <section>
@@ -722,6 +832,16 @@ export default function Orders() {
                                             >
                                                 Alterar status
                                             </button>{' '}
+                                            {canDelete && (
+                                                <>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => startEditOrder(order)}
+                                                    >
+                                                        Editar
+                                                    </button>{' '}
+                                                </>
+                                            )}
                                             <button
                                                 type="button"
                                                 onClick={() =>
