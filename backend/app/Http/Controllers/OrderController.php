@@ -6,17 +6,23 @@ use App\Models\Ingredient;
 use App\Models\IngredientMovement;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\OrderStatusHistory;
 use App\Models\Product;
 use App\Models\ProductAddon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class OrderController extends Controller
 {
-    // Listar pedidos
+    // Status que exigem um motivo quando são aplicados
+    private const STATUS_WITH_REASON = ['cancelled', 'not_delivered', 'late'];
+
+    // Listar pedidos (com histórico de status e utilizador)
     public function index(Request $request)
     {
-        $query = Order::query();
+        $query = Order::with('items.product', 'items.addons.addon', 'user', 'statusHistory.user')
+            ->withCount('statusHistory');
 
         if ($status = trim((string) $request->query('status', ''))) {
             $query->where('status', $status);
@@ -28,21 +34,24 @@ class OrderController extends Controller
     // Mostrar um pedido com todos os itens
     public function show(Order $order)
     {
-        return response()->json($order->load('items.product', 'items.addons.addon', 'user'));
+        return response()->json(
+            $order->load('items.product', 'items.addons.addon', 'user', 'statusHistory.user')
+        );
     }
 
     // Criar pedido e dar baixa automática nos ingredientes da receita
     public function store(Request $request)
     {
         $data = $request->validate([
-            'items'     => 'required|array|min:1',
+            'customer_name'      => 'nullable|string|max:120',
+            'items'              => 'required|array|min:1',
             'items.*.product_id' => 'required|integer|exists:products,id',
             'items.*.quantity'   => 'required|integer|min:1|max:999',
             'items.*.notes'      => 'nullable|string|max:1000',
             'items.*.addons'     => 'nullable|array',
             'items.*.addons.*.product_addon_id' => 'required|integer|exists:product_addons,id',
             'items.*.addons.*.quantity'         => 'required|integer|min:1|max:999',
-            'notes' => 'nullable|string|max:1000',
+            'notes'              => 'nullable|string|max:1000',
         ]);
 
         DB::beginTransaction();
@@ -67,10 +76,19 @@ class OrderController extends Controller
 
             // 2) Criar a ordem
             $order = Order::create([
-                'user_id' => $user->id,
-                'total'   => 0,
-                'status'  => 'pending',
-                'notes'   => $data['notes'] ?? null,
+                'user_id'       => $user->id,
+                'customer_name' => $data['customer_name'] ?? null,
+                'total'         => 0,
+                'status'        => 'pending',
+                'notes'         => $data['notes'] ?? null,
+            ]);
+
+            // 2.1) Registar o status inicial no histórico
+            OrderStatusHistory::create([
+                'order_id' => $order->id,
+                'user_id'  => $user->id,
+                'status'   => 'pending',
+                'reason'   => null,
             ]);
 
             // 3) Criar itens, adicionais e baixar estoque
@@ -125,7 +143,7 @@ class OrderController extends Controller
 
             return response()->json([
                 'message' => 'Pedido realizado com sucesso!',
-                'order'   => $order->fresh()->load('items.product', 'items.addons.addon', 'user'),
+                'order'   => $order->fresh()->load('items.product', 'items.addons.addon', 'user', 'statusHistory.user'),
             ], 201);
 
         } catch (\Exception $e) {
@@ -137,25 +155,62 @@ class OrderController extends Controller
         }
     }
 
-    // Atualizar status do pedido (pendente -> preparando -> pronto -> entregue -> cancelado)
+    // Atualizar status do pedido e registar no histórico
     public function updateStatus(Request $request, Order $order)
     {
         $data = $request->validate([
-            'status' => ['required', Rule::in(['pending', 'development', 'preparing', 'ready', 'delivered', 'cancelled'])],
+            'status' => [
+                'required',
+                Rule::in([
+                    'pending',
+                    'development',
+                    'preparing',
+                    'ready',
+                    'delivered',
+                    'cancelled',
+                    'not_delivered',
+                    'late',
+                ]),
+            ],
+            'reason' => [
+                Rule::requiredIf(fn () => in_array($request->input('status'), self::STATUS_WITH_REASON, true)),
+                'nullable',
+                'string',
+                'max:1000',
+            ],
+        ], [
+            'status.required' => 'Informe o novo status do pedido.',
+            'status.in'       => 'Status de pedido inválido.',
+            'reason.required' => 'Informe o motivo para este status.',
+            'reason.max'      => 'O motivo pode ter no máximo 1000 caracteres.',
         ]);
+
+        if ($data['status'] === $order->status) {
+            return response()->json([
+                'message' => 'O pedido já está com esse status.',
+                'order'   => $order->fresh()->load('items.product', 'items.addons.addon', 'user', 'statusHistory.user'),
+            ]);
+        }
 
         $order->update(['status' => $data['status']]);
 
+        OrderStatusHistory::create([
+            'order_id' => $order->id,
+            'user_id'  => $request->user()?->id,
+            'status'   => $data['status'],
+            'reason'   => $data['reason'] ?? null,
+        ]);
+
         return response()->json([
             'message' => 'Status do pedido atualizado!',
-            'order'   => $order->fresh(),
+            'order'   => $order->fresh()->load('items.product', 'items.addons.addon', 'user', 'statusHistory.user'),
         ]);
     }
 
     // Excluir pedido (só se ainda não estiver entregue/cancelado)
     public function destroy(Order $order)
     {
-        if (in_array($order->status, ['delivered', 'cancelled'])) {
+        if (in_array($order->status, ['delivered', 'cancelled'], true)) {
             return response()->json([
                 'message' => 'Não é possível excluir um pedido já entregue ou cancelado.',
             ], 422);
