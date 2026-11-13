@@ -1,34 +1,15 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-    ShoppingCart,
-    Trash2,
-    Printer,
-    Copy,
-    Clock,
-    CheckCircle2,
-    XCircle,
-    ClipboardList,
-    ChevronDown,
-    ChevronUp,
-    Loader2,
-    RefreshCw,
-    User,
-    X,
-} from 'lucide-react';
 import api from '../Services/api';
 import {
     FILTERS,
-    OPEN_STATUSES,
     STATUS_META,
     STATUS_ORDER,
     formatDateTime,
     formatPrice,
     getErrorMessage,
     getHistory,
-    isToday,
     orderNumber,
 } from '../lib/orderStatus';
-import '../styles/orders.css';
 
 const escapeHtml = (value) =>
     String(value ?? '').replace(/[&<>"']/g, (char) => ({
@@ -430,18 +411,6 @@ export default function Orders() {
         return result;
     }, [orders]);
 
-    const stats = useMemo(() => {
-        const todayOrders = orders.filter((order) => isToday(order.created_at));
-        return {
-            today: todayOrders.length,
-            open: orders.filter((order) => OPEN_STATUSES.includes(order.status)).length,
-            deliveredToday: todayOrders.filter((order) => order.status === 'delivered').length,
-            cancelled: orders.filter((order) =>
-                ['cancelled', 'not_delivered', 'late'].includes(order.status)
-            ).length,
-        };
-    }, [orders]);
-
     const filteredOrders = useMemo(() => {
         const term = search.trim().toLowerCase();
         return orders.filter((order) => {
@@ -462,97 +431,44 @@ export default function Orders() {
     /* ---------------- Render ---------------- */
 
     const renderTimeline = (order) => (
-        <div className="timeline">
+        <div>
             {getHistory(order).map((entry) => {
-                const meta = STATUS_META[entry.status] || {
-                    label: entry.status,
-                    tone: 'pending',
-                };
+                const meta = STATUS_META[entry.status] || { label: entry.status };
                 return (
-                    <div className="timeline-item" key={entry.id}>
-                        <span className={`timeline-dot tone-${meta.tone}`} />
-                        <div className="timeline-content">
-                            <span className="timeline-status">{meta.label}</span>
-                            <span className="timeline-date">
-                                {formatDateTime(entry.created_at)}
-                                {entry.user?.name ? ` · por ${entry.user.name}` : ''}
-                            </span>
-                            {entry.reason && (
-                                <span className="timeline-reason">Motivo: {entry.reason}</span>
-                            )}
-                        </div>
-                    </div>
+                    <p key={entry.id}>
+                        {meta.label} — {formatDateTime(entry.created_at)}
+                        {entry.user?.name ? ` · por ${entry.user.name}` : ''}
+                        {entry.reason ? ` — Motivo: ${entry.reason}` : ''}
+                    </p>
                 );
             })}
         </div>
     );
 
     return (
-        <div className="orders-page">
-            <header className="page-head">
-                <div>
-                    <h1 className="page-title">Gestão de Pedidos</h1>
-                    <p className="page-sub">
-                        Crie pedidos com os produtos cadastrados, imprima, copie para o WhatsApp e
-                        acompanhe cada alteração de status.
-                    </p>
-                </div>
+        <div>
+            <header>
+                <h1>Gestão de Pedidos</h1>
+                <p>
+                    Crie pedidos com os produtos cadastrados, imprima, copie para o WhatsApp e
+                    acompanhe cada alteração de status.
+                </p>
             </header>
 
-            <div className="stat-row">
-                <div className="stat-card accent">
-                    <span className="stat-label">Pedidos hoje</span>
-                    <span className="stat-value">{stats.today}</span>
-                </div>
-                <div className="stat-card warning">
-                    <span className="stat-label">Em aberto</span>
-                    <span className="stat-value">{stats.open}</span>
-                </div>
-                <div className="stat-card success">
-                    <span className="stat-label">Entregues hoje</span>
-                    <span className="stat-value">{stats.deliveredToday}</span>
-                </div>
-                <div className="stat-card danger">
-                    <span className="stat-label">Cancel./atrasos</span>
-                    <span className="stat-value">{stats.cancelled}</span>
-                </div>
-            </div>
+            {error && <p role="alert">{error}</p>}
 
-            {error && (
-                <div className="notice notice-error">
-                    <XCircle size={16} /> {error}
-                </div>
-            )}
-
-            {success && (
-                <div className="notice notice-success">
-                    <CheckCircle2 size={16} /> {success}
-                </div>
-            )}
+            {success && <p role="status">{success}</p>}
 
             {lastCreated && (
-                <div className="notice notice-info" style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
-                    <span>
-                        <ClipboardList size={15} style={{ verticalAlign: '-2px', marginRight: 6 }} />
-                        Pedido {orderNumber(lastCreated.id)} pronto para imprimir ou copiar.
-                    </span>
-                    <span style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                        <button
-                            type="button"
-                            className="btn btn-primary btn-sm"
-                            onClick={() => printOrder(lastCreated)}
-                        >
-                            <Printer size={14} /> Imprimir
-                        </button>
-                        <button
-                            type="button"
-                            className="btn btn-ghost btn-sm"
-                            onClick={() => copyOrder(lastCreated)}
-                        >
-                            <Copy size={14} /> {copiedId === lastCreated.id ? 'Copiado!' : 'Copiar'}
-                        </button>
-                    </span>
-                </div>
+                <p>
+                    Pedido {orderNumber(lastCreated.id)} pronto para imprimir ou copiar.{' '}
+                    <button type="button" onClick={() => printOrder(lastCreated)}>
+                        Imprimir
+                    </button>{' '}
+                    <button type="button" onClick={() => copyOrder(lastCreated)}>
+                        {copiedId === lastCreated.id ? 'Copiado!' : 'Copiar'}
+                    </button>
+                </p>
             )}
 
             {/* ================= CRIAÇÃO ================= */}
@@ -679,61 +595,46 @@ export default function Orders() {
             </section>
 
             {/* ================= LISTA ================= */}
-            <section className="panel">
-                <div className="panel-head">
-                    <div>
-                        <h2 className="panel-title">
-                            <ClipboardList size={18} /> Pedidos
-                        </h2>
-                        <p className="panel-sub">
-                            Altere o status, imprima, copie ou consulte o histórico de cada pedido.
-                        </p>
-                    </div>
-                    <div className="field" style={{ minWidth: 220 }}>
-                        <label htmlFor="order-search">Buscar pedido</label>
-                        <input
-                            id="order-search"
-                            className="input"
-                            type="search"
-                            placeholder="Nº do pedido, cliente ou atendente"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                        />
-                    </div>
-                </div>
+            <section>
+                <h2>Pedidos</h2>
+                <p>
+                    Altere o status, imprima, copie ou consulte o histórico de cada pedido.
+                </p>
 
-                <div className="filters">
+                <p>
+                    <label htmlFor="order-search">Buscar pedido</label>{' '}
+                    <input
+                        id="order-search"
+                        type="search"
+                        placeholder="Nº do pedido, cliente ou atendente"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                    />
+                </p>
+
+                <p>
                     {FILTERS.map((item) => (
                         <button
                             key={item.key}
                             type="button"
-                            className={`chip ${filter === item.key ? 'is-active' : ''}`}
+                            aria-pressed={filter === item.key}
                             onClick={() => setFilter(item.key)}
                         >
-                            {item.label}
-                            <span className="chip-count">{counts[item.key] || 0}</span>
+                            {item.label} ({counts[item.key] || 0})
                         </button>
                     ))}
-                </div>
+                </p>
 
                 {loading ? (
-                    <div className="loading-row">
-                        <Loader2 size={16} className="spin" /> A carregar pedidos...
-                    </div>
+                    <p>A carregar pedidos...</p>
                 ) : filteredOrders.length === 0 ? (
-                    <div className="empty">
-                        <ClipboardList size={28} />
-                        Nenhum pedido encontrado com estes filtros.
-                    </div>
+                    <p>Nenhum pedido encontrado com estes filtros.</p>
                 ) : (
-                    <div className="order-list">
+                    <ul>
                         {filteredOrders.map((order) => {
                             const meta = STATUS_META[order.status] || {
                                 label: order.status,
-                                tone: 'pending',
-                                icon: Clock,
                             };
-                            const StatusIcon = meta.icon;
                             const itemCount = (order.items || []).reduce(
                                 (sum, item) => sum + item.quantity,
                                 0
@@ -743,226 +644,169 @@ export default function Orders() {
                             const canDelete = !['delivered', 'cancelled'].includes(order.status);
 
                             return (
-                                <article className="order-card" key={order.id}>
-                                    <div className="order-card-head">
-                                        <div>
-                                            <div className="order-num">{orderNumber(order.id)}</div>
-                                            <div className="order-customer">
-                                                {order.customer_name || 'Sem nome do cliente'}
-                                            </div>
-                                        </div>
-                                        <span className={`badge tone-${meta.tone}`}>
-                                            <StatusIcon size={13} />
-                                            {meta.label}
-                                        </span>
-                                        <span className="order-total">{formatPrice(order.total)}</span>
-                                    </div>
+                                <li key={order.id}>
+                                    <article>
+                                        <h3>
+                                            {orderNumber(order.id)} —{' '}
+                                            {order.customer_name || 'Sem nome do cliente'}
+                                        </h3>
 
-                                    <div className="order-meta">
-                                        <span>
-                                            <Clock size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} />
-                                            {formatDateTime(order.created_at)}
-                                        </span>
-                                        <span>
-                                            <User size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} />
-                                            {order.user?.name || '—'}
-                                        </span>
-                                        <span>
-                                            <ShoppingCart size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} />
-                                            {itemCount} item(ns)
-                                        </span>
-                                    </div>
+                                        <p>
+                                            Status: {meta.label} · Total:{' '}
+                                            {formatPrice(order.total)}
+                                        </p>
 
-                                    <div className="order-items">
-                                        {(order.items || []).map((item) => (
-                                            <div key={item.id}>
-                                                <div className="order-item">
-                                                    <span>
-                                                        <span className="order-item-qty">{item.quantity}×</span>
-                                                        {item.product?.name || 'Produto'}
-                                                    </span>
-                                                    <span>{formatPrice(item.subtotal)}</span>
-                                                </div>
-                                                {(item.addons || []).map((addon) => (
-                                                    <div className="order-item-addon" key={addon.id}>
-                                                        + {addon.quantity}× {addon.addon?.name || 'Adicional'}
-                                                    </div>
-                                                ))}
-                                                {item.notes && (
-                                                    <div className="order-item-note">Obs.: {item.notes}</div>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
+                                        <p>
+                                            {formatDateTime(order.created_at)} ·{' '}
+                                            {order.user?.name || '—'} · {itemCount} item(ns)
+                                        </p>
 
-                                    {order.notes && (
-                                        <div className="order-note">
-                                            <strong>Observações do pedido:</strong> {order.notes}
-                                        </div>
-                                    )}
+                                        <ul>
+                                            {(order.items || []).map((item) => (
+                                                <li key={item.id}>
+                                                    {item.quantity}×{' '}
+                                                    {item.product?.name || 'Produto'} —{' '}
+                                                    {formatPrice(item.subtotal)}
+                                                    {(item.addons || []).map((addon) => (
+                                                        <div key={addon.id}>
+                                                            + {addon.quantity}×{' '}
+                                                            {addon.addon?.name || 'Adicional'}
+                                                        </div>
+                                                    ))}
+                                                    {item.notes && <div>Obs.: {item.notes}</div>}
+                                                </li>
+                                            ))}
+                                        </ul>
 
-                                    <div className="order-actions">
-                                        <button
-                                            type="button"
-                                            className="btn btn-ghost btn-sm"
-                                            onClick={() => printOrder(order)}
-                                        >
-                                            <Printer size={15} /> Imprimir
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className="btn btn-ghost btn-sm"
-                                            onClick={() => copyOrder(order)}
-                                        >
-                                            <Copy size={15} /> {copiedId === order.id ? 'Copiado!' : 'Copiar'}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className="btn btn-primary btn-sm"
-                                            onClick={() => openStatusModal(order)}
-                                        >
-                                            <RefreshCw size={15} /> Alterar status
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className="btn btn-ghost btn-sm"
-                                            onClick={() =>
-                                                setExpandedId(expanded ? null : order.id)
-                                            }
-                                        >
-                                            {expanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
-                                            Histórico ({history.length})
-                                        </button>
-                                        {canDelete && (
+                                        {order.notes && (
+                                            <p>
+                                                <strong>Observações do pedido:</strong>{' '}
+                                                {order.notes}
+                                            </p>
+                                        )}
+
+                                        <p>
                                             <button
                                                 type="button"
-                                                className="btn btn-danger btn-sm"
-                                                onClick={() => deleteOrder(order)}
+                                                onClick={() => printOrder(order)}
                                             >
-                                                <Trash2 size={15} /> Excluir
+                                                Imprimir
+                                            </button>{' '}
+                                            <button
+                                                type="button"
+                                                onClick={() => copyOrder(order)}
+                                            >
+                                                {copiedId === order.id
+                                                    ? 'Copiado!'
+                                                    : 'Copiar'}
+                                            </button>{' '}
+                                            <button
+                                                type="button"
+                                                onClick={() => openStatusModal(order)}
+                                            >
+                                                Alterar status
+                                            </button>{' '}
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setExpandedId(expanded ? null : order.id)
+                                                }
+                                            >
+                                                Histórico ({history.length})
                                             </button>
-                                        )}
-                                    </div>
+                                            {canDelete && (
+                                                <>
+                                                    {' '}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => deleteOrder(order)}
+                                                    >
+                                                        Excluir
+                                                    </button>
+                                                </>
+                                            )}
+                                        </p>
 
-                                    {expanded && renderTimeline(order)}
-                                </article>
+                                        {expanded && renderTimeline(order)}
+                                    </article>
+                                </li>
                             );
                         })}
-                    </div>
+                    </ul>
                 )}
             </section>
 
             {/* ================= MODAL DE STATUS ================= */}
             {statusModal && (
-                <div
-                    className="modal-backdrop"
-                    role="presentation"
-                    onClick={(e) => {
-                        if (e.target === e.currentTarget) closeStatusModal();
-                    }}
-                >
-                    <div className="modal" role="dialog" aria-modal="true" aria-labelledby="status-modal-title">
-                        <div className="modal-head">
-                            <div>
-                                <h2 className="modal-title" id="status-modal-title">
-                                    Alterar status {orderNumber(statusModal.order.id)}
-                                </h2>
-                                <p className="panel-sub">
-                                    Escolha o novo status do pedido.
-                                </p>
-                            </div>
-                            <button
-                                type="button"
-                                className="modal-close"
-                                onClick={closeStatusModal}
-                                aria-label="Fechar"
-                            >
-                                <X size={20} />
-                            </button>
-                        </div>
+                <div role="dialog" aria-modal="true" aria-labelledby="status-modal-title">
+                    <h2 id="status-modal-title">
+                        Alterar status {orderNumber(statusModal.order.id)}
+                    </h2>
+                    <p>Escolha o novo status do pedido.</p>
 
-                        {statusModal.error && (
-                            <div className="notice notice-error">
-                                <XCircle size={15} /> {statusModal.error}
-                            </div>
-                        )}
+                    {statusModal.error && <p role="alert">{statusModal.error}</p>}
 
-                        <div className="status-grid">
-                            {STATUS_ORDER.map((status) => {
-                                const meta = STATUS_META[status];
-                                const Icon = meta.icon;
-                                const isCurrent = status === statusModal.order.status;
-                                return (
-                                    <button
-                                        key={status}
-                                        type="button"
-                                        className={`status-option ${
-                                            statusModal.selected === status ? 'is-selected' : ''
-                                        } ${isCurrent ? 'is-current' : ''}`}
-                                        onClick={() => selectStatus(status)}
-                                        disabled={isCurrent}
-                                    >
-                                        <Icon size={16} />
-                                        {meta.label}
-                                        {isCurrent ? ' (atual)' : ''}
-                                    </button>
-                                );
-                            })}
-                        </div>
+                    <p>
+                        {STATUS_ORDER.map((status) => {
+                            const meta = STATUS_META[status];
+                            const isCurrent = status === statusModal.order.status;
+                            return (
+                                <button
+                                    key={status}
+                                    type="button"
+                                    aria-pressed={statusModal.selected === status}
+                                    onClick={() => selectStatus(status)}
+                                    disabled={isCurrent}
+                                >
+                                    {meta.label}
+                                    {isCurrent ? ' (atual)' : ''}
+                                </button>
+                            );
+                        })}
+                    </p>
 
-                        {STATUS_META[statusModal.selected]?.needsReason && (
-                            <div className="field">
-                                <label htmlFor="status-reason">
-                                    Motivo (obrigatório para {STATUS_META[statusModal.selected].label.toLowerCase()})
-                                </label>
-                                <textarea
-                                    id="status-reason"
-                                    className="textarea"
-                                    rows={3}
-                                    maxLength={1000}
-                                    placeholder="Explique o motivo desta alteração..."
-                                    value={statusModal.reason}
-                                    onChange={(e) =>
-                                        setStatusModal((prev) => ({
-                                            ...prev,
-                                            reason: e.target.value,
-                                            error: '',
-                                        }))
-                                    }
-                                />
-                            </div>
-                        )}
-
-                        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-                            <button
-                                type="button"
-                                className="btn btn-ghost"
-                                onClick={closeStatusModal}
-                                disabled={statusModal.saving}
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                type="button"
-                                className="btn btn-primary"
-                                onClick={confirmStatus}
-                                disabled={
-                                    statusModal.saving ||
-                                    statusModal.selected === statusModal.order.status
+                    {STATUS_META[statusModal.selected]?.needsReason && (
+                        <p>
+                            <label htmlFor="status-reason">
+                                Motivo (obrigatório para{' '}
+                                {STATUS_META[statusModal.selected].label.toLowerCase()})
+                            </label>{' '}
+                            <textarea
+                                id="status-reason"
+                                rows={3}
+                                maxLength={1000}
+                                placeholder="Explique o motivo desta alteração..."
+                                value={statusModal.reason}
+                                onChange={(e) =>
+                                    setStatusModal((prev) => ({
+                                        ...prev,
+                                        reason: e.target.value,
+                                        error: '',
+                                    }))
                                 }
-                            >
-                                {statusModal.saving ? (
-                                    <>
-                                        <Loader2 size={15} className="spin" /> A guardar...
-                                    </>
-                                ) : (
-                                    <>
-                                        <CheckCircle2 size={15} /> Confirmar status
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                    </div>
+                            />
+                        </p>
+                    )}
+
+                    <p>
+                        <button
+                            type="button"
+                            onClick={closeStatusModal}
+                            disabled={statusModal.saving}
+                        >
+                            Cancelar
+                        </button>{' '}
+                        <button
+                            type="button"
+                            onClick={confirmStatus}
+                            disabled={
+                                statusModal.saving ||
+                                statusModal.selected === statusModal.order.status
+                            }
+                        >
+                            {statusModal.saving ? 'A guardar...' : 'Confirmar status'}
+                        </button>
+                    </p>
                 </div>
             )}
         </div>
