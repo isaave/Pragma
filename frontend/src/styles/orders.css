@@ -73,17 +73,30 @@
 .stat-card.danger .stat-value { color: var(--danger); }
 .stat-card.warning .stat-value { color: var(--warning); }
 
-/* ---------- Layout em duas colunas ---------- */
-.orders-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-    gap: 20px;
-    align-items: start;
+/* ---------- Seletor de produto ---------- */
+.picker-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
 }
 
-@media (max-width: 1000px) {
-    .orders-grid {
-        grid-template-columns: minmax(0, 1fr);
+.picker-row .field {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.picker-row .btn {
+    flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+    .picker-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .picker-row .btn {
+        width: 100%;
     }
 }
 
@@ -168,62 +181,6 @@
 .textarea {
     resize: vertical;
     min-height: 64px;
-}
-
-/* ---------- Catálogo de produtos ---------- */
-.catalog-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-    gap: 10px;
-    max-height: 420px;
-    overflow-y: auto;
-    padding-right: 4px;
-}
-
-.product-card {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    padding: 12px;
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border-color);
-    border-radius: 14px;
-    min-width: 0;
-}
-
-.product-card.is-unavailable {
-    opacity: 0.62;
-}
-
-.product-name {
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--text-primary);
-    line-height: 1.25;
-}
-
-.product-meta {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    color: var(--text-muted);
-}
-
-.product-price {
-    font-size: 15px;
-    font-weight: 800;
-    color: var(--accent);
-}
-
-.product-stock {
-    font-size: 11px;
-    color: var(--text-muted);
-}
-
-.product-stock.is-out {
-    color: var(--danger);
-    font-weight: 700;
 }
 
 /* ---------- Carrinho ---------- */
@@ -907,10 +864,6 @@
     .panel {
         padding: 16px;
         border-radius: 16px;
-    }
-
-    .catalog-grid {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     }
 
     .order-card {

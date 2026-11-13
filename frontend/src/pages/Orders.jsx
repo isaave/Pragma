@@ -7,7 +7,6 @@ import {
     Printer,
     Copy,
     Clock,
-    Search,
     CheckCircle2,
     XCircle,
     ClipboardList,
@@ -189,7 +188,7 @@ export default function Orders() {
     // Formulário de criação
     const [customerName, setCustomerName] = useState('');
     const [orderNotes, setOrderNotes] = useState('');
-    const [productSearch, setProductSearch] = useState('');
+    const [selectedProductId, setSelectedProductId] = useState('');
     const [cart, setCart] = useState([]); // [{ product, quantity, notes }]
 
     // Filtros da lista
@@ -246,6 +245,13 @@ export default function Orders() {
             }
             return [...prev, { product, quantity: 1, notes: '' }];
         });
+    };
+
+    const addSelectedProduct = () => {
+        const product = products.find((item) => String(item.id) === String(selectedProductId));
+        if (!product) return;
+        addProduct(product);
+        setSelectedProductId('');
     };
 
     const changeQuantity = (index, delta) => {
@@ -457,12 +463,6 @@ export default function Orders() {
         });
     }, [orders, filter, search]);
 
-    const visibleProducts = useMemo(() => {
-        const term = productSearch.trim().toLowerCase();
-        if (!term) return products;
-        return products.filter((product) => product.name.toLowerCase().includes(term));
-    }, [products, productSearch]);
-
     /* ---------------- Render ---------------- */
 
     const renderTimeline = (order) => (
@@ -560,114 +560,77 @@ export default function Orders() {
             )}
 
             {/* ================= CRIAÇÃO ================= */}
-            <div className="orders-grid">
-                {/* Catálogo */}
-                <section className="panel">
-                    <div className="panel-head">
-                        <div>
-                            <h2 className="panel-title">
-                                <ClipboardList size={18} /> Produtos cadastrados
-                            </h2>
-                            <p className="panel-sub">
-                                Toque num produto para adicioná-lo ao pedido.
-                            </p>
+            <section className="panel">
+                <div className="panel-head">
+                    <div>
+                        <h2 className="panel-title">
+                            <ShoppingCart size={18} /> Novo pedido
+                        </h2>
+                        <p className="panel-sub">
+                            {cartCount === 0
+                                ? 'Selecione os produtos e monte o pedido.'
+                                : `${cartCount} item(ns) no pedido.`}
+                        </p>
+                    </div>
+                </div>
+
+                <form onSubmit={finishOrder} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    <div className="picker-row">
+                        <div className="field">
+                            <label htmlFor="product-select">Adicionar produto</label>
+                            <select
+                                id="product-select"
+                                className="select"
+                                value={selectedProductId}
+                                onChange={(e) => setSelectedProductId(e.target.value)}
+                                disabled={loading || products.length === 0}
+                            >
+                                <option value="">
+                                    {loading
+                                        ? 'A carregar produtos...'
+                                        : products.length === 0
+                                          ? 'Nenhum produto cadastrado'
+                                          : 'Selecione um produto...'}
+                                </option>
+                                {products.map((product) => (
+                                    <option
+                                        key={product.id}
+                                        value={product.id}
+                                        disabled={!product.available}
+                                    >
+                                        {product.name} — {formatPrice(product.price)}
+                                        {product.available ? '' : ' (indisponível)'}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
+                        <button
+                            type="button"
+                            className="btn btn-primary"
+                            onClick={addSelectedProduct}
+                            disabled={!selectedProductId}
+                        >
+                            <Plus size={16} /> Adicionar
+                        </button>
                     </div>
 
                     <div className="field">
-                        <label htmlFor="product-search">Buscar produto</label>
-                        <div style={{ position: 'relative' }}>
-                            <Search
-                                size={16}
-                                style={{
-                                    position: 'absolute',
-                                    left: 12,
-                                    top: '50%',
-                                    transform: 'translateY(-50%)',
-                                    color: 'var(--text-muted)',
-                                }}
-                            />
-                            <input
-                                id="product-search"
-                                className="input"
-                                type="search"
-                                placeholder="Nome do produto..."
-                                value={productSearch}
-                                onChange={(e) => setProductSearch(e.target.value)}
-                                style={{ paddingLeft: 36 }}
-                            />
-                        </div>
+                        <label htmlFor="customer-name">Cliente</label>
+                        <input
+                            id="customer-name"
+                            className="input"
+                            type="text"
+                            placeholder="Nome do cliente (opcional)"
+                            maxLength={120}
+                            value={customerName}
+                            onChange={(e) => setCustomerName(e.target.value)}
+                        />
                     </div>
-
-                    {loading ? (
-                        <div className="loading-row">
-                            <Loader2 size={16} className="spin" /> A carregar produtos...
-                        </div>
-                    ) : visibleProducts.length === 0 ? (
-                        <div className="empty">
-                            <ShoppingCart size={26} />
-                            Nenhum produto ativo encontrado.
-                        </div>
-                    ) : (
-                        <div className="catalog-grid">
-                            {visibleProducts.map((product) => (
-                                <div
-                                    key={product.id}
-                                    className={`product-card ${product.available ? '' : 'is-unavailable'}`}
-                                >
-                                    <span className="product-meta">{product.category}</span>
-                                    <span className="product-name">{product.name}</span>
-                                    <span className="product-price">{formatPrice(product.price)}</span>
-                                    <span className={`product-stock ${product.available ? '' : 'is-out'}`}>
-                                        {product.available ? 'Disponível' : 'Indisponível (estoque)'}
-                                    </span>
-                                    <button
-                                        type="button"
-                                        className="btn btn-primary btn-sm"
-                                        disabled={!product.available}
-                                        onClick={() => addProduct(product)}
-                                    >
-                                        <Plus size={14} /> Adicionar
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </section>
-
-                {/* Carrinho */}
-                <section className="panel">
-                    <div className="panel-head">
-                        <div>
-                            <h2 className="panel-title">
-                                <ShoppingCart size={18} /> Novo pedido
-                            </h2>
-                            <p className="panel-sub">
-                                {cartCount === 0
-                                    ? 'Nenhum item adicionado.'
-                                    : `${cartCount} item(ns) no pedido.`}
-                            </p>
-                        </div>
-                    </div>
-
-                    <form onSubmit={finishOrder} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                        <div className="field">
-                            <label htmlFor="customer-name">Cliente</label>
-                            <input
-                                id="customer-name"
-                                className="input"
-                                type="text"
-                                placeholder="Nome do cliente (opcional)"
-                                maxLength={120}
-                                value={customerName}
-                                onChange={(e) => setCustomerName(e.target.value)}
-                            />
-                        </div>
 
                         {cart.length === 0 ? (
                             <div className="empty">
                                 <ShoppingCart size={26} />
-                                Adicione produtos do catálogo ao lado.
+                                Selecione um produto acima para começar.
                             </div>
                         ) : (
                             <div className="cart-list">
@@ -764,9 +727,8 @@ export default function Orders() {
                                 </>
                             )}
                         </button>
-                    </form>
-                </section>
-            </div>
+                </form>
+            </section>
 
             {/* ================= LISTA ================= */}
             <section className="panel">
