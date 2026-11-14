@@ -29,6 +29,7 @@ export default function History() {
     const [error, setError] = useState('');
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
+    const [dateFilter, setDateFilter] = useState('');
     const [expandedKey, setExpandedKey] = useState(null);
 
     const loadOrders = useCallback(async () => {
@@ -48,10 +49,24 @@ export default function History() {
         loadOrders();
     }, [loadOrders]);
 
+    // Só pedidos com estado final (concluído ou cancelado) entram no histórico
+    const concludedOrders = useMemo(
+        () =>
+            orders.filter((order) =>
+                [
+                    'delivered',
+                    'cancelled',
+                    'not_delivered',
+                    'late',
+                ].includes(order.status)
+            ),
+        [orders]
+    );
+
     /* Todos os eventos de status, do mais recente para o mais antigo */
     const events = useMemo(() => {
         const list = [];
-        orders.forEach((order) => {
+        concludedOrders.forEach((order) => {
             getHistory(order).forEach((entry) => {
                 list.push({
                     key: `${order.id}-${entry.id ?? entry.created_at}-${entry.status}`,
@@ -65,24 +80,27 @@ export default function History() {
         });
         list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
         return list;
-    }, [orders]);
+    }, [concludedOrders]);
 
     const stats = useMemo(
         () => ({
-            orders: orders.length,
+            orders: concludedOrders.length,
             events: events.length,
             cancelled: events.filter((event) => event.status === 'cancelled').length,
             problems: events.filter((event) =>
                 ['not_delivered', 'late'].includes(event.status)
             ).length,
         }),
-        [orders, events]
+        [concludedOrders, events]
     );
 
     const filteredEvents = useMemo(() => {
         const term = search.trim().toLowerCase();
         return events.filter((event) => {
             if (statusFilter !== 'all' && event.status !== statusFilter) return false;
+            if (dateFilter && String(event.created_at).slice(0, 10) !== dateFilter) {
+                return false;
+            }
             if (!term) return true;
             const haystack = [
                 event.order.id,
@@ -95,7 +113,7 @@ export default function History() {
                 .toLowerCase();
             return haystack.includes(term);
         });
-    }, [events, search, statusFilter]);
+    }, [events, search, statusFilter, dateFilter]);
 
     const toggleDetails = (key) => {
         setExpandedKey((prev) => (prev === key ? null : key));
@@ -190,6 +208,17 @@ export default function History() {
                                 </option>
                             ))}
                         </select>
+                    </div>
+
+                    <div className="field">
+                        <label htmlFor="history-date">Data</label>
+                        <input
+                            id="history-date"
+                            className="input"
+                            type="date"
+                            value={dateFilter}
+                            onChange={(e) => setDateFilter(e.target.value)}
+                        />
                     </div>
                 </div>
 
