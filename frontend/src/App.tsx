@@ -8,6 +8,7 @@ import UserProfile from './components/UserProfile';
 import Sidebar from './components/Sidebar';
 import ProfileButton from './components/ProfileButton';
 import History from './pages/History';
+import Orders from './pages/Orders';
 import Products from './pages/Products';
 import Reports from './pages/Reports';
 import Stock from './pages/Stock';
@@ -120,7 +121,7 @@ export default function App() {
 
       <main style={{ flex: 1, minWidth: 0, padding: isMobile ? '16px' : '24px', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
         {!isMobile && view !== 'profile' && <ProfileButton onNavigate={setView} currentUser={currentUser} />}
-        {view === 'orders' && null}
+        {view === 'orders' && <Orders />}
         {view === 'history' && <History />}
         {view === 'menu' && <Products />}
         {view === 'reports' && <Reports />}
