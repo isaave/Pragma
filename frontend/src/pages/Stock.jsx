@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../Services/api';
-import { exportStockCsv, exportStockPdf, exportStockTxt } from '../lib/exportStock';
+import { exportStockCsv, exportStockListCsv, exportStockListPdf, exportStockListTxt, exportStockPdf, exportStockTxt } from '../lib/exportStock';
 
 const FILTERS = [
     { key: 'all', label: 'Todos' },
@@ -52,6 +52,7 @@ export default function Stock() {
 
     const [filter, setFilter] = useState('all');
     const [search, setSearch] = useState('');
+    const [exporting, setExporting] = useState(false);
 
     // form: null (fechado) ou { id: número|null, values: {...} }  -> cadastro/edição
     const [form, setForm] = useState(null);
@@ -187,6 +188,37 @@ export default function Stock() {
         }
     };
 
+    // Exporta TODOS os ingredientes (ignora filtros e busca)
+    const exportAll = async (format) => {
+        setExporting(true);
+        setError('');
+        setInfo('');
+        try {
+            const res = await api.get('/ingredients');
+            const all = res.data || [];
+
+            if (all.length === 0) {
+                setInfo('Nenhum ingrediente cadastrado para exportar.');
+                return;
+            }
+
+            if (format === 'csv') {
+                exportStockListCsv(all);
+            } else if (format === 'txt') {
+                exportStockListTxt(all);
+            } else if (!exportStockListPdf(all)) {
+                setError('Não foi possível abrir a janela de exportação. Permita pop-ups para exportar em PDF.');
+                return;
+            }
+
+            setInfo(`${all.length} ingrediente(s) exportado(s).`);
+        } catch (err) {
+            setError(getErrorMessage(err, 'Erro ao exportar o estoque.'));
+        } finally {
+            setExporting(false);
+        }
+    };
+
     // ---------- Tela ----------
 
     return (
@@ -213,6 +245,45 @@ export default function Stock() {
                     onChange={(e) => setSearch(e.target.value)}
                 />
                 <button type="button" onClick={openCreate}>Novo ingrediente</button>
+                <details style={{ position: 'relative' }}>
+                    <summary
+                        style={{
+                            cursor: 'pointer',
+                            listStyle: 'none',
+                            padding: '8px 12px',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '8px',
+                            background: 'var(--card-bg)',
+                            color: 'var(--text-primary)',
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            whiteSpace: 'nowrap',
+                        }}
+                    >
+                        Exportar tudo
+                    </summary>
+                    <div
+                        style={{
+                            position: 'absolute',
+                            right: 0,
+                            zIndex: 10,
+                            marginTop: '4px',
+                            minWidth: '120px',
+                            padding: '6px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '2px',
+                            background: 'var(--card-bg)',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '10px',
+                            boxShadow: 'var(--card-shadow)',
+                        }}
+                    >
+                        <button type="button" onClick={(e) => { e.currentTarget.closest('details').open = false; exportAll('pdf'); }} disabled={exporting}>PDF</button>
+                        <button type="button" onClick={(e) => { e.currentTarget.closest('details').open = false; exportAll('csv'); }} disabled={exporting}>CSV</button>
+                        <button type="button" onClick={(e) => { e.currentTarget.closest('details').open = false; exportAll('txt'); }} disabled={exporting}>TXT</button>
+                    </div>
+                </details>
             </div>
 
             {/* Formulário de cadastro / edição */}

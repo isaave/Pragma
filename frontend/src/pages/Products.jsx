@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../Services/api';
-import { exportProductCsv, exportProductPdf, exportProductTxt } from '../lib/exportProduct';
+import {
+    exportProductCsv,
+    exportProductPdf,
+    exportProductsCsv,
+    exportProductsPdf,
+    exportProductsTxt,
+    exportProductTxt,
+} from '../lib/exportProduct';
 
 const CATEGORIES = [
     { key: 'hamburguer', label: 'Hambúrguer' },
@@ -52,6 +59,7 @@ export default function Products() {
 
     const [filter, setFilter] = useState('all');
     const [search, setSearch] = useState('');
+    const [exporting, setExporting] = useState(false);
 
     const [form, setForm] = useState(null); // null ou { id, values, recipe, addons }
     const [pick, setPick] = useState({ ingredientId: '', quantity: '' });
@@ -200,6 +208,37 @@ export default function Products() {
         }
     };
 
+    // Exporta TODOS os produtos (ignora filtros e busca)
+    const exportAll = async (format) => {
+        setExporting(true);
+        setError('');
+        setInfo('');
+        try {
+            const res = await api.get('/products');
+            const all = res.data || [];
+
+            if (all.length === 0) {
+                setInfo('Nenhum produto cadastrado para exportar.');
+                return;
+            }
+
+            if (format === 'csv') {
+                exportProductsCsv(all);
+            } else if (format === 'txt') {
+                exportProductsTxt(all);
+            } else if (!exportProductsPdf(all)) {
+                setError('Não foi possível abrir a janela de exportação. Permita pop-ups para exportar em PDF.');
+                return;
+            }
+
+            setInfo(`${all.length} produto(s) exportado(s).`);
+        } catch (err) {
+            setError(getErrorMessage(err, 'Erro ao exportar os produtos.'));
+        } finally {
+            setExporting(false);
+        }
+    };
+
     return (
         <div>
             <h1>Produtos</h1>
@@ -225,6 +264,45 @@ export default function Products() {
                     style={{ flex: 1, padding: '8px' }}
                 />
                 <button type="button" onClick={openCreate}>Novo produto</button>
+                <details style={{ position: 'relative' }}>
+                    <summary
+                        style={{
+                            cursor: 'pointer',
+                            listStyle: 'none',
+                            padding: '8px 12px',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '8px',
+                            background: 'var(--card-bg)',
+                            color: 'var(--text-primary)',
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            whiteSpace: 'nowrap',
+                        }}
+                    >
+                        Exportar tudo
+                    </summary>
+                    <div
+                        style={{
+                            position: 'absolute',
+                            right: 0,
+                            zIndex: 10,
+                            marginTop: '4px',
+                            minWidth: '120px',
+                            padding: '6px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '2px',
+                            background: 'var(--card-bg)',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '10px',
+                            boxShadow: 'var(--card-shadow)',
+                        }}
+                    >
+                        <button type="button" onClick={(e) => { e.currentTarget.closest('details').open = false; exportAll('pdf'); }} disabled={exporting}>PDF</button>
+                        <button type="button" onClick={(e) => { e.currentTarget.closest('details').open = false; exportAll('csv'); }} disabled={exporting}>CSV</button>
+                        <button type="button" onClick={(e) => { e.currentTarget.closest('details').open = false; exportAll('txt'); }} disabled={exporting}>TXT</button>
+                    </div>
+                </details>
             </div>
 
             {/* Formulário de cadastro / edição */}
