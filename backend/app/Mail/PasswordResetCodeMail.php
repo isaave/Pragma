@@ -12,7 +12,7 @@ class PasswordResetCodeMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public function __construct(public string $code, public string $email = '') {}
+    public function __construct(public string $code) {}
 
     public function envelope(): Envelope
     {

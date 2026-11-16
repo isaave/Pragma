@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff, ClipboardList, History, Package, BarChart3, Users, Sun, Moon } from 'lucide-react';
 import api from '../Services/api';
 import logo from '../assets/LogoHouseBurguer.png';
@@ -233,31 +233,15 @@ const features = [
 export default function Login({ onLoginSuccess }) {
     const { isDark, toggleTheme } = useTheme();
     const isMobile = useIsMobile(900);
-    // Código vindo do botão "Copiar código" do e-mail (?code=...&email=...)
-    const [linkParams] = useState(() => {
-        const params = new URLSearchParams(window.location.search);
-        return { code: params.get('code') || '', email: params.get('email') || '' };
-    });
-    const [view, setView] = useState(linkParams.code ? 'verify' : 'login'); // login | forgot | verify | reset
-    const [email, setEmail] = useState(linkParams.email);
+    const [view, setView] = useState('login'); // login | forgot | verify | reset
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [code, setCode] = useState(linkParams.code);
+    const [code, setCode] = useState('');
     const [error, setError] = useState('');
-    const [info, setInfo] = useState(linkParams.code ? 'Código preenchido automaticamente. De seguida, confirme o código.' : '');
+    const [info, setInfo] = useState('');
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
-
-    // Copia o código e limpa a URL para não ficar exposto
-    useEffect(() => {
-        if (!linkParams.code) return;
-
-        if (navigator.clipboard) {
-            navigator.clipboard.writeText(linkParams.code).catch(() => {});
-        }
-
-        window.history.replaceState({}, '', window.location.pathname);
-    }, [linkParams]);
 
     const titles = {
         login: 'Login',
