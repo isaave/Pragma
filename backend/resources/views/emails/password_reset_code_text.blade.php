@@ -10,3 +10,5 @@ Se não fez este pedido, ignore este e-mail.
 
 Cumprimentos,
 Equipa Pragma
+
+© Pragma - Direitos Reservados a Isabella Avelina, Isadora Burgos e Pedro william - 2026

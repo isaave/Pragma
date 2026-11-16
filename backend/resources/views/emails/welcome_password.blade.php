@@ -10,9 +10,18 @@
             <td align="center">
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background-color:#ffffff;border-radius:16px;border:1px solid #e5e7eb;">
                     <tr>
-                        <td style="background-color:#0f172a;border-radius:16px 16px 0 0;padding:24px;text-align:center;">
-                            <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:800;letter-spacing:2px;">HOUSE BURGUER</h1>
-                            <p style="margin:8px 0 0;color:#94a3b8;font-size:12px;text-transform:uppercase;letter-spacing:2px;">Pragma</p>
+                        <td style="background-color:#0f172a;border-radius:16px 16px 0 0;padding:28px 24px;text-align:center;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:0 auto;">
+                                <tr>
+                                    <td style="background-color:#ffffff;border-radius:16px;padding:12px;">
+                                        <img src="{{ $message->embed(resource_path('views/emails/images/logo-house-burguer.png')) }}"
+                                             alt="House Burguer"
+                                             width="76"
+                                             style="display:block;width:76px;height:auto;border:0;outline:none;text-decoration:none;">
+                                    </td>
+                                </tr>
+                            </table>
+                            <p style="margin:16px 0 0;color:#94a3b8;font-size:12px;text-transform:uppercase;letter-spacing:2px;">Pragma</p>
                         </td>
                     </tr>
                     <tr>
@@ -29,7 +38,7 @@
                     </tr>
                     <tr>
                         <td style="background-color:#f8fafc;border-top:1px solid #e5e7eb;border-radius:0 0 16px 16px;padding:20px;text-align:center;">
-                            <p style="margin:0;color:#64748b;font-size:12px;">© Pragma - House Burguer</p>
+                            <p style="margin:0;color:#64748b;font-size:12px;">&copy; Pragma - Direitos Reservados a Isabella Avelina, Isadora Burgos e Pedro william - 2026</p>
                         </td>
                     </tr>
                 </table>
