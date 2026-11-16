@@ -3,8 +3,6 @@ import { Bell } from 'lucide-react';
 import api from '../Services/api';
 import { getHistory, orderNumber, formatDateTime, STATUS_META } from '../lib/orderStatus';
 
-const FONT = "'Helvetica Neue', Helvetica, Arial, sans-serif";
-
 export default function NotificationButton() {
     const [open, setOpen] = useState(false);
     const [events, setEvents] = useState([]);
@@ -26,22 +24,6 @@ export default function NotificationButton() {
     }, []);
 
     const toggle = () => setOpen((prev) => !prev);
-
-    const buttonStyle = {
-        position: 'relative',
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: '42px',
-        height: '42px',
-        borderRadius: '12px',
-        background: 'var(--card-bg)',
-        border: '1px solid var(--border-color)',
-        color: 'var(--text-primary)',
-        cursor: 'pointer',
-        flexShrink: 0,
-        fontFamily: FONT,
-    };
 
     const panelStyle = {
         position: 'absolute',
@@ -80,30 +62,8 @@ export default function NotificationButton() {
 
     return (
         <div style={{ position: 'relative' }}>
-            <button type="button" onClick={toggle} title="Notificações" aria-label="Notificações" style={buttonStyle}>
+            <button type="button" onClick={toggle} title="Notificações" aria-label="Notificações">
                 <Bell size={20} />
-                {events.length > 0 && (
-                    <span
-                        style={{
-                            position: 'absolute',
-                            top: '-6px',
-                            right: '-6px',
-                            minWidth: '18px',
-                            height: '18px',
-                            padding: '0 5px',
-                            borderRadius: '999px',
-                            background: 'var(--danger)',
-                            color: '#fff',
-                            fontSize: '11px',
-                            fontWeight: 800,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                        }}
-                    >
-                        {events.length}
-                    </span>
-                )}
             </button>
 
             {open && (
