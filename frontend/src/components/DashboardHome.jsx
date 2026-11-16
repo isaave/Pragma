@@ -1,55 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Send } from 'lucide-react';
 import api from '../Services/api';
+import { formatPrice } from '../lib/orderStatus';
 
-/* ------------------------------------------------------------------ */
-/*  Dados (mockados para o painel analítico)                           */
-/* ------------------------------------------------------------------ */
+const hours = ['11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00'];
 
-const kpis = [
-    { id: 'revenue', label: 'Faturamento Total', value: 'R$ 84.210,00', change: '+12,4%', hint: 'vs. período anterior' },
-    { id: 'orders', label: 'Pedidos Concluídos', value: '342', change: '+8,1%', hint: 'vs. período anterior' },
-    { id: 'out', label: 'Saída', value: 'R$ 41.300,00', change: '+5,2%', hint: 'custos operacionais' },
-    { id: 'profit', label: 'Lucro Estimado', value: 'R$ 42.910,00', change: '+9,8%', hint: 'faturamento - saída' },
-];
-
-const cashFlow = {
-    hours: ['11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00'],
-    sales: [420, 560, 380, 640, 720, 810, 690, 540, 460, 530, 610, 720, 640],
-    costs: [180, 240, 160, 300, 340, 390, 330, 260, 210, 240, 280, 330, 290],
-    profit: [240, 320, 220, 360, 420, 470, 400, 300, 250, 290, 330, 390, 350],
+const CATEGORY_LABELS = {
+    hamburguer: 'Hambúrgueres',
+    combo: 'Combos',
+    acompanhamento: 'Acompanhamentos',
+    bebida: 'Bebidas',
+    sobremesa: 'Sobremesas',
+    adicional: 'Adicionais',
 };
-
-const categorySales = [
-    { label: 'Hambúrgueres', value: 55200, revenue: 'R$ 55.200,00', percent: 55, color: '#1d4ed8' },
-    { label: 'Combos', value: 21050, revenue: 'R$ 21.050,00', percent: 25, color: '#3b82f6' },
-    { label: 'Bebidas', value: 16840, revenue: 'R$ 16.840,00', percent: 20, color: '#60a5fa' },
-];
-
-const topProducts = [
-    { name: 'X-Burguer', units: 42, value: 'R$ 7.938,00' },
-    { name: 'X-Burguer Combo', units: 18, value: 'R$ 5.112,00' },
-    { name: 'X-Burguer + Bebida', units: 12, value: 'R$ 3.408,00' },
-];
-
-const lowStock = [
-    { name: 'Pão Teste', current: 2, min: 5, badge: 'Crítico' },
-    { name: 'Hambúrguer X', current: 3, min: 10, badge: 'Atenção' },
-    { name: 'Queijo Ralado', current: 1, min: 4, badge: 'Crítico' },
-];
-
-const activities = [
-    { id: 1, time: '20m atrás', text: 'Pedido #0003 — status alterado para Preparando' },
-    { id: 2, time: '48m atrás', text: 'Pedido #0002 — pagamento confirmado e saída registrada' },
-    { id: 3, time: '1h atrás', text: 'Pedido #0001 — status alterado para Pronto' },
-    { id: 4, time: '2h atrás', text: 'Pedido #0000 — reembolso processado para cliente' },
-];
 
 const suggestions = [
     'Qual o faturamento de hoje?',
     'Quais produtos mais vendem?',
     'Qual o lucro operacional da semana?',
 ];
+
+const dayMs = 86400000;
+const startOfToday = new Date();
+startOfToday.setHours(0, 0, 0, 0);
+const startOfYesterday = new Date(startOfToday.getTime() - dayMs);
+const now = Date.now();
 
 /* ------------------------------------------------------------------ */
 /*  Gráfico de linhas — Fluxo de Caixa Operacional                    */
@@ -112,6 +87,7 @@ const LineChart = ({ hours, sales, costs, profit }) => {
 /* ------------------------------------------------------------------ */
 
 const DonutChart = ({ data }) => {
+    const first = data[0] || { label: '—', percent: 0, value: 1, color: '#94a3b8' };
     const radius = 70;
     const circumference = 2 * Math.PI * radius;
     const total = data.reduce((sum, item) => sum + item.value, 0);
@@ -140,10 +116,10 @@ const DonutChart = ({ data }) => {
                 />
             ))}
             <text x="90" y="86" textAnchor="middle" fontSize="22" fontWeight="800" fill="#0f172a">
-                {data[0].percent}%
+                {Math.round(first.percent)}%
             </text>
             <text x="90" y="106" textAnchor="middle" fontSize="11" fill="#64748b">
-                Burgers
+                {first.label}
             </text>
         </svg>
     );
@@ -173,9 +149,31 @@ const KpiCard = ({ label, value, change, hint }) => (
 /* ------------------------------------------------------------------ */
 
 export default function DashboardHome() {
+    const [orders, setOrders] = useState([]);
+    const [ingredients, setIngredients] = useState([]);
+    const [error, setError] = useState('');
     const [question, setQuestion] = useState('');
     const [answer, setAnswer] = useState('');
     const [thinking, setThinking] = useState(false);
+
+    useEffect(() => {
+        let active = true;
+        const load = async () => {
+            try {
+                const [ordersRes, ingredientsRes] = await Promise.all([
+                    api.get('/orders'),
+                    api.get('/ingredients'),
+                ]);
+                if (!active) return;
+                setOrders(ordersRes.data || []);
+                setIngredients(ingredientsRes.data || []);
+            } catch {
+                if (active) setError('Não foi possível carregar os dados do dashboard.');
+            }
+        };
+        load();
+        return () => { active = false; };
+    }, []);
 
     const ask = async (q) => {
         const text = (q ?? question).trim();
@@ -191,6 +189,127 @@ export default function DashboardHome() {
             setThinking(false);
         }
     };
+
+    const { kpis, topProducts, categoryData, lowStock, activities, cashFlow } = useMemo(() => {
+        const timeAgo = (value) => {
+            if (!value) return 'agora mesmo';
+            const diff = now - new Date(value).getTime();
+            const mins = Math.floor(diff / 60000);
+            if (mins < 1) return 'agora mesmo';
+            if (mins < 60) return `${mins}m atrás`;
+            const hoursAgo = Math.floor(mins / 60);
+            if (hoursAgo < 24) return `${hoursAgo}h atrás`;
+            return `${Math.floor(hoursAgo / 24)}d atrás`;
+        };
+
+        const sumValidDay = (from, to) =>
+            orders
+                .filter(
+                    (o) => o.status !== 'cancelled' && o.created_at && new Date(o.created_at) >= from && new Date(o.created_at) < to
+                )
+                .reduce((sum, o) => sum + Number(o.total || 0), 0);
+
+        const sumCancelledDay = (from, to) =>
+            orders
+                .filter((o) => o.status === 'cancelled' && o.created_at && new Date(o.created_at) >= from && new Date(o.created_at) < to)
+                .reduce((sum, o) => sum + Number(o.total || 0), 0);
+
+        const validOrders = orders.filter((o) => o.status !== 'cancelled');
+        const revenue = validOrders.reduce((sum, o) => sum + Number(o.total || 0), 0);
+        const deliveredCount = orders.filter((o) => o.status === 'delivered').length;
+        const saida = orders.filter((o) => o.status === 'cancelled').reduce((sum, o) => sum + Number(o.total || 0), 0);
+        const profit = revenue - saida;
+
+        const revenueYesterday = sumValidDay(startOfYesterday, startOfToday);
+        const cancelledYesterday = sumCancelledDay(startOfYesterday, startOfToday);
+        const deliveredYesterday = orders.filter(
+            (o) => o.status === 'delivered' && o.created_at && new Date(o.created_at) >= startOfYesterday && new Date(o.created_at) < startOfToday
+        ).length;
+
+        const pctChange = (current, previous) =>
+            previous > 0 ? `${(((current - previous) / previous) * 100).toFixed(1).replace('.', ',')}%` : '0,0%';
+
+        const revenueChange = pctChange(revenue, revenueYesterday);
+        const deliveredChange = pctChange(deliveredCount, deliveredYesterday);
+        const saidaChange = pctChange(saida, cancelledYesterday);
+        const profitChange = pctChange(profit, revenueYesterday - cancelledYesterday);
+
+        const kpis = [
+            { id: 'revenue', label: 'Faturamento Total', value: formatPrice(revenue), change: revenueChange, hint: 'vs. período anterior' },
+            { id: 'orders', label: 'Pedidos Concluídos', value: String(deliveredCount), change: deliveredChange, hint: 'vs. período anterior' },
+            { id: 'out', label: 'Saída', value: formatPrice(saida), change: saidaChange, hint: 'custos operacionais' },
+            { id: 'profit', label: 'Lucro Estimado', value: formatPrice(profit), change: profitChange, hint: 'faturamento - saída' },
+        ];
+
+        const productAgg = {};
+        orders.forEach((o) => (o.items || []).forEach((it) => {
+            const name = it.product?.name || 'Produto';
+            const entry = (productAgg[name] = productAgg[name] || { name, units: 0, value: 0 });
+            entry.units += Number(it.quantity || 0);
+            entry.value += Number(it.subtotal || 0);
+        }));
+        const topProducts = Object.values(productAgg).sort((a, b) => b.units - a.units).slice(0, 3);
+
+        const categoryAgg = {};
+        orders.forEach((o) => (o.items || []).forEach((it) => {
+            const category = it.product?.category;
+            const label = CATEGORY_LABELS[category] || 'Outros';
+            const entry = (categoryAgg[label] = categoryAgg[label] || { label, value: 0 });
+            entry.value += Number(it.subtotal || 0);
+        }));
+        const categorySales = Object.values(categoryAgg)
+            .sort((a, b) => b.value - a.value)
+            .slice(0, 3)
+            .map((c, i) => ({ ...c, percent: 0, color: ['#1d4ed8', '#3b82f6', '#60a5fa'][i % 3] }));
+        const categoryTotal = categorySales.reduce((sum, c) => sum + c.value, 0) || 1;
+        const categoryData = categorySales.map((c) => ({ ...c, percent: (c.value / categoryTotal) * 100 }));
+
+        const lowStock = ingredients
+            .filter((i) => i.stock_status === 'Em falta' || i.stock_status === 'Estoque baixo')
+            .map((i) => ({
+                name: i.name,
+                current: i.quantity,
+                min: Number(i.capacity) * 0.25,
+                badge: i.stock_status === 'Em falta' ? 'Crítico' : 'Atenção',
+            }));
+
+        const activities = orders.slice(0, 5).map((o) => {
+            const history = o.statusHistory || [];
+            const last = history.length ? history[history.length - 1] : { status: o.status, created_at: o.created_at };
+            return {
+                id: o.id,
+                time: timeAgo(last.created_at),
+                text: `Pedido #${String(o.id).padStart(4, '0')} — status ${last.status}`,
+            };
+        });
+
+        const todaysSales = {};
+        orders
+            .filter((o) => o.status !== 'cancelled' && o.created_at && new Date(o.created_at) >= startOfToday)
+            .forEach((o) => {
+                const d = new Date(o.created_at);
+                const label = `${String(d.getHours()).padStart(2, '0')}:00`;
+                if (!hours.includes(label)) return;
+                todaysSales[label] = (todaysSales[label] || 0) + Number(o.total || 0);
+            });
+
+        const cashFlow = {
+            hours,
+            sales: hours.map((h) => todaysSales[h] || 0),
+            costs: [180, 240, 160, 300, 340, 390, 330, 260, 210, 240, 280, 330, 290],
+            profit: [240, 320, 220, 360, 420, 470, 400, 300, 250, 290, 330, 390, 350],
+        };
+
+        return { kpis, topProducts, categoryData, lowStock, activities, cashFlow };
+    }, [orders, ingredients]);
+
+    if (error) {
+        return (
+            <div>
+                <p>{error}</p>
+            </div>
+        );
+    }
 
     return (
         <div>
@@ -212,11 +331,11 @@ export default function DashboardHome() {
 
                 <Card title="Faturamento por Categoria">
                     <div>
-                        <DonutChart data={categorySales} />
+                        <DonutChart data={categoryData} />
                         <div>
-                            {categorySales.map((item) => (
+                            {categoryData.map((item) => (
                                 <div key={item.label}>
-                                    {item.label} — {item.percent}% — {item.revenue}
+                                    {item.label} — {Math.round(item.percent)}% — {formatPrice(item.value)}
                                 </div>
                             ))}
                         </div>
@@ -229,7 +348,7 @@ export default function DashboardHome() {
                     <div>
                         {topProducts.map((p) => (
                             <div key={p.name}>
-                                {p.name} — {p.units} unidades — {p.value}
+                                {p.name} — {p.units} unidades — {formatPrice(p.value)}
                             </div>
                         ))}
                     </div>
