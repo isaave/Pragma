@@ -1,5 +1,6 @@
-import React from 'react';
-import { AlertTriangle } from 'lucide-react';
+import React, { useState } from 'react';
+import { AlertTriangle, Send } from 'lucide-react';
+import api from '../Services/api';
 
 /* ------------------------------------------------------------------ */
 /*  Dados (mockados para o painel analítico)                           */
@@ -16,12 +17,13 @@ const cashFlow = {
     hours: ['11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00'],
     sales: [420, 560, 380, 640, 720, 810, 690, 540, 460, 530, 610, 720, 640],
     costs: [180, 240, 160, 300, 340, 390, 330, 260, 210, 240, 280, 330, 290],
+    profit: [240, 320, 220, 360, 420, 470, 400, 300, 250, 290, 330, 390, 350],
 };
 
 const categorySales = [
-    { label: 'Hambúrgueres', value: 55200, percent: 55, color: '#1d4ed8' },
-    { label: 'Combos', value: 21050, percent: 25, color: '#3b82f6' },
-    { label: 'Bebidas', value: 16840, percent: 20, color: '#60a5fa' },
+    { label: 'Hambúrgueres', value: 55200, revenue: 'R$ 55.200,00', percent: 55, color: '#1d4ed8' },
+    { label: 'Combos', value: 21050, revenue: 'R$ 21.050,00', percent: 25, color: '#3b82f6' },
+    { label: 'Bebidas', value: 16840, revenue: 'R$ 16.840,00', percent: 20, color: '#60a5fa' },
 ];
 
 const topProducts = [
@@ -33,19 +35,27 @@ const topProducts = [
 const lowStock = [
     { name: 'Pão Teste', current: 2, min: 5, badge: 'Crítico' },
     { name: 'Hambúrguer X', current: 3, min: 10, badge: 'Atenção' },
+    { name: 'Queijo Ralado', current: 1, min: 4, badge: 'Crítico' },
 ];
 
 const activities = [
     { id: 1, time: '20m atrás', text: 'Pedido #0003 — status alterado para Preparando' },
     { id: 2, time: '48m atrás', text: 'Pedido #0002 — pagamento confirmado e saída registrada' },
     { id: 3, time: '1h atrás', text: 'Pedido #0001 — status alterado para Pronto' },
+    { id: 4, time: '2h atrás', text: 'Pedido #0000 — reembolso processado para cliente' },
+];
+
+const suggestions = [
+    'Qual o faturamento de hoje?',
+    'Quais produtos mais vendem?',
+    'Qual o lucro operacional da semana?',
 ];
 
 /* ------------------------------------------------------------------ */
 /*  Gráfico de linhas — Fluxo de Caixa Operacional                    */
 /* ------------------------------------------------------------------ */
 
-const LineChart = ({ hours, sales, costs }) => {
+const LineChart = ({ hours, sales, costs, profit }) => {
     const width = 640;
     const height = 220;
     const pad = { top: 20, right: 20, bottom: 30, left: 40 };
@@ -57,6 +67,9 @@ const LineChart = ({ hours, sales, costs }) => {
     const y = (v) => pad.top + innerH - (v / maxVal) * innerH;
 
     const pathFor = (arr) =>
+        arr.map((v, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+
+    const lineFor = (arr) =>
         arr.map((v, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
 
     const areaFor = (arr) =>
@@ -78,6 +91,7 @@ const LineChart = ({ hours, sales, costs }) => {
             <path d={areaFor(sales)} fill="rgba(29, 78, 216, 0.12)" />
             <path d={pathFor(sales)} fill="none" stroke="#1d4ed8" strokeWidth="2.5" strokeLinecap="round" />
             <path d={pathFor(costs)} fill="none" stroke="#dc2626" strokeWidth="2.5" strokeLinecap="round" />
+            {profit && <path d={lineFor(profit)} fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" />}
             {sales.map((v, i) => (
                 <circle key={`s${i}`} cx={x(i)} cy={y(v)} r="3" fill="#1d4ed8" />
             ))}
@@ -183,6 +197,24 @@ const KpiCard = ({ label, value, change, tone, hint }) => (
 /* ------------------------------------------------------------------ */
 
 export default function DashboardHome() {
+    const [question, setQuestion] = useState('');
+    const [answer, setAnswer] = useState('');
+    const [thinking, setThinking] = useState(false);
+
+    const ask = async (q) => {
+        const text = (q ?? question).trim();
+        if (!text) return;
+        setThinking(true);
+        setAnswer('');
+        try {
+            const res = await api.post('/ai/ask', { question: text });
+            setAnswer(res.data.answer || 'Sem resposta.');
+        } catch {
+            setAnswer('Não foi possível obter a resposta da IA.');
+        } finally {
+            setThinking(false);
+        }
+    };
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -200,7 +232,7 @@ export default function DashboardHome() {
             {/* ===== GRÁFICOS ===== */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
                 <Card title="Fluxo de Caixa Operacional">
-                    <LineChart hours={cashFlow.hours} sales={cashFlow.sales} costs={cashFlow.costs} />
+                    <LineChart hours={cashFlow.hours} sales={cashFlow.sales} costs={cashFlow.costs} profit={cashFlow.profit} />
                 </Card>
                 <Card title="Faturamento por Categoria">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
@@ -211,6 +243,7 @@ export default function DashboardHome() {
                                     <span style={{ width: 12, height: 12, borderRadius: '4px', background: item.color, display: 'inline-block' }} />
                                     {item.label}
                                     <strong>{item.percent}%</strong>
+                                    <span style={{ marginLeft: 'auto', fontWeight: 700, color: '#0f172a' }}>{item.revenue}</span>
                                 </div>
                             ))}
                         </div>
@@ -287,6 +320,35 @@ export default function DashboardHome() {
                     </div>
                 </Card>
             </div>
+
+            {/* ===== ASSISTENTE DE IA ===== */}
+            <section>
+                <h3>Assistente de IA</h3>
+                <p>
+                    Faça perguntas sobre vendas, movimentação de dinheiro, estoque e produtos.
+                </p>
+
+                <div>
+                    {suggestions.map((s) => (
+                        <button key={s} type="button" onClick={() => ask(s)}>{s}</button>
+                    ))}
+                </div>
+
+                <div>
+                    <textarea
+                        placeholder="Ex.: Qual foi a receita total de hoje? Quais produtos mais vendem?"
+                        value={question}
+                        onChange={(e) => setQuestion(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ask(); } }}
+                    />
+                    <button type="button" onClick={() => ask()} disabled={thinking}>
+                        <Send size={16} /> {thinking ? 'A pensar...' : 'Enviar'}
+                    </button>
+                </div>
+
+                {thinking && <p>A consultar os dados e a IA...</p>}
+                {answer && <p>{answer}</p>}
+            </section>
         </div>
     );
 }
