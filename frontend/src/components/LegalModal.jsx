@@ -56,6 +56,15 @@ const styles = {
     list: { margin: '0 0 10px', paddingLeft: '20px' },
     contact: { margin: '16px 0 0', fontWeight: 600, color: 'var(--accent)' },
     link: { color: 'var(--accent)', textDecoration: 'underline' },
+    copyright: {
+        margin: '18px 0 0',
+        paddingTop: '14px',
+        borderTop: '1px solid var(--border-color)',
+        color: 'var(--text-secondary)',
+        fontSize: '11.5px',
+        lineHeight: 1.5,
+        textAlign: 'center',
+    },
 };
 
 const terms = [
@@ -203,6 +212,9 @@ export default function LegalModal({ type, onClose }) {
                         <a href="mailto:ippsolutionpragma@gmail.com" style={styles.link}>
                             ippsolutionpragma@gmail.com
                         </a>
+                    </p>
+                    <p style={styles.copyright}>
+                        © 2026 Pragma — Isabella Avelina, Isadora Burgos e Pedro William. Todos os direitos reservados
                     </p>
                 </div>
             </div>
