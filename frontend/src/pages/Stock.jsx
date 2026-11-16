@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../Services/api';
+import { exportStockCsv, exportStockPdf, exportStockTxt } from '../lib/exportStock';
 
 const FILTERS = [
     { key: 'all', label: 'Todos' },
@@ -168,6 +169,24 @@ export default function Stock() {
         }
     };
 
+    // ---------- Exportação ----------
+
+    const handleExport = (item, format) => {
+        if (format === 'csv') {
+            exportStockCsv(item);
+            return;
+        }
+
+        if (format === 'txt') {
+            exportStockTxt(item);
+            return;
+        }
+
+        if (!exportStockPdf(item)) {
+            setError('Não foi possível abrir a janela de exportação. Permita pop-ups para exportar em PDF.');
+        }
+    };
+
     // ---------- Tela ----------
 
     return (
@@ -302,6 +321,12 @@ export default function Stock() {
                                     <button type="button" onClick={() => openRestock(item)}>Adicionar estoque</button>
                                     <button type="button" onClick={() => openEdit(item)}>Editar</button>
                                     <button type="button" onClick={() => deleteItem(item)}>Excluir</button>
+                                    <details style={{ display: 'inline-block' }}>
+                                        <summary style={{ cursor: 'pointer' }}>Exportar</summary>
+                                        <button type="button" onClick={() => handleExport(item, 'pdf')} style={{ display: 'block' }}>PDF</button>
+                                        <button type="button" onClick={() => handleExport(item, 'csv')} style={{ display: 'block' }}>CSV</button>
+                                        <button type="button" onClick={() => handleExport(item, 'txt')} style={{ display: 'block' }}>TXT</button>
+                                    </details>
                                 </td>
                             </tr>
                         ))}
