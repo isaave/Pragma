@@ -15,7 +15,6 @@
                                  alt="House Burguer"
                                  width="96"
                                  style="display:block;width:96px;height:auto;margin:0 auto;border:0;outline:none;text-decoration:none;border-radius:50%;">
-                            <p style="margin:14px 0 0;color:#94a3b8;font-size:12px;text-transform:uppercase;letter-spacing:3px;">IPPSOLUTION</p>
                         </td>
                     </tr>
                     <tr>
