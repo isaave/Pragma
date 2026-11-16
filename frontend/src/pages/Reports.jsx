@@ -1,6 +1,6 @@
 import React from 'react';
-import Dashboard from '../components/Dashboard';
+import DashboardHome from '../components/DashboardHome';
 
 export default function Reports() {
-    return <Dashboard />;
+    return <DashboardHome />;
 }
