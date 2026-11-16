@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import api from '../Services/api';
+import { exportOrderCsv, exportOrderPdf, exportOrderTxt } from '../lib/exportOrder';
 import {
     STATUS_META,
     STATUS_ORDER,
@@ -106,6 +107,22 @@ export default function History() {
         setExpandedKey((prev) => (prev === key ? null : key));
     };
 
+    const handleExport = (order, format) => {
+        if (format === 'csv') {
+            exportOrderCsv(order);
+            return;
+        }
+
+        if (format === 'txt') {
+            exportOrderTxt(order);
+            return;
+        }
+
+        if (!exportOrderPdf(order)) {
+            setError('Não foi possível abrir a janela de exportação. Permita pop-ups para exportar em PDF.');
+        }
+    };
+
     return (
         <div>
             <header>
@@ -195,6 +212,28 @@ export default function History() {
                                     <button type="button" onClick={() => toggleDetails(event.key)}>
                                         {expanded ? 'Ocultar pedido' : 'Ver pedido'}
                                     </button>
+
+                                    <details>
+                                        <summary>Exportar pedido</summary>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleExport(event.order, 'pdf')}
+                                        >
+                                            PDF (comprovante)
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleExport(event.order, 'csv')}
+                                        >
+                                            CSV (Excel)
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleExport(event.order, 'txt')}
+                                        >
+                                            TXT (recibo)
+                                        </button>
+                                    </details>
 
                                     {expanded && (
                                         <div>

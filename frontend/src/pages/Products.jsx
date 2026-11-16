@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../Services/api';
+import { exportProductCsv, exportProductPdf, exportProductTxt } from '../lib/exportProduct';
 
 const CATEGORIES = [
     { key: 'hamburguer', label: 'Hambúrguer' },
@@ -183,6 +184,22 @@ export default function Products() {
         }
     };
 
+    const handleExport = (product, format) => {
+        if (format === 'csv') {
+            exportProductCsv(product);
+            return;
+        }
+
+        if (format === 'txt') {
+            exportProductTxt(product);
+            return;
+        }
+
+        if (!exportProductPdf(product)) {
+            setError('Não foi possível abrir a janela de exportação. Permita pop-ups para exportar em PDF.');
+        }
+    };
+
     return (
         <div>
             <h1>Produtos</h1>
@@ -337,7 +354,13 @@ export default function Products() {
                                 </td>
                                 <td>
                                     <button type="button" onClick={() => openEdit(p)} style={{ marginRight: '6px' }}>Editar</button>
-                                    <button type="button" onClick={() => deleteProduct(p)} style={{ color: '#b91c1c' }}>Excluir</button>
+                                    <button type="button" onClick={() => deleteProduct(p)} style={{ color: '#b91c1c', marginRight: '6px' }}>Excluir</button>
+                                    <details style={{ display: 'inline-block' }}>
+                                        <summary style={{ cursor: 'pointer' }}>Exportar</summary>
+                                        <button type="button" onClick={() => handleExport(p, 'pdf')} style={{ display: 'block' }}>PDF</button>
+                                        <button type="button" onClick={() => handleExport(p, 'csv')} style={{ display: 'block' }}>CSV</button>
+                                        <button type="button" onClick={() => handleExport(p, 'txt')} style={{ display: 'block' }}>TXT</button>
+                                    </details>
                                 </td>
                             </tr>
                         ))}
