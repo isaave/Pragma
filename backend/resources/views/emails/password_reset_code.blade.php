@@ -1,12 +1,12 @@
 Olá,
 
-Recebemos um pedido de redefinição de senha para a tua conta no Pragma.
+Recebemos um pedido de redefinição de senha para a sua conta no Pragma.
 
-O teu código de acesso é: {{ $code }}
+O seu código de acesso é: {{ $code }}
 
 Este código é válido por 15 minutos.
 
-Se não fizeste este pedido, ignora este email.
+Se não fez este pedido, ignore este e-mail.
 
 Cumprimentos,
 Equipa Pragma
