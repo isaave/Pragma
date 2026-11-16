@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AlertTriangle, Send } from 'lucide-react';
+import { Send } from 'lucide-react';
 import api from '../Services/api';
 
 /* ------------------------------------------------------------------ */
@@ -7,10 +7,10 @@ import api from '../Services/api';
 /* ------------------------------------------------------------------ */
 
 const kpis = [
-    { id: 'revenue', label: 'Faturamento Total', value: 'R$ 84.210,00', change: '+12,4%', tone: 'positive', hint: 'vs. período anterior' },
-    { id: 'orders', label: 'Pedidos Concluídos', value: '342', change: '+8,1%', tone: 'positive', hint: 'vs. período anterior' },
-    { id: 'out', label: 'Saída', value: 'R$ 41.300,00', change: '+5,2%', tone: 'warning', hint: 'custos operacionais' },
-    { id: 'profit', label: 'Lucro Estimado', value: 'R$ 42.910,00', change: '+9,8%', tone: 'positive', hint: 'faturamento - saída' },
+    { id: 'revenue', label: 'Faturamento Total', value: 'R$ 84.210,00', change: '+12,4%', hint: 'vs. período anterior' },
+    { id: 'orders', label: 'Pedidos Concluídos', value: '342', change: '+8,1%', hint: 'vs. período anterior' },
+    { id: 'out', label: 'Saída', value: 'R$ 41.300,00', change: '+5,2%', hint: 'custos operacionais' },
+    { id: 'profit', label: 'Lucro Estimado', value: 'R$ 42.910,00', change: '+9,8%', hint: 'faturamento - saída' },
 ];
 
 const cashFlow = {
@@ -140,7 +140,7 @@ const DonutChart = ({ data }) => {
                 />
             ))}
             <text x="90" y="86" textAnchor="middle" fontSize="22" fontWeight="800" fill="#0f172a">
-                {categorySales[0].percent}%
+                {data[0].percent}%
             </text>
             <text x="90" y="106" textAnchor="middle" fontSize="11" fill="#64748b">
                 Burgers
@@ -153,42 +153,18 @@ const DonutChart = ({ data }) => {
 /*  Componentes modulares                                              */
 /* ------------------------------------------------------------------ */
 
-const Card = ({ title, children, style }) => (
-    <section
-        style={{
-            background: '#ffffff',
-            border: '1px solid #e5e7eb',
-            borderRadius: '16px',
-            padding: '20px',
-            boxShadow: '0 10px 30px rgba(15, 23, 42, 0.06)',
-            ...style,
-        }}
-    >
-        {title && <h3 style={{ margin: '0 0 14px', fontSize: '16px', fontWeight: 700, color: '#0f172a' }}>{title}</h3>}
+const Card = ({ title, children }) => (
+    <section>
+        {title ? <h3>{title}</h3> : null}
         {children}
     </section>
 );
 
-const KpiCard = ({ label, value, change, tone, hint }) => (
-    <div
-        style={{
-            background: '#ffffff',
-            border: '1px solid #e5e7eb',
-            borderRadius: '16px',
-            padding: '20px',
-            boxShadow: '0 10px 30px rgba(15, 23, 42, 0.06)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '8px',
-        }}
-    >
-        <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-            {label}
-        </span>
-        <span style={{ fontSize: '24px', fontWeight: 800, color: '#0f172a' }}>{value}</span>
-        <span style={{ fontSize: '12px', fontWeight: 700, color: tone === 'positive' ? '#16a34a' : tone === 'warning' ? '#d97706' : '#dc2626' }}>
-            {change} · {hint}
-        </span>
+const KpiCard = ({ label, value, change, hint }) => (
+    <div>
+        <span>{label}</span>
+        <span>{value}</span>
+        <span>{change} · {hint}</span>
     </div>
 );
 
@@ -217,33 +193,30 @@ export default function DashboardHome() {
     };
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div>
             <div>
-                <h1 style={{ fontSize: '26px', fontWeight: 700, color: '#0f172a', margin: 0 }}>Dashboard</h1>
-                <p style={{ fontSize: '14px', color: '#64748b', margin: '4px 0 0' }}>Visão geral do negócio e assistente de IA</p>
+                <h1>Dashboard</h1>
+                <p>Visão geral do negócio e assistente de IA</p>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
+            <div>
                 {kpis.map((kpi) => (
                     <KpiCard key={kpi.id} {...kpi} />
                 ))}
             </div>
 
-            {/* ===== GRÁFICOS ===== */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
+            <div>
                 <Card title="Fluxo de Caixa Operacional">
                     <LineChart hours={cashFlow.hours} sales={cashFlow.sales} costs={cashFlow.costs} profit={cashFlow.profit} />
                 </Card>
+
                 <Card title="Faturamento por Categoria">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
+                    <div>
                         <DonutChart data={categorySales} />
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minWidth: 140 }}>
+                        <div>
                             {categorySales.map((item) => (
-                                <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#334155' }}>
-                                    <span style={{ width: 12, height: 12, borderRadius: '4px', background: item.color, display: 'inline-block' }} />
-                                    {item.label}
-                                    <strong>{item.percent}%</strong>
-                                    <span style={{ marginLeft: 'auto', fontWeight: 700, color: '#0f172a' }}>{item.revenue}</span>
+                                <div key={item.label}>
+                                    {item.label} — {item.percent}% — {item.revenue}
                                 </div>
                             ))}
                         </div>
@@ -251,70 +224,32 @@ export default function DashboardHome() {
                 </Card>
             </div>
 
-            {/* ===== COLUNAS INFERIORES ===== */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+            <div>
                 <Card title="Produtos Mais Vendidos">
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div>
                         {topProducts.map((p) => (
-                            <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px' }}>
-                                <div style={{ width: 36, height: 36, borderRadius: '10px', background: '#e0e7ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1d4ed8', fontWeight: 800 }}>
-                                    {p.units}
-                                </div>
-                                <div style={{ flex: 1, minWidth: 0 }}>
-                                    <div style={{ fontWeight: 700, color: '#0f172a' }}>{p.name}</div>
-                                    <div style={{ fontSize: '12px', color: '#64748b' }}>{p.value}</div>
-                                </div>
+                            <div key={p.name}>
+                                {p.name} — {p.units} unidades — {p.value}
                             </div>
                         ))}
                     </div>
                 </Card>
 
                 <Card title="Alerta de Insumos">
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div>
                         {lowStock.map((item) => (
-                            <div key={item.name} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px' }}>
-                                <AlertTriangle size={18} color={item.badge === 'Crítico' ? '#dc2626' : '#d97706'} />
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ fontWeight: 700, color: '#0f172a' }}>{item.name}</div>
-                                    <div style={{ fontSize: '12px', color: '#64748b' }}>
-                                        Atual: {item.current} · Mínimo: {item.min}
-                                    </div>
-                                </div>
-                                <span
-                                    style={{
-                                        fontSize: '11px',
-                                        fontWeight: 800,
-                                        color: item.badge === 'Crítico' ? '#dc2626' : '#d97706',
-                                        background: item.badge === 'Crítico' ? 'rgba(220, 38, 38, 0.1)' : 'rgba(217, 119, 6, 0.12)',
-                                        padding: '4px 10px',
-                                        borderRadius: '999px',
-                                    }}
-                                >
-                                    {item.badge}
-                                </span>
+                            <div key={item.name}>
+                                {item.name} — Atual: {item.current} · Mínimo: {item.min} — {item.badge}
                             </div>
                         ))}
                     </div>
                 </Card>
 
                 <Card title="Atividades Recentes">
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div>
                         {activities.map((a) => (
-                            <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: '#334155' }}>
-                                <span
-                                    style={{
-                                        fontSize: '11px',
-                                        fontWeight: 700,
-                                        color: '#1d4ed8',
-                                        background: 'rgba(29, 78, 216, 0.1)',
-                                        padding: '4px 10px',
-                                        borderRadius: '999px',
-                                        whiteSpace: 'nowrap',
-                                    }}
-                                >
-                                    {a.time}
-                                </span>
-                                {a.text}
+                            <div key={a.id}>
+                                {a.time} — {a.text}
                             </div>
                         ))}
                     </div>
