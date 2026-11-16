@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Ai;
+namespace Ai;
 
 use App\Models\Ingredient;
 use App\Models\Order;

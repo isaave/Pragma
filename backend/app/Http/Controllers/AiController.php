@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Ai\Agent;
+use Ai\Agent;
 use Illuminate\Http\Request;
 
 class AiController extends Controller
