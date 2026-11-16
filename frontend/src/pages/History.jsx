@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
     History as HistoryIcon,
-    Search,
     Loader2,
     XCircle,
     ChevronDown,
@@ -168,36 +167,21 @@ export default function History() {
                 </div>
 
                 <div className="history-toolbar">
-                    <div className="field">
+                    <div>
                         <label htmlFor="history-search">Buscar</label>
-                        <div style={{ position: 'relative' }}>
-                            <Search
-                                size={16}
-                                style={{
-                                    position: 'absolute',
-                                    left: 12,
-                                    top: '50%',
-                                    transform: 'translateY(-50%)',
-                                    color: 'var(--text-muted)',
-                                }}
-                            />
-                            <input
-                                id="history-search"
-                                className="input"
-                                type="search"
-                                placeholder="Nº do pedido, cliente, motivo..."
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                style={{ paddingLeft: 36 }}
-                            />
-                        </div>
+                        <input
+                            id="history-search"
+                            type="search"
+                            placeholder="Nº do pedido, cliente, motivo..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                        />
                     </div>
 
-                    <div className="field">
+                    <div>
                         <label htmlFor="history-status">Status</label>
                         <select
                             id="history-status"
-                            className="select"
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
                         >
@@ -210,11 +194,10 @@ export default function History() {
                         </select>
                     </div>
 
-                    <div className="field">
+                    <div>
                         <label htmlFor="history-date">Data</label>
                         <input
                             id="history-date"
-                            className="input"
                             type="date"
                             value={dateFilter}
                             onChange={(e) => setDateFilter(e.target.value)}
