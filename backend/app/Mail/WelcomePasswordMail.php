@@ -24,7 +24,8 @@ class WelcomePasswordMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            text: 'emails.welcome_password',
+            html: 'emails.welcome_password',
+            text: 'emails.welcome_password_text',
         );
     }
 }

@@ -7,6 +7,7 @@ import Profile from './pages/Profile';
 import UserProfile from './components/UserProfile';
 import Sidebar from './components/Sidebar';
 import ProfileButton from './components/ProfileButton';
+import NotificationButton from './components/NotificationButton';
 import History from './pages/History';
 import Orders from './pages/Orders';
 import Products from './pages/Products';
@@ -115,12 +116,22 @@ export default function App() {
           >
             <Menu size={20} />
           </button>
-          {view !== 'profile' && <ProfileButton compact onNavigate={setView} currentUser={currentUser} />}
+          {view !== 'profile' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <NotificationButton />
+              <ProfileButton compact onNavigate={setView} currentUser={currentUser} />
+            </div>
+          )}
         </header>
       )}
 
       <main style={{ flex: 1, minWidth: 0, padding: isMobile ? '16px' : '24px', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
-        {!isMobile && view !== 'profile' && <ProfileButton onNavigate={setView} currentUser={currentUser} />}
+        {!isMobile && view !== 'profile' && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '12px', marginBottom: '16px' }}>
+            <NotificationButton />
+            {!isMobile && view !== 'profile' && <ProfileButton onNavigate={setView} currentUser={currentUser} />}
+          </div>
+        )}
         {view === 'orders' && <Orders />}
         {view === 'history' && <History />}
         {view === 'menu' && <Products />}

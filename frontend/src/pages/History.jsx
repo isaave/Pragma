@@ -1,16 +1,4 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-    History as HistoryIcon,
-    Search,
-    Loader2,
-    XCircle,
-    ChevronDown,
-    ChevronUp,
-    ClipboardList,
-    Clock,
-    User,
-    ShoppingCart,
-} from 'lucide-react';
 import api from '../Services/api';
 import {
     STATUS_META,
@@ -21,7 +9,6 @@ import {
     getHistory,
     orderNumber,
 } from '../lib/orderStatus';
-import '../styles/orders.css';
 
 export default function History() {
     const [orders, setOrders] = useState([]);
@@ -120,84 +107,41 @@ export default function History() {
     };
 
     return (
-        <div className="orders-page">
-            <header className="page-head">
-                <div>
-                    <h1 className="page-title">Histórico de Pedidos</h1>
-                    <p className="page-sub">
-                        Todas as alterações de status, com data, hora, responsável e motivo.
-                    </p>
-                </div>
+        <div>
+            <header>
+                <h1>Histórico de Pedidos</h1>
+                <p>
+                    Todas as alterações de status, com data, hora, responsável e motivo.
+                </p>
             </header>
 
-            <div className="stat-row">
-                <div className="stat-card accent">
-                    <span className="stat-label">Pedidos registados</span>
-                    <span className="stat-value">{stats.orders}</span>
-                </div>
-                <div className="stat-card">
-                    <span className="stat-label">Alterações de status</span>
-                    <span className="stat-value">{stats.events}</span>
-                </div>
-                <div className="stat-card danger">
-                    <span className="stat-label">Cancelamentos</span>
-                    <span className="stat-value">{stats.cancelled}</span>
-                </div>
-                <div className="stat-card warning">
-                    <span className="stat-label">Atrasos / não entregues</span>
-                    <span className="stat-value">{stats.problems}</span>
-                </div>
-            </div>
+            <p>
+                Pedidos registados: {stats.orders} · Alterações de status: {stats.events} ·
+                Cancelamentos: {stats.cancelled} · Atrasos / não entregues: {stats.problems}
+            </p>
 
-            {error && (
-                <div className="notice notice-error">
-                    <XCircle size={16} /> {error}
-                </div>
-            )}
+            {error && <p role="alert">{error}</p>}
 
-            <section className="panel">
-                <div className="panel-head">
+            <section>
+                <h2>Linha do tempo</h2>
+                <p>{filteredEvents.length} registo(s) encontrados.</p>
+
+                <div>
                     <div>
-                        <h2 className="panel-title">
-                            <HistoryIcon size={18} /> Linha do tempo
-                        </h2>
-                        <p className="panel-sub">
-                            {filteredEvents.length} registo(s) encontrados.
-                        </p>
-                    </div>
-                </div>
-
-                <div className="history-toolbar">
-                    <div className="field">
                         <label htmlFor="history-search">Buscar</label>
-                        <div style={{ position: 'relative' }}>
-                            <Search
-                                size={16}
-                                style={{
-                                    position: 'absolute',
-                                    left: 12,
-                                    top: '50%',
-                                    transform: 'translateY(-50%)',
-                                    color: 'var(--text-muted)',
-                                }}
-                            />
-                            <input
-                                id="history-search"
-                                className="input"
-                                type="search"
-                                placeholder="Nº do pedido, cliente, motivo..."
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                style={{ paddingLeft: 36 }}
-                            />
-                        </div>
+                        <input
+                            id="history-search"
+                            type="search"
+                            placeholder="Nº do pedido, cliente, motivo..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                        />
                     </div>
 
-                    <div className="field">
+                    <div>
                         <label htmlFor="history-status">Status</label>
                         <select
                             id="history-status"
-                            className="select"
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
                         >
@@ -210,11 +154,10 @@ export default function History() {
                         </select>
                     </div>
 
-                    <div className="field">
+                    <div>
                         <label htmlFor="history-date">Data</label>
                         <input
                             id="history-date"
-                            className="input"
                             type="date"
                             value={dateFilter}
                             onChange={(e) => setDateFilter(e.target.value)}
@@ -223,23 +166,13 @@ export default function History() {
                 </div>
 
                 {loading ? (
-                    <div className="loading-row">
-                        <Loader2 size={16} className="spin" /> A carregar histórico...
-                    </div>
+                    <p>A carregar histórico...</p>
                 ) : filteredEvents.length === 0 ? (
-                    <div className="empty">
-                        <ClipboardList size={28} />
-                        Nenhuma alteração de status encontrada.
-                    </div>
+                    <p>Nenhuma alteração de status encontrada.</p>
                 ) : (
-                    <div className="event-list">
+                    <ul>
                         {filteredEvents.map((event) => {
-                            const meta = STATUS_META[event.status] || {
-                                label: event.status,
-                                tone: 'pending',
-                                icon: Clock,
-                            };
-                            const Icon = meta.icon;
+                            const meta = STATUS_META[event.status] || { label: event.status };
                             const expanded = expandedKey === event.key;
                             const itemCount = (event.order.items || []).reduce(
                                 (sum, item) => sum + item.quantity,
@@ -247,149 +180,72 @@ export default function History() {
                             );
 
                             return (
-                                <article className="event" key={event.key}>
-                                    <span className={`timeline-dot tone-${meta.tone}`} />
-                                    <div className="event-body">
-                                        <div className="event-top">
-                                            <span className="event-order">
-                                                {orderNumber(event.order.id)}
-                                            </span>
-                                            <span className="event-customer">
-                                                {event.order.customer_name || 'Sem cliente'}
-                                            </span>
-                                            <span className={`badge tone-${meta.tone}`}>
-                                                <Icon size={13} />
-                                                {meta.label}
-                                            </span>
-                                            <span className="event-date">
-                                                {formatDateTime(event.created_at)}
-                                            </span>
-                                        </div>
+                                <li key={event.key}>
+                                    <p>
+                                        {orderNumber(event.order.id)} —{' '}
+                                        {event.order.customer_name || 'Sem cliente'} — {meta.label}
+                                    </p>
+                                    <p>
+                                        Total: {formatPrice(event.order.total)} · {itemCount} item(ns)
+                                    </p>
+                                    <p>{formatDateTime(event.created_at)}</p>
+                                    {event.reason && <p>Motivo: {event.reason}</p>}
+                                    <p>Registado por {event.user?.name || 'sistema'}</p>
 
-                                        {event.reason && (
-                                            <div className="event-reason">
-                                                Motivo: {event.reason}
-                                            </div>
-                                        )}
+                                    <button type="button" onClick={() => toggleDetails(event.key)}>
+                                        {expanded ? 'Ocultar pedido' : 'Ver pedido'}
+                                    </button>
 
-                                        <span className="event-user">
-                                            Registado por {event.user?.name || 'sistema'}
-                                        </span>
-
+                                    {expanded && (
                                         <div>
-                                            <button
-                                                type="button"
-                                                className="btn btn-ghost btn-sm"
-                                                onClick={() => toggleDetails(event.key)}
-                                            >
-                                                {expanded ? (
-                                                    <ChevronUp size={14} />
-                                                ) : (
-                                                    <ChevronDown size={14} />
-                                                )}
-                                                {expanded ? 'Ocultar pedido' : 'Ver pedido'}
-                                            </button>
-                                        </div>
-
-                                        {expanded && (
-                                            <div className="event-details">
-                                                <div className="order-items">
-                                                    {(event.order.items || []).map((item) => (
-                                                        <div key={item.id}>
-                                                            <div className="order-item">
-                                                                <span>
-                                                                    <span className="order-item-qty">
-                                                                        {item.quantity}×
-                                                                    </span>
-                                                                    {item.product?.name || 'Produto'}
-                                                                </span>
-                                                                <span>{formatPrice(item.subtotal)}</span>
+                                            <ul>
+                                                {(event.order.items || []).map((item) => (
+                                                    <li key={item.id}>
+                                                        {item.quantity}×{' '}
+                                                        {item.product?.name || 'Produto'} —{' '}
+                                                        {formatPrice(item.subtotal)}
+                                                        {(item.addons || []).map((addon) => (
+                                                            <div key={addon.id}>
+                                                                + {addon.quantity}×{' '}
+                                                                {addon.addon?.name || 'Adicional'}
                                                             </div>
-                                                            {(item.addons || []).map((addon) => (
-                                                                <div
-                                                                    className="order-item-addon"
-                                                                    key={addon.id}
-                                                                >
-                                                                    + {addon.quantity}×{' '}
-                                                                    {addon.addon?.name || 'Adicional'}
-                                                                </div>
-                                                            ))}
-                                                            {item.notes && (
-                                                                <div className="order-item-note">
-                                                                    Obs.: {item.notes}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    ))}
-                                                </div>
-
-                                                <div className="order-meta">
-                                                    <span>
-                                                        <ShoppingCart
-                                                            size={12}
-                                                            style={{ verticalAlign: '-2px', marginRight: 4 }}
-                                                        />
-                                                        {itemCount} item(ns) · Total{' '}
-                                                        {formatPrice(event.order.total)}
-                                                    </span>
-                                                    <span>
-                                                        <User
-                                                            size={12}
-                                                            style={{ verticalAlign: '-2px', marginRight: 4 }}
-                                                        />
-                                                        Aberto por {event.order.user?.name || '—'}
-                                                    </span>
-                                                </div>
-
-                                                {event.order.notes && (
-                                                    <div className="order-note">
-                                                        <strong>Observações do pedido:</strong>{' '}
-                                                        {event.order.notes}
-                                                    </div>
-                                                )}
-
-                                                <div className="timeline">
-                                                    {getHistory(event.order).map((entry) => {
-                                                        const entryMeta =
-                                                            STATUS_META[entry.status] || {
-                                                                label: entry.status,
-                                                                tone: 'pending',
-                                                            };
-                                                        return (
-                                                            <div
-                                                                className="timeline-item"
-                                                                key={entry.id}
-                                                            >
-                                                                <span
-                                                                    className={`timeline-dot tone-${entryMeta.tone}`}
-                                                                />
-                                                                <div className="timeline-content">
-                                                                    <span className="timeline-status">
-                                                                        {entryMeta.label}
-                                                                    </span>
-                                                                    <span className="timeline-date">
-                                                                        {formatDateTime(entry.created_at)}
-                                                                        {entry.user?.name
-                                                                            ? ` · por ${entry.user.name}`
-                                                                            : ''}
-                                                                    </span>
-                                                                    {entry.reason && (
-                                                                        <span className="timeline-reason">
-                                                                            Motivo: {entry.reason}
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
+                                                        ))}
+                                                        {item.notes && <div>Obs.: {item.notes}</div>}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                            {event.order.notes && (
+                                                <p>
+                                                    <strong>Observações do pedido:</strong>{' '}
+                                                    {event.order.notes}
+                                                </p>
+                                            )}
+                                            <div>
+                                                {getHistory(event.order).map((entry) => {
+                                                    const entryMeta =
+                                                        STATUS_META[entry.status] || {
+                                                            label: entry.status,
+                                                        };
+                                                    return (
+                                                        <p key={entry.id}>
+                                                            {entryMeta.label} —{' '}
+                                                            {formatDateTime(entry.created_at)}
+                                                            {entry.user?.name
+                                                                ? ` · por ${entry.user.name}`
+                                                                : ''}
+                                                            {entry.reason
+                                                                ? ` — Motivo: ${entry.reason}`
+                                                                : ''}
+                                                        </p>
+                                                    );
+                                                })}
                                             </div>
-                                        )}
-                                    </div>
-                                </article>
+                                        </div>
+                                    )}
+                                </li>
                             );
                         })}
-                    </div>
+                    </ul>
                 )}
             </section>
         </div>

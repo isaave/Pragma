@@ -24,7 +24,8 @@ class PasswordResetCodeMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            text: 'emails.password_reset_code',
+            html: 'emails.password_reset_code',
+            text: 'emails.password_reset_code_text',
         );
     }
 }
