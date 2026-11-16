@@ -31,7 +31,7 @@
                     </tr>
                     <tr>
                         <td style="background-color:#f8fafc;border-top:1px solid #e5e7eb;border-radius:0 0 16px 16px;padding:20px;text-align:center;">
-                            <p style="margin:0;color:#64748b;font-size:12px;">&copy; Pragma - Direitos Reservados a Isabella Avelina, Isadora Burgos e Pedro william - 2026</p>
+                            <p style="margin:0;color:#64748b;font-size:12px;">&copy; 2026 Pragma &mdash; Isabella Avelina, Isadora Burgos e Pedro William. Todos os direitos reservados</p>
                         </td>
                     </tr>
                 </table>

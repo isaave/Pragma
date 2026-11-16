@@ -9,4 +9,4 @@ Por segurança, acesse ao sistema e redefina a sua senha através de "Esqueci a 
 Cumprimentos,
 Equipa Pragma
 
-© Pragma - Direitos Reservados a Isabella Avelina, Isadora Burgos e Pedro william - 2026
+© 2026 Pragma — Isabella Avelina, Isadora Burgos e Pedro William. Todos os direitos reservados
