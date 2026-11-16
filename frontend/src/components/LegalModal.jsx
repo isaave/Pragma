@@ -17,13 +17,13 @@ const styles = {
         boxSizing: 'border-box',
     },
     modal: {
-        background: '#ffffff',
+        background: 'var(--card-bg)',
         borderRadius: '20px',
         width: 'min(720px, 100%)',
         maxHeight: '85vh',
         display: 'flex',
         flexDirection: 'column',
-        boxShadow: '0 24px 60px rgba(3, 7, 30, 0.25)',
+        boxShadow: 'var(--card-shadow), 0 24px 60px rgba(3, 7, 30, 0.25)',
         fontFamily: FONT,
         overflow: 'hidden',
     },
@@ -33,14 +33,14 @@ const styles = {
         justifyContent: 'space-between',
         gap: '16px',
         padding: '24px 28px 16px',
-        borderBottom: '1px solid #eef2f7',
+        borderBottom: '1px solid var(--border-color)',
     },
     title: { fontSize: '20px', fontWeight: 700, color: 'var(--text-primary)', margin: 0 },
     close: {
         background: 'none',
         border: 'none',
         cursor: 'pointer',
-        color: '#64748b',
+        color: 'var(--text-secondary)',
         padding: '4px',
         display: 'flex',
     },
@@ -54,8 +54,8 @@ const styles = {
     sectionTitle: { fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', margin: '18px 0 6px' },
     paragraph: { margin: '0 0 10px' },
     list: { margin: '0 0 10px', paddingLeft: '20px' },
-    contact: { margin: '16px 0 0', fontWeight: 600, color: '#1d4ed8' },
-    link: { color: '#1d4ed8', textDecoration: 'underline' },
+    contact: { margin: '16px 0 0', fontWeight: 600, color: 'var(--accent)' },
+    link: { color: 'var(--accent)', textDecoration: 'underline' },
 };
 
 const terms = [
