@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import api from '../Services/api';
+import StoreStatus from '../components/StoreStatus';
 import {
     FILTERS,
     STATUS_META,
@@ -545,6 +546,10 @@ export default function Orders() {
                     </button>
                 </p>
             </header>
+
+            <div style={{ marginBottom: '16px' }}>
+                <StoreStatus compact />
+            </div>
 
             {error && <p role="alert">{error}</p>}
 

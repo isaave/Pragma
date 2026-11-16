@@ -64,6 +64,15 @@ body {
     transition: background 0.2s ease, color 0.2s ease;
 }
 
+/* Ícone de carregamento */
+@keyframes pragma-spin {
+    to { transform: rotate(360deg); }
+}
+
+.spin {
+    animation: pragma-spin 0.9s linear infinite;
+}
+
 /* Transição suave para todos os elementos com variáveis de tema */
 *, *::before, *::after {
     transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
