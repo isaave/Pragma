@@ -1,0 +1,23 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class StoreSetting extends Model
+{
+    protected $fillable = [
+        'is_open',
+        'updated_by',
+    ];
+
+    protected $casts = [
+        'is_open' => 'boolean',
+    ];
+
+    public function updatedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+}
