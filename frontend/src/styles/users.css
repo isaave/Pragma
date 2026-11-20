@@ -1,0 +1,349 @@
+/* TODO: confirmar no Dev Mode do Figma (valores aproximados) */
+:root {
+    --users-title-size: 28px;
+    --users-title-color: var(--text-primary, #03071e);
+    --users-subtitle-size: 11px;
+    --users-subtitle-color: var(--accent, #312e81);
+
+    --users-panel-border: var(--text-primary, #03071e);
+    --users-panel-radius: 14px;
+    --users-panel-bg: var(--card-bg, #ffffff);
+    --users-separator: var(--border-color, #e2e8f0);
+
+    --users-head-bg: var(--accent, #1d4ed8);
+    --users-head-color: #ffffff;
+    --users-head-size: 11px;
+
+    --users-row-size: 12px;
+    --users-row-color: var(--text-primary, #03071e);
+    --users-muted: var(--text-secondary, #475569);
+
+    --users-input-bg: var(--input-bg, #fafbfd);
+    --users-primary-bg: var(--accent, #1d4ed8);
+    --users-primary-color: #ffffff;
+    --users-hover-bg: var(--accent-light, #eff6ff);
+
+    /* TODO: confirmar no Dev Mode do Figma (largura máxima da página de Usuários) */
+    --users-page-max-width: 1280px;
+
+    /* Pop-ups */
+    --users-modal-overlay: rgba(46, 26, 120, 0.45);
+    --users-modal-label-size: 9px;
+    --users-modal-label-color: var(--accent, #312e81);
+    --users-modal-field-height: 32px;
+    --users-modal-field-radius: 4px;
+    --users-modal-field-size: 12px;
+    --users-modal-field-border: var(--text-primary, #03071e);
+}
+
+.users-page {
+    padding: 4px 0 24px;
+    max-width: var(--users-page-max-width);
+}
+
+.users-main {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 0;
+}
+
+/* Cabeçalho */
+.page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    min-width: 0;
+}
+
+.page-header-text {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.page-header-title {
+    margin: 0;
+    font-size: var(--users-title-size);
+    font-weight: 700;
+    color: var(--users-title-color);
+    line-height: 1.2;
+}
+
+.page-header-subtitle {
+    margin: 0;
+    font-size: var(--users-subtitle-size);
+    font-weight: 500;
+    color: var(--users-subtitle-color);
+    line-height: 1.4;
+}
+
+.page-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+/* Filtro + ações */
+.users-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: nowrap;
+    min-width: 0;
+}
+
+.users-segmented {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+/* O componente não aceita className nas opções: ajuste só por CSS,
+   sem editar o SegmentedControl. !important é necessário porque as
+   opções têm flex/padding definidos em estilo inline. */
+.users-segmented [data-segmented-control] {
+    width: 100%;
+}
+
+.users-segmented [data-segmented-control] button {
+    flex: 1 1 0 !important;
+    min-width: 0;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+}
+
+.users-search,
+.users-status-filter {
+    display: flex;
+    align-items: center;
+}
+
+.users-search input,
+.users-status-filter select {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 320px;
+    padding: 8px 10px;
+    border: 1px solid var(--users-separator);
+    border-radius: 8px;
+    background: var(--users-input-bg);
+    color: var(--users-row-color);
+    font-size: var(--users-row-size);
+}
+
+.users-status-filter select {
+    max-width: 200px;
+}
+
+/* Formulário dos pop-ups */
+.users-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 16px;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.users-form label,
+.users-form .users-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+    font-size: var(--users-modal-label-size);
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--users-modal-label-color);
+}
+
+.users-form input,
+.users-form select {
+    box-sizing: border-box;
+    width: 100%;
+    height: var(--users-modal-field-height);
+    padding: 0 8px;
+    border: 1px solid var(--users-modal-field-border);
+    border-radius: var(--users-modal-field-radius);
+    background: var(--users-input-bg);
+    color: var(--users-row-color);
+    font-size: var(--users-modal-field-size);
+    font-weight: 400;
+    text-transform: none;
+}
+
+.users-form input::placeholder {
+    color: var(--text-muted, #94a3b8);
+}
+
+/* Leitura no pop-up de informações: mantém a cor mesmo desabilitado */
+.users-form input[readonly],
+.users-form select:disabled,
+.users-status-button:disabled {
+    color: var(--users-row-color);
+    opacity: 1;
+}
+
+.users-status-buttons {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+}
+
+.users-status-button {
+    flex: 1 1 0;
+    min-width: 0;
+    height: var(--users-modal-field-height);
+    padding: 0 8px;
+    border: 1px solid var(--users-modal-field-border);
+    border-radius: var(--users-modal-field-radius);
+    background: transparent;
+    color: var(--users-row-color);
+    font-size: var(--users-modal-field-size);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.users-status-button.is-selected {
+    background: var(--users-primary-bg);
+    border-color: var(--users-primary-bg);
+    color: var(--users-primary-color);
+}
+
+.users-status-button:disabled {
+    cursor: default;
+}
+
+.users-form-divider {
+    grid-column: 1 / -1;
+    height: 1px;
+    background: var(--users-separator);
+}
+
+.users-modal-primary {
+    grid-column: 1 / -1;
+    box-sizing: border-box;
+    width: 100%;
+    height: 34px;
+    padding: 0 12px;
+    border: 1px solid var(--users-primary-bg);
+    border-radius: var(--users-modal-field-radius);
+    background: var(--users-primary-bg);
+    color: var(--users-primary-color);
+    font-size: var(--users-modal-field-size);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* Tabela */
+.users-table-wrap {
+    border: 1px solid var(--users-panel-border);
+    border-radius: var(--users-panel-radius);
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.users-table {
+    min-width: 760px;
+    font-size: var(--users-row-size);
+    color: var(--users-row-color);
+}
+
+.users-table th {
+    padding: 10px 12px;
+    background: var(--users-head-bg);
+    color: var(--users-head-color);
+    font-size: var(--users-head-size);
+    font-weight: 700;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.users-table td {
+    padding: 10px 12px;
+    background: var(--users-panel-bg);
+    color: var(--users-row-color);
+    border-top: 1px solid var(--users-separator);
+    vertical-align: middle;
+}
+
+.users-table td:first-child {
+    font-weight: 700;
+}
+
+/* Nome da tabela: botão sem aparência de botão */
+.users-name-button {
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-weight: 700;
+    text-align: left;
+    cursor: pointer;
+}
+
+.users-name-button:focus-visible {
+    outline: 2px solid var(--accent, #1d4ed8);
+    outline-offset: 2px;
+}
+
+.users-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.users-action-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--users-title-color);
+    cursor: pointer;
+}
+
+.users-action-icon:hover {
+    background: var(--users-hover-bg);
+}
+
+.users-empty {
+    padding: 22px 12px !important;
+    text-align: center;
+    color: var(--users-muted);
+    font-weight: 500;
+}
+
+/* Celular: filtro e ações em duas linhas, sem estourar a largura */
+@media (max-width: 900px) {
+    .users-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .users-segmented {
+        width: 100%;
+    }
+
+    .page-header {
+        align-items: flex-start;
+    }
+}
+
+/* Campos do pop-up: 2 colunas até 560px, 1 coluna abaixo disso */
+@media (max-width: 560px) {
+    .users-form {
+        grid-template-columns: 1fr;
+    }
+}
