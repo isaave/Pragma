@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../Services/api';
 import { exportStockCsv, exportStockListCsv, exportStockListPdf, exportStockListTxt, exportStockPdf, exportStockTxt } from '../lib/exportStock';
+import SegmentedControl from '../components/ui/SegmentedControl';
+import ActionToolbar from '../components/ui/ActionToolbar';
+import Modal from '../components/ui/Modal';
+import PageHeader from '../components/ui/PageHeader';
+import StatusBadge from '../components/ui/StatusBadge';
+import StockCard from '../components/StockCard';
+import '../styles/stock.css';
 
 const FILTERS = [
     { key: 'all', label: 'Todos' },
@@ -53,6 +60,9 @@ export default function Stock() {
     const [filter, setFilter] = useState('all');
     const [search, setSearch] = useState('');
     const [exporting, setExporting] = useState(false);
+    const [mostrarBusca, setMostrarBusca] = useState(false);
+    const [mostrarOrdenacao, setMostrarOrdenacao] = useState(false);
+    const [ordenacao, setOrdenacao] = useState('padrao');
 
     // form: null (fechado) ou { id: número|null, values: {...} }  -> cadastro/edição
     const [form, setForm] = useState(null);
@@ -137,6 +147,7 @@ export default function Stock() {
         try {
             const res = await api.delete(`/ingredients/${item.id}`);
             setInfo(res.data.message);
+            setForm(null);
             loadItems();
         } catch (err) {
             setError(getErrorMessage(err, 'Erro ao excluir o ingrediente.'));
@@ -221,188 +232,214 @@ export default function Stock() {
 
     // ---------- Tela ----------
 
-    return (
-        <div>
-            <h1>Estoque</h1>
-            <p>Controle de itens, alertas e níveis de estoque</p>
+    // Ordenação visual: trabalha numa cópia, sem alterar o items da API
+    const visibleItems = [...items];
+    if (ordenacao === 'nome') {
+        visibleItems.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt-BR'));
+    } else if (ordenacao === 'nivel') {
+        visibleItems.sort((a, b) => Number(a.percentage) - Number(b.percentage));
+    } else if (ordenacao === 'validade') {
+        visibleItems.sort((a, b) => {
+            if (a.expiry_date && b.expiry_date) return a.expiry_date.localeCompare(b.expiry_date);
+            if (a.expiry_date) return -1;
+            if (b.expiry_date) return 1;
+            return 0;
+        });
+    }
 
-            {error && <p>{error}</p>}
-            {info && <p>{info}</p>}
+    const itemAtual = form ? items.find((i) => i.id === form.id) : null;
+
+    const statusTone = (status) => {
+        if (status === 'Estoque mediano') return 'neutral';
+        if (status === 'Em falta') return 'danger';
+        if (status === 'Estoque baixo') return 'warning';
+        if (status === 'Estoque alto') return 'success';
+        return 'neutral';
+    };
+
+    return (
+        <div className="stock-page">
+            <PageHeader title="Estoque" subtitle="Controle de itens, alertas e níveis de estoque" />
+
+            {error && <p className="stock-message stock-message--error" role="alert">{error}</p>}
+            {info && <p className="stock-message stock-message--info" role="status">{info}</p>}
 
             {/* Filtros, busca e botão de novo ingrediente */}
-            <div>
-                {FILTERS.map((f) => (
-                    <button key={f.key} type="button" disabled={filter === f.key} onClick={() => setFilter(f.key)}>
-                        {f.label}
-                    </button>
-                ))}
-            </div>
-            <div>
-                <input
-                    type="text"
-                    placeholder="Buscar ingrediente"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
+            <div className="stock-controls">
+                <SegmentedControl
+                    options={FILTERS.map(f => ({ value: f.key, label: f.label }))}
+                    value={filter}
+                    onChange={setFilter}
                 />
-                <button type="button" onClick={openCreate}>Novo ingrediente</button>
-                <details style={{ position: 'relative' }}>
-                    <summary
-                        style={{
-                            cursor: 'pointer',
-                            listStyle: 'none',
-                            padding: '8px 12px',
-                            border: '1px solid var(--border-color)',
-                            borderRadius: '8px',
-                            background: 'var(--card-bg)',
-                            color: 'var(--text-primary)',
-                            fontSize: '13px',
-                            fontWeight: 600,
-                            whiteSpace: 'nowrap',
-                        }}
-                    >
-                        Exportar tudo
-                    </summary>
-                    <div
-                        style={{
-                            position: 'absolute',
-                            right: 0,
-                            zIndex: 10,
-                            marginTop: '4px',
-                            minWidth: '120px',
-                            padding: '6px',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '2px',
-                            background: 'var(--card-bg)',
-                            border: '1px solid var(--border-color)',
-                            borderRadius: '10px',
-                            boxShadow: 'var(--card-shadow)',
-                        }}
-                    >
-                        <button type="button" onClick={(e) => { e.currentTarget.closest('details').open = false; exportAll('pdf'); }} disabled={exporting}>PDF</button>
-                        <button type="button" onClick={(e) => { e.currentTarget.closest('details').open = false; exportAll('csv'); }} disabled={exporting}>CSV</button>
-                        <button type="button" onClick={(e) => { e.currentTarget.closest('details').open = false; exportAll('txt'); }} disabled={exporting}>TXT</button>
-                    </div>
-                </details>
+                <div className="stock-controls-actions">
+                    <ActionToolbar
+                        onAdd={openCreate}
+                        onFilter={() => setMostrarOrdenacao(v => !v)}
+                        onSearch={() => setMostrarBusca(v => !v)}
+                    />
+                    <details className="stock-export-all">
+                        <summary>Exportar tudo</summary>
+                        <div className="stock-export-menu">
+                            <button type="button" onClick={(e) => { e.currentTarget.closest('details').open = false; exportAll('pdf'); }} disabled={exporting}>PDF</button>
+                            <button type="button" onClick={(e) => { e.currentTarget.closest('details').open = false; exportAll('csv'); }} disabled={exporting}>CSV</button>
+                            <button type="button" onClick={(e) => { e.currentTarget.closest('details').open = false; exportAll('txt'); }} disabled={exporting}>TXT</button>
+                        </div>
+                    </details>
+                </div>
             </div>
+
+            {mostrarOrdenacao && (
+                <div className="stock-ordenacao">
+                    <label className="stock-ordenacao-label" htmlFor="stock-ordenacao">Ordenar por</label>
+                    <select
+                        id="stock-ordenacao"
+                        className="stock-ordenacao-select"
+                        aria-label="Ordenar por"
+                        value={ordenacao}
+                        onChange={(e) => {
+                            setOrdenacao(e.target.value);
+                            setMostrarOrdenacao(false);
+                        }}
+                    >
+                        <option value="padrao">Padrão</option>
+                        <option value="nome">Nome (A-Z)</option>
+                        <option value="nivel">Menor nível</option>
+                        <option value="validade">Validade mais próxima</option>
+                    </select>
+                </div>
+            )}
+
+            {(mostrarBusca || search) && (
+                <div className="stock-search">
+                    <input
+                        type="text"
+                        placeholder="Buscar ingrediente"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                    />
+                </div>
+            )}
 
             {/* Formulário de cadastro / edição */}
-            {form && (
-                <form onSubmit={saveForm}>
-                    <h2>{form.id ? 'Editar ingrediente' : 'Novo ingrediente'}</h2>
-                    <div>
-                        <label>Nome </label>
-                        <input type="text" required value={form.values.name} onChange={(e) => changeForm('name', e.target.value)} />
-                    </div>
-                    <div>
-                        <label>Unidade </label>
-                        <input type="text" required list="stock-units" value={form.values.unit} onChange={(e) => changeForm('unit', e.target.value)} />
-                        <datalist id="stock-units">
-                            <option value="unidades" />
-                            <option value="hambúrgueres" />
-                            <option value="kg" />
-                            <option value="g" />
-                            <option value="L" />
-                            <option value="ml" />
-                        </datalist>
-                    </div>
-                    <div>
-                        <label>Quantidade atual </label>
-                        <input type="number" required min="0" step="0.01" value={form.values.quantity} onChange={(e) => changeForm('quantity', e.target.value)} />
-                    </div>
-                    <div>
-                        <label>Capacidade máxima </label>
-                        <input type="number" required min="0.01" step="0.01" value={form.values.capacity} onChange={(e) => changeForm('capacity', e.target.value)} />
-                    </div>
-                    <div>
-                        <label>Validade do lote </label>
-                        <input type="date" value={form.values.expiry_date} onChange={(e) => changeForm('expiry_date', e.target.value)} />
-                    </div>
-                    <div>
-                        <label>Última compra </label>
-                        <input type="date" value={form.values.last_purchase_date} onChange={(e) => changeForm('last_purchase_date', e.target.value)} />
-                    </div>
-                    <div>
-                        <label>Observações </label>
-                        <input type="text" value={form.values.notes} onChange={(e) => changeForm('notes', e.target.value)} />
-                    </div>
-                    <button type="submit">Salvar</button>
-                    <button type="button" onClick={() => setForm(null)}>Cancelar</button>
-                </form>
-            )}
+            <Modal
+                open={!!form}
+                onClose={() => setForm(null)}
+                maxWidth="640px"
+                showDivider={false}
+                closePlacement="top"
+                title={form && form.id ? 'Editar ingrediente' : 'Novo ingrediente'}
+                titleExtra={form && form.id && itemAtual ? (
+                    <StatusBadge label={itemAtual.stock_status} tone={statusTone(itemAtual.stock_status)} />
+                ) : null}
+            >
+                {form && (
+                    <form className="stock-form" onSubmit={saveForm}>
+                        <div className="stock-field">
+                            <label>Nome</label>
+                            <input type="text" required value={form.values.name} onChange={(e) => changeForm('name', e.target.value)} />
+                        </div>
+                        <div className="stock-field">
+                            <label>Unidade</label>
+                            <input type="text" required list="stock-units" value={form.values.unit} onChange={(e) => changeForm('unit', e.target.value)} />
+                            <datalist id="stock-units">
+                                <option value="unidades" />
+                                <option value="hambúrgueres" />
+                                <option value="kg" />
+                                <option value="g" />
+                                <option value="L" />
+                                <option value="ml" />
+                            </datalist>
+                        </div>
+                        <div className="stock-field">
+                            <label>Quantidade atual</label>
+                            <input type="number" required min="0" step="0.01" value={form.values.quantity} onChange={(e) => changeForm('quantity', e.target.value)} />
+                        </div>
+                        <div className="stock-field">
+                            <label>Capacidade máxima</label>
+                            <input type="number" required min="0.01" step="0.01" value={form.values.capacity} onChange={(e) => changeForm('capacity', e.target.value)} />
+                        </div>
+                        <div className="stock-field">
+                            <label>Validade do lote</label>
+                            <input type="date" value={form.values.expiry_date} onChange={(e) => changeForm('expiry_date', e.target.value)} />
+                        </div>
+                        <div className="stock-field">
+                            <label>Última compra</label>
+                            <input type="date" value={form.values.last_purchase_date} onChange={(e) => changeForm('last_purchase_date', e.target.value)} />
+                        </div>
+                        <div className="stock-field stock-field--full">
+                            <label>Observações</label>
+                            <input type="text" value={form.values.notes} onChange={(e) => changeForm('notes', e.target.value)} />
+                        </div>
+                        <div className="stock-field stock-field--full">
+                            <button type="submit" className="stock-form-primary">Salvar</button>
+                        </div>
+                        {form.id && itemAtual && (
+                            <>
+                                <div className="stock-form-divider" />
+                                <div className="stock-form-actions">
+                                    <button type="button" className="stock-form-danger" onClick={() => deleteItem(itemAtual)}>Excluir</button>
+                                    <button type="button" onClick={() => handleExport(itemAtual, 'pdf')}>PDF</button>
+                                    <button type="button" onClick={() => handleExport(itemAtual, 'csv')}>CSV</button>
+                                    <button type="button" onClick={() => handleExport(itemAtual, 'txt')}>TXT</button>
+                                </div>
+                            </>
+                        )}
+                    </form>
+                )}
+            </Modal>
 
             {/* Formulário de adicionar estoque (modal "Adicionar" do Figma) */}
-            {restock && (
-                <form onSubmit={saveRestock}>
-                    <h2>Adicionar estoque: {restock.item.name}</h2>
-                    <div>
-                        <label>Quantidade a adicionar ({restock.item.unit}) </label>
-                        <input type="number" required min="0.01" step="0.01" value={restock.values.quantity} onChange={(e) => changeRestock('quantity', e.target.value)} />
-                    </div>
-                    <div>
-                        <label>Validade do lote </label>
-                        <input type="date" value={restock.values.expiry_date} onChange={(e) => changeRestock('expiry_date', e.target.value)} />
-                    </div>
-                    <div>
-                        <label>Última compra </label>
-                        <input type="date" value={restock.values.last_purchase_date} onChange={(e) => changeRestock('last_purchase_date', e.target.value)} />
-                    </div>
-                    <div>
-                        <label>Observações </label>
-                        <input type="text" value={restock.values.notes} onChange={(e) => changeRestock('notes', e.target.value)} />
-                    </div>
-                    <button type="submit">Adicionar</button>
-                    <button type="button" onClick={() => setRestock(null)}>Cancelar</button>
-                </form>
-            )}
+            <Modal
+                open={!!restock}
+                onClose={() => setRestock(null)}
+                maxWidth="520px"
+                showDivider={false}
+                closePlacement="top"
+                title={restock ? restock.item.name : ''}
+                titleExtra={restock ? (
+                    <StatusBadge label={restock.item.stock_status} tone={statusTone(restock.item.stock_status)} />
+                ) : null}
+            >
+                {restock && (
+                    <form className="stock-form" onSubmit={saveRestock}>
+                        <div className="stock-field stock-field--quantity">
+                            <label>Quantidade ({restock.item.unit})</label>
+                            <input type="number" required min="0.01" step="0.01" value={restock.values.quantity} onChange={(e) => changeRestock('quantity', e.target.value)} />
+                        </div>
+                        <div className="stock-field">
+                            <label>Validade do lote</label>
+                            <input type="date" value={restock.values.expiry_date} onChange={(e) => changeRestock('expiry_date', e.target.value)} />
+                        </div>
+                        <div className="stock-field">
+                            <label>Última compra</label>
+                            <input type="date" value={restock.values.last_purchase_date} onChange={(e) => changeRestock('last_purchase_date', e.target.value)} />
+                        </div>
+                        <div className="stock-field stock-field--full">
+                            <label>Observações</label>
+                            <input type="text" value={restock.values.notes} onChange={(e) => changeRestock('notes', e.target.value)} />
+                        </div>
+                        <div className="stock-field stock-field--full">
+                            <button type="submit" className="stock-form-primary">Adicionar</button>
+                        </div>
+                    </form>
+                )}
+            </Modal>
 
             {/* Listagem */}
-            {loading && <p>Carregando...</p>}
-            {!loading && items.length === 0 && <p>Nenhum ingrediente encontrado.</p>}
+            {loading && <p className="stock-empty">Carregando...</p>}
+            {!loading && items.length === 0 && <p className="stock-empty">Nenhum ingrediente encontrado.</p>}
 
             {items.length > 0 && (
-                <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-                <table border="1" cellPadding="4" style={{ width: '100%', borderCollapse: 'collapse' }}>
-                    <thead>
-                        <tr>
-                            <th>Nome</th>
-                            <th>Quantidade</th>
-                            <th>Nível</th>
-                            <th>Status</th>
-                            <th>Última compra</th>
-                            <th>Validade</th>
-                            <th>Observações</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {items.map((item) => (
-                            <tr key={item.id}>
-                                <td>{item.name}</td>
-                                <td>{item.quantity} {item.unit}</td>
-                                <td>{item.percentage}% de {item.capacity}</td>
-                                <td>{item.stock_status}</td>
-                                <td>{formatDate(item.last_purchase_date)}</td>
-                                <td>
-                                    {formatDate(item.expiry_date)}
-                                    {item.near_expiry && ' (atenção: validade próxima)'}
-                                </td>
-                                <td>{item.notes || '-'}</td>
-                                <td>
-                                    <button type="button" onClick={() => openRestock(item)}>Adicionar estoque</button>
-                                    <button type="button" onClick={() => openEdit(item)}>Editar</button>
-                                    <button type="button" onClick={() => deleteItem(item)}>Excluir</button>
-                                    <details style={{ display: 'inline-block' }}>
-                                        <summary style={{ cursor: 'pointer' }}>Exportar</summary>
-                                        <button type="button" onClick={() => handleExport(item, 'pdf')} style={{ display: 'block' }}>PDF</button>
-                                        <button type="button" onClick={() => handleExport(item, 'csv')} style={{ display: 'block' }}>CSV</button>
-                                        <button type="button" onClick={() => handleExport(item, 'txt')} style={{ display: 'block' }}>TXT</button>
-                                    </details>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+                <div className="stock-grid">
+                    {visibleItems.map((item) => (
+                        <StockCard
+                            key={item.id}
+                            item={item}
+                            onOpen={openRestock}
+                            onEdit={openEdit}
+                            formatDate={formatDate}
+                        />
+                    ))}
                 </div>
             )}
         </div>

@@ -24,13 +24,24 @@ const SIZES = {
     padding: '18px 20px',
     headerGap: '12px',
     titleSize: '16px',
+    titleTopSize: '20px',
     subtitleSize: '10px',
     dividerHeight: '1px',
 };
 
 let nextModalId = 0;
 
-export default function Modal({ open, onClose, title, subtitle, children, maxWidth = 640 }) {
+export default function Modal({
+    open,
+    onClose,
+    title,
+    subtitle,
+    children,
+    maxWidth = 640,
+    titleExtra,
+    showDivider = true,
+    closePlacement = 'inline',
+}) {
     const [titleId] = useState(() => `pragma-modal-title-${++nextModalId}`);
 
     useEffect(() => {
@@ -86,42 +97,100 @@ export default function Modal({ open, onClose, title, subtitle, children, maxWid
                     boxShadow: SIZES.cardShadow,
                 }}
             >
-                <div
-                    style={{
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        justifyContent: 'space-between',
-                        gap: SIZES.headerGap,
-                        padding: SIZES.padding,
-                    }}
-                >
-                    <div style={{ minWidth: 0 }}>
-                        <h2
-                            id={titleId}
+                {closePlacement === 'top' ? (
+                    <>
+                        <div
                             style={{
-                                margin: 0,
-                                fontSize: SIZES.titleSize,
-                                fontWeight: 700,
-                                color: COLORS.title,
-                                lineHeight: 1.3,
+                                display: 'flex',
+                                justifyContent: 'flex-end',
+                                padding: '18px 20px 0',
                             }}
                         >
-                            {title}
-                        </h2>
-                        <p
+                            <CloseButton onClick={onClose} />
+                        </div>
+                        <div
                             style={{
-                                margin: '3px 0 0',
-                                fontSize: SIZES.subtitleSize,
-                                color: COLORS.subtitle,
-                                lineHeight: 1.4,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                gap: SIZES.headerGap,
+                                padding: '10px 20px 18px',
                             }}
                         >
-                            {subtitle}
-                        </p>
+                            <div style={{ minWidth: 0 }}>
+                                <h2
+                                    id={titleId}
+                                    style={{
+                                        margin: 0,
+                                        fontSize: SIZES.titleTopSize,
+                                        fontWeight: 700,
+                                        color: COLORS.title,
+                                        lineHeight: 1.3,
+                                    }}
+                                >
+                                    {title}
+                                </h2>
+                                {subtitle && (
+                                    <p
+                                        style={{
+                                            margin: '3px 0 0',
+                                            fontSize: SIZES.subtitleSize,
+                                            color: COLORS.subtitle,
+                                            lineHeight: 1.4,
+                                        }}
+                                    >
+                                        {subtitle}
+                                    </p>
+                                )}
+                            </div>
+                            {titleExtra && <div style={{ flexShrink: 0 }}>{titleExtra}</div>}
+                        </div>
+                    </>
+                ) : (
+                    <div
+                        style={{
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            justifyContent: 'space-between',
+                            gap: SIZES.headerGap,
+                            padding: SIZES.padding,
+                        }}
+                    >
+                        <div style={{ minWidth: 0 }}>
+                            <h2
+                                id={titleId}
+                                style={{
+                                    margin: 0,
+                                    fontSize: SIZES.titleSize,
+                                    fontWeight: 700,
+                                    color: COLORS.title,
+                                    lineHeight: 1.3,
+                                }}
+                            >
+                                {title}
+                            </h2>
+                            <p
+                                style={{
+                                    margin: '3px 0 0',
+                                    fontSize: SIZES.subtitleSize,
+                                    color: COLORS.subtitle,
+                                    lineHeight: 1.4,
+                                }}
+                            >
+                                {subtitle}
+                            </p>
+                        </div>
+                        {titleExtra ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: SIZES.headerGap, flexShrink: 0 }}>
+                                {titleExtra}
+                                <CloseButton onClick={onClose} />
+                            </div>
+                        ) : (
+                            <CloseButton onClick={onClose} />
+                        )}
                     </div>
-                    <CloseButton onClick={onClose} />
-                </div>
-                <div style={{ height: SIZES.dividerHeight, background: COLORS.divider }} />
+                )}
+                {showDivider && <div style={{ height: SIZES.dividerHeight, background: COLORS.divider }} />}
                 <div style={{ padding: SIZES.padding }}>
                     {children}
                 </div>
