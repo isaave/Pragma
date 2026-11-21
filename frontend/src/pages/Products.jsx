@@ -8,6 +8,11 @@ import {
     exportProductsTxt,
     exportProductTxt,
 } from '../lib/exportProduct';
+import PageHeader from '../components/ui/PageHeader';
+import SegmentedControl from '../components/ui/SegmentedControl';
+import ActionToolbar from '../components/ui/ActionToolbar';
+import ProductCard from '../components/ProductCard';
+import '../styles/products.css';
 
 const CATEGORIES = [
     { key: 'hamburguer', label: 'Hambúrguer' },
@@ -60,6 +65,9 @@ export default function Products() {
     const [filter, setFilter] = useState('all');
     const [search, setSearch] = useState('');
     const [exporting, setExporting] = useState(false);
+    const [mostrarBusca, setMostrarBusca] = useState(false);
+    const [mostrarOrdenacao, setMostrarOrdenacao] = useState(false);
+    const [ordenacao, setOrdenacao] = useState('padrao');
 
     const [form, setForm] = useState(null); // null ou { id, values, recipe, addons }
     const [pick, setPick] = useState({ ingredientId: '', quantity: '' });
@@ -186,6 +194,7 @@ export default function Products() {
         try {
             const res = await api.delete(`/products/${product.id}`);
             setInfo(res.data.message);
+            setForm(null);
             loadProducts();
         } catch (err) {
             setError(getErrorMessage(err, 'Erro ao excluir o produto.'));
@@ -239,71 +248,86 @@ export default function Products() {
         }
     };
 
-    return (
-        <div>
-            <h1>Produtos</h1>
-            <p>Gerencie produtos, preços, receitas e adicionais</p>
+    // Ordenação visual: trabalha numa cópia, sem alterar o products da API
+    const visibleProducts = [...products];
+    if (ordenacao === 'nome') {
+        visibleProducts.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt-BR'));
+    } else if (ordenacao === 'menor') {
+        visibleProducts.sort((a, b) => Number(a.price) - Number(b.price));
+    } else if (ordenacao === 'maior') {
+        visibleProducts.sort((a, b) => Number(b.price) - Number(a.price));
+    }
 
-            {error && <p style={{ color: '#b91c1c' }}>{error}</p>}
-            {info && <p style={{ color: '#15803d' }}>{info}</p>}
+    const produtoAtual = form ? products.find((p) => p.id === form.id) : null;
+
+    return (
+        <div className="products-page">
+            <PageHeader title="Produtos" subtitle="Gerencie produtos, preços e disponibilidade" />
+
+            {error && <p className="products-message products-message--error">{error}</p>}
+            {info && <p className="products-message products-message--info">{info}</p>}
 
             {/* Filtros e busca */}
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
-                {FILTERS.map((f) => (
-                    <button key={f.key} type="button" disabled={filter === f.key} onClick={() => setFilter(f.key)}>
-                        {f.label}
-                    </button>
-                ))}
-            </div>
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-                <input
-                    type="text"
-                    placeholder="Buscar produto"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    style={{ flex: 1, padding: '8px' }}
+            <div className="products-controls">
+                <SegmentedControl
+                    options={FILTERS.map(f => ({ value: f.key, label: f.label }))}
+                    value={filter}
+                    onChange={setFilter}
+                    style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(6, minmax(max-content, 1fr))',
+                        width: '100%',
+                        minWidth: 0,
+                    }}
                 />
-                <button type="button" onClick={openCreate}>Novo produto</button>
-                <details style={{ position: 'relative' }}>
-                    <summary
-                        style={{
-                            cursor: 'pointer',
-                            listStyle: 'none',
-                            padding: '8px 12px',
-                            border: '1px solid var(--border-color)',
-                            borderRadius: '8px',
-                            background: 'var(--card-bg)',
-                            color: 'var(--text-primary)',
-                            fontSize: '13px',
-                            fontWeight: 600,
-                            whiteSpace: 'nowrap',
-                        }}
-                    >
-                        Exportar tudo
-                    </summary>
-                    <div
-                        style={{
-                            position: 'absolute',
-                            right: 0,
-                            zIndex: 10,
-                            marginTop: '4px',
-                            minWidth: '120px',
-                            padding: '6px',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '2px',
-                            background: 'var(--card-bg)',
-                            border: '1px solid var(--border-color)',
-                            borderRadius: '10px',
-                            boxShadow: 'var(--card-shadow)',
-                        }}
-                    >
-                        <button type="button" onClick={(e) => { e.currentTarget.closest('details').open = false; exportAll('pdf'); }} disabled={exporting}>PDF</button>
-                        <button type="button" onClick={(e) => { e.currentTarget.closest('details').open = false; exportAll('csv'); }} disabled={exporting}>CSV</button>
-                        <button type="button" onClick={(e) => { e.currentTarget.closest('details').open = false; exportAll('txt'); }} disabled={exporting}>TXT</button>
-                    </div>
-                </details>
+                <div className="products-controls-actions">
+                    <ActionToolbar
+                        onAdd={openCreate}
+                        onSearch={() => setMostrarBusca(v => !v)}
+                        onFilter={() => setMostrarOrdenacao(v => !v)}
+                    />
+                    <details className="products-export-all">
+                        <summary>Exportar tudo</summary>
+                        <div className="products-export-menu">
+                            <button type="button" onClick={(e) => { e.currentTarget.closest('details').open = false; exportAll('pdf'); }} disabled={exporting}>PDF</button>
+                            <button type="button" onClick={(e) => { e.currentTarget.closest('details').open = false; exportAll('csv'); }} disabled={exporting}>CSV</button>
+                            <button type="button" onClick={(e) => { e.currentTarget.closest('details').open = false; exportAll('txt'); }} disabled={exporting}>TXT</button>
+                        </div>
+                    </details>
+                </div>
             </div>
+
+            {mostrarOrdenacao && (
+                <div className="products-ordenacao">
+                    <label className="products-ordenacao-label" htmlFor="products-ordenacao">Ordenar por</label>
+                    <select
+                        id="products-ordenacao"
+                        className="products-ordenacao-select"
+                        aria-label="Ordenar por"
+                        value={ordenacao}
+                        onChange={(e) => {
+                            setOrdenacao(e.target.value);
+                            setMostrarOrdenacao(false);
+                        }}
+                    >
+                        <option value="padrao">Padrão</option>
+                        <option value="nome">Nome (A-Z)</option>
+                        <option value="menor">Menor preço</option>
+                        <option value="maior">Maior preço</option>
+                    </select>
+                </div>
+            )}
+
+            {(mostrarBusca || search) && (
+                <div className="products-search">
+                    <input
+                        type="text"
+                        placeholder="Buscar produto"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                    />
+                </div>
+            )}
 
             {/* Formulário de cadastro / edição */}
             {form && (
@@ -381,69 +405,38 @@ export default function Products() {
                         <button type="button" onClick={() => setForm(null)} style={{ padding: '10px 20px', border: '1px solid #ddd', background: '#fff', cursor: 'pointer', borderRadius: '6px' }}>Cancelar</button>
                         <button type="submit" style={{ padding: '10px 20px', background: '#1d4ed8', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}>Salvar</button>
                     </div>
+
+                    {form.id && produtoAtual && (
+                        <>
+                            <div className="products-form-divider" />
+                            <div className="products-form-actions">
+                                <button type="button" className="products-form-danger" onClick={() => deleteProduct(produtoAtual)}>Excluir</button>
+                                <button type="button" onClick={() => handleExport(produtoAtual, 'pdf')}>PDF</button>
+                                <button type="button" onClick={() => handleExport(produtoAtual, 'csv')}>CSV</button>
+                                <button type="button" onClick={() => handleExport(produtoAtual, 'txt')}>TXT</button>
+                            </div>
+                        </>
+                    )}
                 </form>
             )}
 
             {/* Listagem */}
-            {loading && <p>Carregando...</p>}
-            {!loading && products.length === 0 && <p>Nenhum produto encontrado.</p>}
+            {loading && <p className="products-empty">Carregando...</p>}
+            {!loading && products.length === 0 && <p className="products-empty">Nenhum produto encontrado.</p>}
 
             {products.length > 0 && (
-                <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-                <table border="1" cellPadding="4" style={{ width: '100%', borderCollapse: 'collapse', marginTop: '16px' }}>
-                    <thead>
-                        <tr>
-                            <th>Nome</th>
-                            <th>Categoria</th>
-                            <th>Valor</th>
-                            <th>Ingredientes</th>
-                            <th>Disponibilidade</th>
-                            <th>Status</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {products.map((p) => (
-                            <tr key={p.id}>
-                                <td>{p.name}</td>
-                                <td>{categoryLabel(p.category)}</td>
-                                <td>{formatPrice(p.price)}</td>
-                                <td style={{ fontSize: '13px' }}>
-                                    {p.recipe.length === 0 ? '-' : p.recipe.map((r) => `${r.quantity} ${r.unit} ${r.name}`).join(', ')}
-                                </td>
-                                <td>{p.available ? 'Disponível' : 'Indisponível'}</td>
-                                <td style={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase' }}>
-                                    <span
-                                        style={{
-                                            padding: '2px 6px',
-                                            borderRadius: '10px',
-                                            background:
-                                                p.status === 'ativo' ? '#dcfce7' :
-                                                p.status === 'inativo' ? '#fee2e2' :
-                                                '#fef9c3',
-                                            color:
-                                                p.status === 'ativo' ? '#15803d' :
-                                                p.status === 'inativo' ? '#b91c1c' :
-                                                '#92400e',
-                                        }}
-                                    >
-                                        {p.status === 'ativo' ? 'Ativo' : p.status === 'inativo' ? 'Inativo' : 'Em desenvolvimento'}
-                                    </span>
-                                </td>
-                                <td>
-                                    <button type="button" onClick={() => openEdit(p)} style={{ marginRight: '6px' }}>Editar</button>
-                                    <button type="button" onClick={() => deleteProduct(p)} style={{ color: '#b91c1c', marginRight: '6px' }}>Excluir</button>
-                                    <details style={{ display: 'inline-block' }}>
-                                        <summary style={{ cursor: 'pointer' }}>Exportar</summary>
-                                        <button type="button" onClick={() => handleExport(p, 'pdf')} style={{ display: 'block' }}>PDF</button>
-                                        <button type="button" onClick={() => handleExport(p, 'csv')} style={{ display: 'block' }}>CSV</button>
-                                        <button type="button" onClick={() => handleExport(p, 'txt')} style={{ display: 'block' }}>TXT</button>
-                                    </details>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+                <div className="products-grid">
+                    {visibleProducts.map((p) => (
+                        <ProductCard
+                            key={p.id}
+                            product={p}
+                            onOpen={() => {
+                                // TODO: abrir o pop-up de detalhe do produto (próxima etapa)
+                            }}
+                            onEdit={openEdit}
+                            categoryLabel={categoryLabel}
+                        />
+                    ))}
                 </div>
             )}
         </div>
