@@ -12,7 +12,7 @@ const formatCardPrice = (value) =>
         maximumFractionDigits: 2,
     });
 
-export default function ProductCard({ product, onOpen, onEdit, categoryLabel }) {
+export default function ProductCard({ product, onOpen, onEdit, categoryLabel, selected = false }) {
     const handleKeyDown = (event) => {
         if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
@@ -45,7 +45,7 @@ export default function ProductCard({ product, onOpen, onEdit, categoryLabel }) 
 
     return (
         <div
-            className="products-card"
+            className={`products-card${selected ? ' products-card--selected' : ''}`}
             role="button"
             tabIndex={0}
             onClick={() => onOpen(product)}

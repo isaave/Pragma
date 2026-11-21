@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Check, Trash2, X } from 'lucide-react';
 import api from '../Services/api';
 import {
     exportProductCsv,
@@ -12,6 +13,9 @@ import PageHeader from '../components/ui/PageHeader';
 import SegmentedControl from '../components/ui/SegmentedControl';
 import ActionToolbar from '../components/ui/ActionToolbar';
 import ProductCard from '../components/ProductCard';
+import ProductDetail from '../components/ProductDetail';
+import Modal from '../components/ui/Modal';
+import useIsMobile from '../hooks/useIsMobile';
 import '../styles/products.css';
 
 const CATEGORIES = [
@@ -71,6 +75,10 @@ export default function Products() {
 
     const [form, setForm] = useState(null); // null ou { id, values, recipe, addons }
     const [pick, setPick] = useState({ ingredientId: '', quantity: '' });
+
+    const [detailId, setDetailId] = useState(null);
+    const [detailExpanded, setDetailExpanded] = useState(false);
+    const isMobile = useIsMobile();
 
     const loadProducts = useCallback(async () => {
         setLoading(true);
@@ -259,6 +267,7 @@ export default function Products() {
     }
 
     const produtoAtual = form ? products.find((p) => p.id === form.id) : null;
+    const selectedProduct = products.find((p) => p.id === detailId) || null;
 
     return (
         <div className="products-page">
@@ -331,113 +340,254 @@ export default function Products() {
 
             {/* Formulário de cadastro / edição */}
             {form && (
-                <form onSubmit={saveForm} style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxWidth: '700px' }}>
-                    <h2>{form.id ? 'Editar produto' : 'Novo produto'}</h2>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
-                        <div>
-                            <label style={{ display: 'block', marginBottom: '4px', fontWeight: 600 }}>Nome</label>
-                            <input type="text" required value={form.values.name} onChange={(e) => changeForm('name', e.target.value)} style={{ width: '100%', padding: '8px' }} />
-                        </div>
-                        <div>
-                            <label style={{ display: 'block', marginBottom: '4px', fontWeight: 600 }}>Categoria</label>
-                            <select value={form.values.category} onChange={(e) => changeForm('category', e.target.value)} style={{ width: '100%', padding: '8px' }}>
-                                {CATEGORIES.map((c) => (
-                                    <option key={c.key} value={c.key}>{c.label}</option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
-                        <div>
-                            <label style={{ display: 'block', marginBottom: '4px', fontWeight: 600 }}>Valor (R$)</label>
-                            <input type="number" required min="0" step="0.01" value={form.values.price} onChange={(e) => changeForm('price', e.target.value)} style={{ width: '100%', padding: '8px' }} />
-                        </div>
-                        <div>
-                            <label style={{ display: 'block', marginBottom: '4px', fontWeight: 600 }}>Status</label>
-                            <select value={form.values.status || 'ativo'} onChange={(e) => changeForm('status', e.target.value)} style={{ width: '100%', padding: '8px' }}>
-                                <option value="ativo">Ativo</option>
-                                <option value="inativo">Inativo</option>
-                                <option value="desenvolvimento">Em desenvolvimento</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '4px', fontWeight: 600 }}>Observações</label>
-                        <input type="text" value={form.values.notes} onChange={(e) => changeForm('notes', e.target.value)} style={{ width: '100%', padding: '8px' }} />
-                    </div>
-
-                    {/* Receita: ingredientes do estoque usados no produto */}
-                    <div style={{ borderTop: '1px solid #ddd', paddingTop: '12px' }}>
-                        <h3 style={{ margin: '0 0 8px' }}>Receita — Ingredientes do estoque</h3>
-                        <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
-                            <select value={pick.ingredientId} onChange={(e) => setPick((p) => ({ ...p, ingredientId: e.target.value }))} style={{ padding: '8px', flex: 1 }}>
-                                <option value="">Selecione um ingrediente</option>
-                                {stockItems.map((s) => (
-                                    <option key={s.id} value={s.id}>{s.name} ({s.unit})</option>
-                                ))}
-                            </select>
-                            <input
-                                type="number"
-                                min="0.01"
-                                step="0.01"
-                                placeholder="Qtd do ingrediente (ex: 200g)"
-                                value={pick.quantity}
-                                onChange={(e) => setPick((p) => ({ ...p, quantity: e.target.value }))}
-                                style={{ padding: '8px', width: '140px' }}
-                            />
-                            <button type="button" onClick={addToRecipe} style={{ padding: '8px 12px' }}>Adicionar ingrediente</button>
-                        </div>
-                        {form.recipe.length === 0 && <p style={{ fontSize: '13px', color: '#666' }}>Nenhum ingrediente na receita.</p>}
-                        <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                            {form.recipe.map((r) => (
-                                <li key={r.ingredient_id} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px', border: '1px solid #eee', borderRadius: '6px', marginBottom: '6px' }}>
-                                    <span>{r.quantity} {r.unit} - {r.name}</span>
-                                    <button type="button" onClick={() => removeFromRecipe(r.ingredient_id)} style={{ color: '#b91c1c' }}>Remover</button>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '12px' }}>
-                        <button type="button" onClick={() => setForm(null)} style={{ padding: '10px 20px', border: '1px solid #ddd', background: '#fff', cursor: 'pointer', borderRadius: '6px' }}>Cancelar</button>
-                        <button type="submit" style={{ padding: '10px 20px', background: '#1d4ed8', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}>Salvar</button>
-                    </div>
-
-                    {form.id && produtoAtual && (
-                        <>
-                            <div className="products-form-divider" />
-                            <div className="products-form-actions">
-                                <button type="button" className="products-form-danger" onClick={() => deleteProduct(produtoAtual)}>Excluir</button>
-                                <button type="button" onClick={() => handleExport(produtoAtual, 'pdf')}>PDF</button>
-                                <button type="button" onClick={() => handleExport(produtoAtual, 'csv')}>CSV</button>
-                                <button type="button" onClick={() => handleExport(produtoAtual, 'txt')}>TXT</button>
+                <Modal
+                    open
+                    onClose={() => setForm(null)}
+                    maxWidth="560px"
+                    showDivider={false}
+                    ariaLabel="Produto"
+                    titleNode={
+                        <input
+                            type="text"
+                            required
+                            form="product-form"
+                            className="products-modal-title"
+                            placeholder="Nome do produto"
+                            aria-label="Nome do produto"
+                            value={form.values.name}
+                            onChange={(e) => changeForm('name', e.target.value)}
+                        />
+                    }
+                    headerActions={
+                        form.id && produtoAtual ? (
+                            <button
+                                type="button"
+                                className="products-modal-delete"
+                                aria-label="Excluir produto"
+                                title="Excluir produto"
+                                onClick={() => deleteProduct(produtoAtual)}
+                            >
+                                <Trash2 size={16} aria-hidden="true" />
+                            </button>
+                        ) : null
+                    }
+                >
+                    {form && (
+                        <form id="product-form" className="products-form" onSubmit={saveForm}>
+                            <div className="products-modal-pills">
+                                <select
+                                    className="products-pill-select"
+                                    aria-label="Status"
+                                    value={form.values.status || 'ativo'}
+                                    onChange={(e) => changeForm('status', e.target.value)}
+                                >
+                                    <option value="ativo">Ativo</option>
+                                    <option value="inativo">Inativo</option>
+                                    <option value="desenvolvimento">Em desenvolvimento</option>
+                                </select>
+                                <select
+                                    className="products-pill-select"
+                                    aria-label="Categoria"
+                                    value={form.values.category}
+                                    onChange={(e) => changeForm('category', e.target.value)}
+                                >
+                                    {CATEGORIES.map((c) => (
+                                        <option key={c.key} value={c.key}>{c.label}</option>
+                                    ))}
+                                </select>
                             </div>
-                        </>
+
+                            <div className="products-recipe">
+                                <span className="sr-only">Receita — Ingredientes do estoque</span>
+                                <div className="products-recipe-row">
+                                    <div className="products-recipe-field products-recipe-field--ingredient">
+                                        <label className="products-field-label" htmlFor="product-ingredient">Ingrediente</label>
+                                        <select
+                                            id="product-ingredient"
+                                            className="products-field"
+                                            value={pick.ingredientId}
+                                            onChange={(e) => setPick((p) => ({ ...p, ingredientId: e.target.value }))}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    e.preventDefault();
+                                                    addToRecipe();
+                                                }
+                                            }}
+                                        >
+                                            <option value="">Selecione um ingrediente</option>
+                                            {stockItems.map((s) => (
+                                                <option key={s.id} value={s.id}>{s.name} ({s.unit})</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="products-recipe-field products-recipe-field--qty">
+                                        <label className="products-field-label" htmlFor="product-quantity">Qtd</label>
+                                        <input
+                                            id="product-quantity"
+                                            type="number"
+                                            min="0.01"
+                                            step="0.01"
+                                            placeholder="Qtd do ingrediente (ex: 200g)"
+                                            className="products-field"
+                                            value={pick.quantity}
+                                            onChange={(e) => setPick((p) => ({ ...p, quantity: e.target.value }))}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    e.preventDefault();
+                                                    addToRecipe();
+                                                }
+                                            }}
+                                        />
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className="products-round-button products-check-button"
+                                        aria-label="Adicionar ingrediente"
+                                        title="Adicionar ingrediente"
+                                        onClick={addToRecipe}
+                                    >
+                                        <Check size={14} aria-hidden="true" />
+                                    </button>
+                                </div>
+                                {form.recipe.length === 0 && (
+                                    <p className="products-recipe-empty">Nenhum ingrediente na receita.</p>
+                                )}
+                                <ul className="products-recipe-chips">
+                                    {form.recipe.map((r) => (
+                                        <li key={r.ingredient_id} className="products-recipe-chip">
+                                            <span>{r.quantity} {r.unit !== 'unidades' ? `${r.unit} ` : ''}{r.name}</span>
+                                            <button
+                                                type="button"
+                                                className="products-chip-remove"
+                                                aria-label={`Remover ${r.name}`}
+                                                title={`Remover ${r.name}`}
+                                                onClick={() => removeFromRecipe(r.ingredient_id)}
+                                            >
+                                                <X size={12} aria-hidden="true" />
+                                            </button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+
+                            <div className="products-form-field">
+                                <label className="products-notes-label" htmlFor="product-notes">Observações</label>
+                                <input
+                                    id="product-notes"
+                                    type="text"
+                                    className="products-field"
+                                    value={form.values.notes}
+                                    onChange={(e) => changeForm('notes', e.target.value)}
+                                />
+                            </div>
+
+                            <div className="products-form-field">
+                                <label className="products-field-label" htmlFor="product-price">Valor</label>
+                                <div className="products-price-field">
+                                    <span className="products-price-prefix">R$</span>
+                                    <input
+                                        id="product-price"
+                                        type="number"
+                                        required
+                                        min="0"
+                                        step="0.01"
+                                        className="products-price-input"
+                                        value={form.values.price}
+                                        onChange={(e) => changeForm('price', e.target.value)}
+                                    />
+                                </div>
+                            </div>
+
+                            {error && <p className="products-modal-error" role="alert">{error}</p>}
+
+                            <button type="submit" className="products-submit">
+                                {form.id ? 'Salvar' : 'Adicionar'}
+                            </button>
+
+                            {form.id && produtoAtual && (
+                                <div className="products-modal-export">
+                                    <div className="products-form-divider" />
+                                    <div className="products-modal-export-actions">
+                                        <button type="button" onClick={() => handleExport(produtoAtual, 'pdf')}>PDF</button>
+                                        <button type="button" onClick={() => handleExport(produtoAtual, 'csv')}>CSV</button>
+                                        <button type="button" onClick={() => handleExport(produtoAtual, 'txt')}>TXT</button>
+                                    </div>
+                                </div>
+                            )}
+                        </form>
                     )}
-                </form>
+                </Modal>
             )}
 
             {/* Listagem */}
             {loading && <p className="products-empty">Carregando...</p>}
             {!loading && products.length === 0 && <p className="products-empty">Nenhum produto encontrado.</p>}
 
-            {products.length > 0 && (
-                <div className="products-grid">
-                    {visibleProducts.map((p) => (
-                        <ProductCard
-                            key={p.id}
-                            product={p}
-                            onOpen={() => {
-                                // TODO: abrir o pop-up de detalhe do produto (próxima etapa)
+            <div className="products-layout">
+                {products.length > 0 && (
+                    <div className="products-grid">
+                        {visibleProducts.map((p) => (
+                            <ProductCard
+                                key={p.id}
+                                product={p}
+                                onOpen={(p) => {
+                                    setDetailId(p.id);
+                                    setDetailExpanded(false);
+                                }}
+                                onEdit={openEdit}
+                                categoryLabel={categoryLabel}
+                                selected={p.id === detailId}
+                            />
+                        ))}
+                    </div>
+                )}
+
+                {selectedProduct && !detailExpanded && !isMobile && (
+                    <aside className="products-detail">
+                        <ProductDetail
+                            product={selectedProduct}
+                            variant="panel"
+                            expanded={detailExpanded}
+                            onToggleExpand={() => setDetailExpanded(v => !v)}
+                            onClose={() => setDetailId(null)}
+                            onEdit={() => {
+                                const p = selectedProduct;
+                                setDetailId(null);
+                                openEdit(p);
                             }}
-                            onEdit={openEdit}
+                            onDelete={() => deleteProduct(selectedProduct)}
+                            formatPrice={formatPrice}
                             categoryLabel={categoryLabel}
                         />
-                    ))}
-                </div>
+                    </aside>
+                )}
+            </div>
+
+            {selectedProduct && (detailExpanded || isMobile) && (
+                <Modal
+                    open
+                    onClose={() => setDetailId(null)}
+                    maxWidth="520px"
+                    showDivider={false}
+                    closePlacement="top"
+                    title={selectedProduct.name}
+                >
+                    <ProductDetail
+                        product={selectedProduct}
+                        variant="modal"
+                        expanded={detailExpanded}
+                        onToggleExpand={() => setDetailExpanded(v => !v)}
+                        onClose={() => setDetailId(null)}
+                        onEdit={() => {
+                            const p = selectedProduct;
+                            setDetailId(null);
+                            openEdit(p);
+                        }}
+                        onDelete={() => deleteProduct(selectedProduct)}
+                        formatPrice={formatPrice}
+                        categoryLabel={categoryLabel}
+                    />
+                </Modal>
             )}
         </div>
     );

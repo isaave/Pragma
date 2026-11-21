@@ -42,6 +42,9 @@ export default function Modal({
     showDivider = true,
     closePlacement = 'inline',
     className,
+    titleNode,
+    headerActions,
+    ariaLabel,
 }) {
     const [titleId] = useState(() => `pragma-modal-title-${++nextModalId}`);
 
@@ -85,7 +88,8 @@ export default function Modal({
             <div
                 role="dialog"
                 aria-modal="true"
-                aria-labelledby={titleId}
+                aria-labelledby={titleNode ? undefined : titleId}
+                aria-label={titleNode ? ariaLabel : undefined}
                 onClick={event => event.stopPropagation()}
                 className={className}
                 style={{
@@ -108,6 +112,7 @@ export default function Modal({
                                 padding: '18px 20px 0',
                             }}
                         >
+                            {headerActions}
                             <CloseButton onClick={onClose} />
                         </div>
                         <div
@@ -120,18 +125,22 @@ export default function Modal({
                             }}
                         >
                             <div style={{ minWidth: 0 }}>
-                                <h2
-                                    id={titleId}
-                                    style={{
-                                        margin: 0,
-                                        fontSize: SIZES.titleTopSize,
-                                        fontWeight: 700,
-                                        color: COLORS.title,
-                                        lineHeight: 1.3,
-                                    }}
-                                >
-                                    {title}
-                                </h2>
+                                {titleNode ? (
+                                    titleNode
+                                ) : (
+                                    <h2
+                                        id={titleId}
+                                        style={{
+                                            margin: 0,
+                                            fontSize: SIZES.titleTopSize,
+                                            fontWeight: 700,
+                                            color: COLORS.title,
+                                            lineHeight: 1.3,
+                                        }}
+                                    >
+                                        {title}
+                                    </h2>
+                                )}
                                 {subtitle && (
                                     <p
                                         style={{
@@ -159,18 +168,22 @@ export default function Modal({
                         }}
                     >
                         <div style={{ minWidth: 0 }}>
-                            <h2
-                                id={titleId}
-                                style={{
-                                    margin: 0,
-                                    fontSize: SIZES.titleSize,
-                                    fontWeight: 700,
-                                    color: COLORS.title,
-                                    lineHeight: 1.3,
-                                }}
-                            >
-                                {title}
-                            </h2>
+                            {titleNode ? (
+                                titleNode
+                            ) : (
+                                <h2
+                                    id={titleId}
+                                    style={{
+                                        margin: 0,
+                                        fontSize: SIZES.titleSize,
+                                        fontWeight: 700,
+                                        color: COLORS.title,
+                                        lineHeight: 1.3,
+                                    }}
+                                >
+                                    {title}
+                                </h2>
+                            )}
                             <p
                                 style={{
                                     margin: '3px 0 0',
@@ -182,9 +195,10 @@ export default function Modal({
                                 {subtitle}
                             </p>
                         </div>
-                        {titleExtra ? (
+                        {titleExtra || headerActions ? (
                             <div style={{ display: 'flex', alignItems: 'center', gap: SIZES.headerGap, flexShrink: 0 }}>
                                 {titleExtra}
+                                {headerActions}
                                 <CloseButton onClick={onClose} />
                             </div>
                         ) : (
