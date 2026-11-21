@@ -41,6 +41,7 @@ export default function Modal({
     titleExtra,
     showDivider = true,
     closePlacement = 'inline',
+    className,
 }) {
     const [titleId] = useState(() => `pragma-modal-title-${++nextModalId}`);
 
@@ -86,6 +87,7 @@ export default function Modal({
                 aria-modal="true"
                 aria-labelledby={titleId}
                 onClick={event => event.stopPropagation()}
+                className={className}
                 style={{
                     boxSizing: 'border-box',
                     width: cardWidth,
