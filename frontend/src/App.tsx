@@ -14,6 +14,10 @@ import Products from './pages/Products';
 import Reports from './pages/Reports';
 import Stock from './pages/Stock';
 import useIsMobile from './hooks/useIsMobile';
+import { HeaderActionsContext } from './components/ui/PageHeader';
+
+// Telas onde o sino e o perfil dividem a linha com o PageHeader (somente desktop)
+const HEADER_INLINE_VIEWS = ['admin', 'stock'];
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -67,6 +71,14 @@ export default function App() {
   if (!isAuthenticated) {
     return <Login onLoginSuccess={handleLoginSuccess} />;
   }
+
+  const headerActions = (
+    <>
+      <NotificationButton />
+      {!isMobile && view !== 'profile' && <ProfileButton onNavigate={setView} currentUser={currentUser} />}
+    </>
+  );
+  const inlineHeader = !isMobile && HEADER_INLINE_VIEWS.includes(view);
 
   return (
     <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', minHeight: '100vh', background: 'var(--bg-primary)' }}>
@@ -126,20 +138,21 @@ export default function App() {
       )}
 
       <main style={{ flex: 1, minWidth: 0, padding: isMobile ? '16px' : '24px', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
-        {!isMobile && view !== 'profile' && (
+        {!isMobile && view !== 'profile' && !inlineHeader && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '12px', marginBottom: '16px' }}>
-            <NotificationButton />
-            {!isMobile && view !== 'profile' && <ProfileButton onNavigate={setView} currentUser={currentUser} />}
+            {headerActions}
           </div>
         )}
-        {view === 'orders' && <Orders />}
-        {view === 'history' && <History />}
-        {view === 'menu' && <Products />}
-        {view === 'reports' && <Reports />}
-        {view === 'profile' && <UserProfile />}
-        {view === 'admin' && <AdminPanel />}
-        {view === 'home' && <Home />}
-        {view === 'stock' && <Stock />}
+        <HeaderActionsContext.Provider value={inlineHeader ? headerActions : null}>
+          {view === 'orders' && <Orders />}
+          {view === 'history' && <History />}
+          {view === 'menu' && <Products />}
+          {view === 'reports' && <Reports />}
+          {view === 'profile' && <UserProfile />}
+          {view === 'admin' && <AdminPanel />}
+          {view === 'home' && <Home />}
+          {view === 'stock' && <Stock />}
+        </HeaderActionsContext.Provider>
       </main>
     </div>
   );
