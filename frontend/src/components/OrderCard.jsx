@@ -1,20 +1,12 @@
 import React from 'react';
 import { formatPrice, orderNumber } from '../lib/orderStatus';
+import timeAgo from '../lib/timeAgo';
+import { expandItems } from '../lib/orderRows';
 
 // Uso:
 // <OrderCard order={order} selected={selected} onOpen={openDetail}
 //     onFinalize={finalizeOrder} canFinalize={canFinalize(order)}
 //     statusLabel={meta.label} tone="info" />
-
-const timeAgo = (value) => {
-    const created = new Date(value).getTime();
-    const minutes = Math.floor((Date.now() - created) / 60000);
-    if (!Number.isFinite(minutes) || minutes < 1) return 'Agora mesmo';
-    if (minutes < 60) return `Há ${minutes} min`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `Há ${hours} h`;
-    return `Há ${Math.floor(hours / 24)} d`;
-};
 
 export default function OrderCard({
     order,
@@ -32,8 +24,8 @@ export default function OrderCard({
         }
     };
 
-    const items = order.items || [];
-    const extraItems = Math.max(0, items.length - 4);
+    const rows = expandItems(order.items);
+    const extraRows = Math.max(0, rows.length - 4);
 
     return (
         <div
@@ -61,20 +53,16 @@ export default function OrderCard({
                     <span>Valor</span>
                 </div>
                 <ul className="orders-card-table-body">
-                    {items.slice(0, 4).map((item) => (
-                        <li key={item.id} className="orders-card-table-row">
-                            <span className="orders-card-item-name">
-                                {item.product?.name || 'Produto'}
-                            </span>
-                            <span className="orders-card-qty">
-                                {String(item.quantity).padStart(2, '0')}
-                            </span>
-                            <span className="orders-card-value">{formatPrice(item.subtotal)}</span>
+                    {rows.slice(0, 4).map((row) => (
+                        <li key={row.key} className="orders-card-table-row">
+                            <span className="orders-card-item-name">{row.name}</span>
+                            <span className="orders-card-qty">01</span>
+                            <span className="orders-card-value">{formatPrice(row.value)}</span>
                         </li>
                     ))}
                 </ul>
-                {extraItems > 0 && (
-                    <p className="orders-card-more">{`+ ${extraItems} item(ns)`}</p>
+                {extraRows > 0 && (
+                    <p className="orders-card-more">{`+ ${extraRows} item(ns)`}</p>
                 )}
             </div>
 
