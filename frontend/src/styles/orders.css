@@ -1,0 +1,721 @@
+/* TODO: confirmar no Dev Mode do Figma (valores aproximados) */
+:root {
+    /* TODO: confirmar no Dev Mode do Figma (largura máxima da página de Pedidos) */
+    --orders-page-max-width: 1280px;
+
+    --orders-text: var(--text-primary, #03071e);
+    --orders-secondary: var(--text-secondary, #475569);
+    --orders-purple: #3d2a9c;
+    --orders-blue: var(--accent, #1d4ed8);
+    --orders-on-blue: #ffffff;
+    --orders-border: var(--text-primary, #03071e);
+    --orders-soft: var(--border-color, #e2e8f0);
+    --orders-card-bg: var(--card-bg, #ffffff);
+    --orders-hover-bg: var(--bg-tertiary, #f8fafc);
+    --orders-input-bg: var(--input-bg, #fafbfd);
+    --orders-soft-blue: #b9cdea;
+    --orders-soft-blue-hover: #a6bfe2;
+    --orders-focus-ring: #6366f1;
+    --orders-shadow: var(--card-shadow, 0 4px 16px rgba(3, 7, 30, 0.05));
+
+    /* TODO: confirmar no Dev Mode do Figma (medidas dos cartões e do painel) */
+    --orders-radius: 14px;
+    --orders-field-radius: 6px;
+    --orders-gap: 14px;
+    --orders-card-padding: 12px;
+    --orders-card-min-width: 280px;
+    --orders-badge-size: 9px;
+    --orders-badge-padding: 2px 10px;
+    --orders-name-size: 18px;
+    --orders-table-size: 10px;
+    --orders-total-size: 14px;
+    --orders-finalize-height: 28px;
+    --orders-finalize-size: 11px;
+
+    /* TODO: confirmar no Dev Mode do Figma (painel/pop-up de detalhe do pedido) */
+    --orders-detail-width: 300px;
+    --orders-detail-padding: 12px;
+    --orders-detail-gap: 10px;
+    --orders-detail-text-size: 11px;
+    --orders-detail-name-size: 20px;
+    --orders-thumb-size: 40px;
+    --orders-primary-height: 34px;
+    --orders-secondary-height: 28px;
+    --orders-detail-top-offset: 16px;
+
+    /* TODO: confirmar no Dev Mode do Figma (modal de alteração de status) */
+    --orders-pill-padding: 4px 10px;
+    --orders-field-height: 30px;
+    --orders-message-size: 12px;
+}
+
+/* ===== Página ===== */
+
+.orders-page {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    max-width: var(--orders-page-max-width);
+    min-width: 0;
+    padding: 4px 0 24px;
+    color: var(--orders-text);
+}
+
+.orders-store-status {
+    min-width: 0;
+}
+
+.orders-message {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 10px 12px;
+    border: 1px solid currentColor;
+    border-radius: 8px;
+    font-size: var(--orders-message-size);
+    line-height: 1.4;
+}
+
+.orders-message--error {
+    color: var(--danger);
+    background: color-mix(in srgb, var(--danger) 8%, var(--orders-card-bg));
+}
+
+.orders-message--success {
+    color: var(--success);
+    background: color-mix(in srgb, var(--success) 8%, var(--orders-card-bg));
+}
+
+.orders-last-created {
+    margin: 0;
+    padding: 8px 12px;
+    border: 1px solid var(--orders-soft);
+    border-radius: var(--orders-field-radius);
+    background: var(--orders-hover-bg);
+    font-size: var(--orders-message-size);
+}
+
+/* ===== Controles ===== */
+
+.orders-list-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+}
+
+.orders-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    min-width: 0;
+}
+
+.orders-filter-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    min-width: 0;
+}
+
+.orders-filter-label {
+    color: var(--orders-text);
+    font-size: var(--orders-message-size);
+    white-space: nowrap;
+}
+
+.orders-filter-select {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 260px;
+    height: var(--orders-field-height);
+    padding: 0 8px;
+    border: 1px solid var(--orders-soft);
+    border-radius: var(--orders-field-radius);
+    background: var(--orders-input-bg);
+    color: var(--orders-text);
+    font-family: inherit;
+    font-size: var(--orders-message-size);
+}
+
+.orders-filter-select:focus,
+.orders-search input:focus {
+    outline: 2px solid var(--orders-blue);
+    outline-offset: 1px;
+}
+
+.orders-search {
+    display: flex;
+    min-width: 0;
+    margin: 0;
+}
+
+.orders-search input {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 340px;
+    height: var(--orders-field-height);
+    padding: 0 10px;
+    border: 1px solid var(--orders-soft);
+    border-radius: var(--orders-field-radius);
+    background: var(--orders-input-bg);
+    color: var(--orders-text);
+    font-family: inherit;
+    font-size: var(--orders-message-size);
+}
+
+/* ===== Grade de pedidos ===== */
+
+.orders-layout {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--orders-gap);
+    min-width: 0;
+}
+
+.orders-layout > .orders-grid {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.orders-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(var(--orders-card-min-width), 100%), 1fr));
+    align-items: start;
+    gap: var(--orders-gap);
+}
+
+.orders-empty {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: var(--orders-secondary);
+    font-size: var(--orders-message-size);
+}
+
+.orders-card {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+    padding: var(--orders-card-padding);
+    border: 1px solid var(--orders-border);
+    border-radius: var(--orders-radius);
+    background: transparent;
+    color: var(--orders-text);
+    cursor: pointer;
+}
+
+.orders-card:hover {
+    background: var(--orders-hover-bg);
+    box-shadow: var(--orders-shadow);
+}
+
+.orders-card:focus-visible {
+    outline: 2px solid var(--orders-blue);
+    outline-offset: 2px;
+}
+
+.orders-card--selected {
+    border-width: 2px;
+    box-shadow: var(--orders-shadow);
+}
+
+.orders-card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.orders-card-heading {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.orders-card-name {
+    font-size: var(--orders-name-size);
+    font-weight: 700;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+.orders-card-order {
+    color: var(--orders-purple);
+    font-size: var(--orders-badge-size);
+}
+
+.orders-card-time {
+    font-size: var(--orders-badge-size);
+    font-weight: 700;
+}
+
+.orders-badge {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    padding: var(--orders-badge-padding);
+    border-radius: 999px;
+    background: var(--orders-blue);
+    color: var(--orders-on-blue);
+    font-size: var(--orders-badge-size);
+    font-weight: 500;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.orders-badge--danger {
+    background: var(--danger);
+}
+
+.orders-badge--warning {
+    background: var(--warning);
+}
+
+.orders-card-table-head,
+.orders-card-table-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 32px auto;
+    align-items: center;
+    gap: 6px;
+}
+
+.orders-card-table-head {
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--orders-soft);
+    color: var(--orders-purple);
+    font-size: var(--orders-table-size);
+    font-weight: 700;
+}
+
+.orders-card-table-body {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.orders-card-table-row {
+    padding: 4px 0;
+    border-bottom: 1px solid var(--orders-soft);
+    font-size: var(--orders-table-size);
+}
+
+.orders-card-item-name {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.orders-card-qty,
+.orders-card-value {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.orders-card-more {
+    margin: 4px 0 0;
+    color: var(--orders-secondary);
+    font-size: var(--orders-table-size);
+}
+
+.orders-card-total,
+.orders-detail-total {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: var(--orders-total-size);
+}
+
+.orders-card-finalize {
+    box-sizing: border-box;
+    width: 100%;
+    height: var(--orders-finalize-height);
+    border: none;
+    border-radius: var(--orders-field-radius);
+    background: var(--orders-blue);
+    color: var(--orders-on-blue);
+    font-family: inherit;
+    font-size: var(--orders-finalize-size);
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* ===== Painel de detalhe do pedido ===== */
+
+.orders-detail {
+    position: sticky;
+    top: var(--orders-detail-top-offset);
+    box-sizing: border-box;
+    flex: 0 0 var(--orders-detail-width);
+    width: var(--orders-detail-width);
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+    padding: var(--orders-detail-padding);
+    border: 1px solid var(--orders-border);
+    border-radius: var(--orders-radius);
+    background: var(--card-bg);
+    box-shadow: var(--orders-shadow);
+}
+
+.orders-detail-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--orders-detail-gap);
+    min-width: 0;
+}
+
+.orders-detail-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.orders-detail-expand,
+.orders-detail__collapse {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    flex: 0 0 auto;
+    width: 32px;
+    height: 32px;
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: var(--orders-soft-blue);
+    color: var(--orders-text);
+    cursor: pointer;
+}
+
+.orders-detail-expand:hover,
+.orders-detail__collapse:hover {
+    background: var(--orders-soft-blue-hover);
+}
+
+.orders-detail-expand:focus-visible,
+.orders-detail__collapse:focus-visible {
+    outline: 2px solid var(--orders-focus-ring);
+    outline-offset: 2px;
+}
+
+.orders-detail-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.orders-detail-name {
+    font-size: var(--orders-detail-name-size);
+    font-weight: 700;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+}
+
+.orders-detail-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: var(--orders-badge-size);
+}
+
+.orders-detail-order {
+    color: var(--orders-purple);
+}
+
+.orders-detail-date {
+    font-weight: 700;
+}
+
+.orders-detail-label {
+    display: block;
+    font-size: var(--orders-message-size);
+    font-weight: 700;
+}
+
+.orders-detail-table {
+    margin-top: 6px;
+}
+
+.orders-detail-table-head,
+.orders-detail-table-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 32px auto;
+    align-items: center;
+    gap: 6px;
+}
+
+.orders-detail-table-head {
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--orders-soft);
+    color: var(--orders-purple);
+    font-size: var(--orders-detail-text-size);
+    font-weight: 700;
+}
+
+.orders-detail-table-body {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.orders-detail-table-row {
+    padding: 6px 0;
+    border-bottom: 1px solid var(--orders-soft);
+    font-size: var(--orders-detail-text-size);
+}
+
+.orders-detail-table-row:last-child {
+    border-bottom: none;
+}
+
+.orders-detail-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    min-width: 0;
+}
+
+.orders-detail-thumb {
+    box-sizing: border-box;
+    flex: 0 0 auto;
+    width: var(--orders-thumb-size);
+    height: var(--orders-thumb-size);
+    border: 1px solid var(--orders-soft);
+    border-radius: var(--orders-field-radius);
+    object-fit: cover;
+}
+
+.orders-detail-thumb--fallback {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--orders-hover-bg);
+    color: var(--orders-purple);
+}
+
+.orders-detail-item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.orders-detail-item-name,
+.orders-detail-item-note {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.orders-detail-item-note {
+    color: var(--orders-secondary);
+}
+
+.orders-detail-qty,
+.orders-detail-value {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.orders-detail-notes {
+    margin: 0;
+    color: var(--orders-secondary);
+    font-size: var(--orders-detail-text-size);
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+.orders-detail-history p {
+    margin: 0 0 4px;
+    color: var(--orders-secondary);
+    font-size: var(--orders-detail-text-size);
+    line-height: 1.4;
+}
+
+.orders-detail-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.orders-detail-main-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.orders-detail-main-actions--modal {
+    flex-direction: row;
+}
+
+.orders-detail-copy,
+.orders-detail-secondary-button,
+.orders-status-cancel {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: var(--orders-secondary-height);
+    margin: 0;
+    padding: 0 10px;
+    border: 1px solid var(--orders-border);
+    border-radius: var(--orders-field-radius);
+    background: transparent;
+    color: var(--orders-text);
+    font-family: inherit;
+    font-size: var(--orders-finalize-size);
+    cursor: pointer;
+}
+
+.orders-detail-edit,
+.orders-detail-finalize,
+.orders-status-confirm {
+    box-sizing: border-box;
+    flex: 1 1 auto;
+    height: var(--orders-primary-height);
+    border: none;
+    border-radius: var(--orders-field-radius);
+    background: var(--orders-blue);
+    color: var(--orders-on-blue);
+    font-family: inherit;
+    font-size: var(--orders-message-size);
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.orders-detail-secondary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.orders-detail-secondary-button--danger {
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
+.orders-detail-content--modal {
+    gap: 12px;
+}
+
+.orders-detail-content--modal .orders-detail-table-head,
+.orders-detail-content--modal .orders-detail-table-row {
+    font-size: var(--orders-message-size);
+}
+
+/* ===== Modal de alteração de status ===== */
+
+.orders-status-modal {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.orders-status-error {
+    margin: 0;
+    color: var(--danger);
+    font-size: var(--orders-message-size);
+}
+
+.orders-status-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 0;
+}
+
+.orders-status-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--orders-pill-padding);
+    border: 1px solid var(--orders-border);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--orders-text);
+    font-family: inherit;
+    font-size: var(--orders-message-size);
+    cursor: pointer;
+}
+
+.orders-status-pill[aria-pressed='true'] {
+    border-color: var(--orders-blue);
+    background: var(--orders-blue);
+    color: var(--orders-on-blue);
+}
+
+.orders-status-pill:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.orders-status-reason {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0;
+}
+
+.orders-status-label {
+    color: var(--orders-secondary);
+    font-size: var(--orders-badge-size);
+}
+
+.orders-status-reason textarea {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 8px;
+    border: 1px solid var(--orders-soft);
+    border-radius: var(--orders-field-radius);
+    background: var(--orders-input-bg);
+    color: var(--orders-text);
+    font-family: inherit;
+    font-size: var(--orders-message-size);
+    resize: vertical;
+}
+
+.orders-status-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    margin: 0;
+}
+
+/* ===== Responsivo ===== */
+
+@media (max-width: 900px) {
+    .orders-detail {
+        display: none;
+    }
+}
+
+@media (max-width: 760px) {
+    .orders-controls {
+        align-items: flex-start;
+    }
+
+    .orders-controls > [data-action-toolbar] {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}
+
+@media (max-width: 560px) {
+    .orders-controls > [data-segmented-control] {
+        width: 100%;
+    }
+
+    .orders-detail-main-actions--modal {
+        flex-direction: column;
+    }
+}

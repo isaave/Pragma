@@ -1,8 +1,17 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Minimize2 } from 'lucide-react';
 import api from '../Services/api';
 import StoreStatus from '../components/StoreStatus';
+import PageHeader from '../components/ui/PageHeader';
+import SegmentedControl from '../components/ui/SegmentedControl';
+import ActionToolbar from '../components/ui/ActionToolbar';
+import Modal from '../components/ui/Modal';
+import OrderCard from '../components/OrderCard';
+import OrderDetail from '../components/OrderDetail';
+import useIsMobile from '../hooks/useIsMobile';
 import {
     FILTERS,
+    OPEN_STATUSES,
     STATUS_META,
     STATUS_ORDER,
     formatDateTime,
@@ -11,6 +20,9 @@ import {
     getHistory,
     orderNumber,
 } from '../lib/orderStatus';
+import '../styles/orders.css';
+
+const COMPLETE_STATUSES = ['delivered', 'cancelled', 'not_delivered', 'late'];
 
 const escapeHtml = (value) =>
     String(value ?? '').replace(/[&<>"']/g, (char) => ({
@@ -180,6 +192,14 @@ export default function Orders() {
 
     // Modal de alteração de status
     const [statusModal, setStatusModal] = useState(null); // { order, selected, reason, saving, error }
+
+    // Visualização da lista
+    const [grupo, setGrupo] = useState('all');
+    const [mostrarBusca, setMostrarBusca] = useState(false);
+    const [mostrarFiltros, setMostrarFiltros] = useState(false);
+    const [detailId, setDetailId] = useState(null);
+    const [detailExpanded, setDetailExpanded] = useState(false);
+    const isMobile = useIsMobile();
 
     /* ---------------- Carregamento ---------------- */
 
@@ -510,6 +530,22 @@ export default function Orders() {
         });
     }, [orders, filter, search]);
 
+    const visibleOrders = filteredOrders.filter((order) => {
+        if (grupo === 'novos') return OPEN_STATUSES.includes(order.status);
+        if (grupo === 'completo') return COMPLETE_STATUSES.includes(order.status);
+        return true;
+    });
+
+    const selectedOrder = orders.find((o) => o.id === detailId) || null;
+
+    const canFinalize = (order) => OPEN_STATUSES.includes(order.status);
+    const canEdit = (order) => !['delivered', 'cancelled'].includes(order.status);
+
+    const finalizeOrder = (order) => {
+        setDetailId(null);
+        setStatusModal({ order, selected: 'delivered', reason: '', saving: false, error: '' });
+    };
+
     /* ---------------- Render ---------------- */
 
     const renderTimeline = (order) => (
@@ -528,35 +564,22 @@ export default function Orders() {
     );
 
     return (
-        <div>
-            <header>
-                <h1>Gestão de Pedidos</h1>
-                <p>
-                    Crie pedidos com os produtos cadastrados, imprima, copie para o WhatsApp e
-                    acompanhe cada alteração de status.
-                </p>
-                <p>
-                    <button
-                        type="button"
-                        onClick={toggleNewOrder}
-                        aria-expanded={showNewOrder}
-                        aria-controls="new-order-form"
-                    >
-                        {showNewOrder ? '− Fechar novo pedido' : '+ Novo pedido'}
-                    </button>
-                </p>
-            </header>
+        <div className="orders-page">
+            <PageHeader
+                title="Gestão de pedidos"
+                subtitle="Controle de entrada e saída de pedidos"
+            />
 
-            <div style={{ marginBottom: '16px' }}>
+            <div className="orders-store-status">
                 <StoreStatus compact />
             </div>
 
-            {error && <p role="alert">{error}</p>}
+            {error && <p className="orders-message orders-message--error" role="alert">{error}</p>}
 
-            {success && <p role="status">{success}</p>}
+            {success && <p className="orders-message orders-message--success" role="status">{success}</p>}
 
             {lastCreated && (
-                <p>
+                <p className="orders-last-created">
                     Pedido {orderNumber(lastCreated.id)} pronto para imprimir ou copiar.{' '}
                     <button type="button" onClick={() => printOrder(lastCreated)}>
                         Imprimir
@@ -726,229 +749,277 @@ export default function Orders() {
             )}
 
             {/* ================= LISTA ================= */}
-            <section>
+            <section className="orders-list-section">
                 <h2>Pedidos</h2>
                 <p>
                     Altere o status, imprima, copie ou consulte o histórico de cada pedido.
                 </p>
 
-                <p>
-                    <label htmlFor="order-search">Buscar pedido</label>{' '}
-                    <input
-                        id="order-search"
-                        type="search"
-                        placeholder="Nº do pedido, cliente ou atendente"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
+                <div className="orders-controls">
+                    <SegmentedControl
+                        options={[{ value: 'all', label: 'Todos' }, { value: 'novos', label: 'Novos' }, { value: 'completo', label: 'Completo' }]}
+                        value={grupo}
+                        onChange={setGrupo}
                     />
-                </p>
+                    <ActionToolbar
+                        onAdd={toggleNewOrder}
+                        onSearch={() => setMostrarBusca(v => !v)}
+                        onFilter={() => setMostrarFiltros(v => !v)}
+                    />
+                </div>
 
-                <p>
-                    {FILTERS.map((item) => (
-                        <button
-                            key={item.key}
-                            type="button"
-                            aria-pressed={filter === item.key}
-                            onClick={() => setFilter(item.key)}
+                {mostrarFiltros && (
+                    <div className="orders-filter-row">
+                        <label className="orders-filter-label" htmlFor="orders-status-filter">
+                            Filtrar por status
+                        </label>
+                        <select
+                            id="orders-status-filter"
+                            className="orders-filter-select"
+                            aria-label="Filtrar por status"
+                            value={filter}
+                            onChange={(e) => setFilter(e.target.value)}
                         >
-                            {item.label} ({counts[item.key] || 0})
-                        </button>
-                    ))}
-                </p>
-
-                {loading ? (
-                    <p>A carregar pedidos...</p>
-                ) : filteredOrders.length === 0 ? (
-                    <p>Nenhum pedido encontrado com estes filtros.</p>
-                ) : (
-                    <ul>
-                        {filteredOrders.map((order) => {
-                            const meta = STATUS_META[order.status] || {
-                                label: order.status,
-                            };
-                            const itemCount = (order.items || []).reduce(
-                                (sum, item) => sum + item.quantity,
-                                0
-                            );
-                            const history = getHistory(order);
-                            const expanded = expandedId === order.id;
-                            const canDelete = !['delivered', 'cancelled'].includes(order.status);
-
-                            return (
-                                <li key={order.id}>
-                                    <article>
-                                        <h3>
-                                            {orderNumber(order.id)} —{' '}
-                                            {order.customer_name || 'Sem nome do cliente'}
-                                        </h3>
-
-                                        <p>
-                                            Status: {meta.label} · Total:{' '}
-                                            {formatPrice(order.total)}
-                                        </p>
-
-                                        <p>
-                                            {formatDateTime(order.created_at)} ·{' '}
-                                            {order.user?.name || '—'} · {itemCount} item(ns)
-                                        </p>
-
-                                        <ul>
-                                            {(order.items || []).map((item) => (
-                                                <li key={item.id}>
-                                                    {item.quantity}×{' '}
-                                                    {item.product?.name || 'Produto'} —{' '}
-                                                    {formatPrice(item.subtotal)}
-                                                    {(item.addons || []).map((addon) => (
-                                                        <div key={addon.id}>
-                                                            + {addon.quantity}×{' '}
-                                                            {addon.addon?.name || 'Adicional'}
-                                                        </div>
-                                                    ))}
-                                                    {item.notes && <div>Obs.: {item.notes}</div>}
-                                                </li>
-                                            ))}
-                                        </ul>
-
-                                        {order.notes && (
-                                            <p>
-                                                <strong>Observações do pedido:</strong>{' '}
-                                                {order.notes}
-                                            </p>
-                                        )}
-
-                                        <p>
-                                            <button
-                                                type="button"
-                                                onClick={() => printOrder(order)}
-                                            >
-                                                Imprimir
-                                            </button>{' '}
-                                            <button
-                                                type="button"
-                                                onClick={() => copyOrder(order)}
-                                            >
-                                                {copiedId === order.id
-                                                    ? 'Copiado!'
-                                                    : 'Copiar'}
-                                            </button>{' '}
-                                            <button
-                                                type="button"
-                                                onClick={() => openStatusModal(order)}
-                                            >
-                                                Alterar status
-                                            </button>{' '}
-                                            {canDelete && (
-                                                <>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => startEditOrder(order)}
-                                                    >
-                                                        Editar
-                                                    </button>{' '}
-                                                </>
-                                            )}
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    setExpandedId(expanded ? null : order.id)
-                                                }
-                                            >
-                                                Histórico ({history.length})
-                                            </button>
-                                            {canDelete && (
-                                                <>
-                                                    {' '}
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => deleteOrder(order)}
-                                                    >
-                                                        Excluir
-                                                    </button>
-                                                </>
-                                            )}
-                                        </p>
-
-                                        {expanded && renderTimeline(order)}
-                                    </article>
-                                </li>
-                            );
-                        })}
-                    </ul>
+                            {FILTERS.map((item) => (
+                                <option key={item.key} value={item.key}>
+                                    {`${item.label} (${counts[item.key] || 0})`}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
                 )}
+
+                {(mostrarBusca || search) && (
+                    <p className="orders-search">
+                        <input
+                            id="order-search"
+                            type="search"
+                            placeholder="Nº do pedido, cliente ou atendente"
+                            aria-label="Buscar pedido"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                        />
+                    </p>
+                )}
+
+                <div className="orders-layout">
+                    <div className="orders-grid">
+                        {loading ? (
+                            <p className="orders-empty">A carregar pedidos...</p>
+                        ) : visibleOrders.length === 0 ? (
+                            <p className="orders-empty">Nenhum pedido encontrado com estes filtros.</p>
+                        ) : (
+                            visibleOrders.map((order) => {
+                                const meta = STATUS_META[order.status] || {
+                                    label: order.status,
+                                };
+                                const tone =
+                                    order.status === 'cancelled'
+                                        ? 'danger'
+                                        : order.status === 'not_delivered' ||
+                                            order.status === 'late'
+                                          ? 'warning'
+                                          : 'info';
+
+                                return (
+                                    <OrderCard
+                                        key={order.id}
+                                        order={order}
+                                        selected={order.id === detailId}
+                                        onOpen={(opened) => {
+                                            setDetailId(opened.id);
+                                            setDetailExpanded(false);
+                                        }}
+                                        onFinalize={finalizeOrder}
+                                        canFinalize={canFinalize(order)}
+                                        statusLabel={meta.label}
+                                        tone={tone}
+                                    />
+                                );
+                            })
+                        )}
+                    </div>
+
+                    {selectedOrder && !detailExpanded && !isMobile && (
+                        <aside className="orders-detail">
+                            <OrderDetail
+                                order={selectedOrder}
+                                variant="panel"
+                                expanded={detailExpanded}
+                                onToggleExpand={() => setDetailExpanded(v => !v)}
+                                onClose={() => setDetailId(null)}
+                                onEdit={() => {
+                                    const order = selectedOrder;
+                                    setDetailId(null);
+                                    startEditOrder(order);
+                                }}
+                                onFinalize={finalizeOrder}
+                                onChangeStatus={() => {
+                                    const order = selectedOrder;
+                                    setDetailId(null);
+                                    openStatusModal(order);
+                                }}
+                                onCopy={copyOrder}
+                                onPrint={printOrder}
+                                onDelete={deleteOrder}
+                                onToggleHistory={() =>
+                                    setExpandedId(expandedId === selectedOrder.id ? null : selectedOrder.id)
+                                }
+                                historyOpen={expandedId === selectedOrder.id}
+                                copied={copiedId === selectedOrder.id}
+                                canEdit={canEdit(selectedOrder)}
+                                canFinalize={canFinalize(selectedOrder)}
+                                renderTimeline={renderTimeline}
+                                formatDateTime={formatDateTime}
+                                formatPrice={formatPrice}
+                                orderNumber={orderNumber}
+                                getHistory={getHistory}
+                            />
+                        </aside>
+                    )}
+                </div>
             </section>
+
+            {selectedOrder && (detailExpanded || isMobile) && (
+                <Modal
+                    open
+                    onClose={() => setDetailId(null)}
+                    maxWidth="520px"
+                    showDivider={false}
+                    closePlacement="top"
+                    title={`Pedido ${orderNumber(selectedOrder.id)}`}
+                    headerStart={
+                        !isMobile ? (
+                            <button
+                                type="button"
+                                className="orders-detail__collapse"
+                                aria-label="Recolher"
+                                title="Recolher"
+                                onClick={() => setDetailExpanded(false)}
+                            >
+                                <Minimize2 size={16} />
+                            </button>
+                        ) : undefined
+                    }
+                >
+                    <OrderDetail
+                        order={selectedOrder}
+                        variant="modal"
+                        expanded={detailExpanded}
+                        onToggleExpand={() => setDetailExpanded(v => !v)}
+                        onClose={() => setDetailId(null)}
+                        onEdit={() => {
+                            const order = selectedOrder;
+                            setDetailId(null);
+                            startEditOrder(order);
+                        }}
+                        onFinalize={finalizeOrder}
+                        onChangeStatus={() => {
+                            const order = selectedOrder;
+                            setDetailId(null);
+                            openStatusModal(order);
+                        }}
+                        onCopy={copyOrder}
+                        onPrint={printOrder}
+                        onDelete={deleteOrder}
+                        onToggleHistory={() =>
+                            setExpandedId(expandedId === selectedOrder.id ? null : selectedOrder.id)
+                        }
+                        historyOpen={expandedId === selectedOrder.id}
+                        copied={copiedId === selectedOrder.id}
+                        canEdit={canEdit(selectedOrder)}
+                        canFinalize={canFinalize(selectedOrder)}
+                        renderTimeline={renderTimeline}
+                        formatDateTime={formatDateTime}
+                        formatPrice={formatPrice}
+                        orderNumber={orderNumber}
+                        getHistory={getHistory}
+                    />
+                </Modal>
+            )}
 
             {/* ================= MODAL DE STATUS ================= */}
             {statusModal && (
-                <div role="dialog" aria-modal="true" aria-labelledby="status-modal-title">
-                    <h2 id="status-modal-title">
-                        Alterar status {orderNumber(statusModal.order.id)}
-                    </h2>
-                    <p>Escolha o novo status do pedido.</p>
+                <Modal
+                    open={!!statusModal}
+                    onClose={closeStatusModal}
+                    maxWidth="480px"
+                    showDivider={false}
+                    closePlacement="top"
+                    title={`Alterar status ${orderNumber(statusModal.order.id)}`}
+                    subtitle="Escolha o novo status do pedido."
+                >
+                    <div className="orders-status-modal">
+                        {statusModal.error && (
+                            <p className="orders-status-error" role="alert">{statusModal.error}</p>
+                        )}
 
-                    {statusModal.error && <p role="alert">{statusModal.error}</p>}
-
-                    <p>
-                        {STATUS_ORDER.map((status) => {
-                            const meta = STATUS_META[status];
-                            const isCurrent = status === statusModal.order.status;
-                            return (
-                                <button
-                                    key={status}
-                                    type="button"
-                                    aria-pressed={statusModal.selected === status}
-                                    onClick={() => selectStatus(status)}
-                                    disabled={isCurrent}
-                                >
-                                    {meta.label}
-                                    {isCurrent ? ' (atual)' : ''}
-                                </button>
-                            );
-                        })}
-                    </p>
-
-                    {STATUS_META[statusModal.selected]?.needsReason && (
-                        <p>
-                            <label htmlFor="status-reason">
-                                Motivo (obrigatório para{' '}
-                                {STATUS_META[statusModal.selected].label.toLowerCase()})
-                            </label>{' '}
-                            <textarea
-                                id="status-reason"
-                                rows={3}
-                                maxLength={1000}
-                                placeholder="Explique o motivo desta alteração..."
-                                value={statusModal.reason}
-                                onChange={(e) =>
-                                    setStatusModal((prev) => ({
-                                        ...prev,
-                                        reason: e.target.value,
-                                        error: '',
-                                    }))
-                                }
-                            />
+                        <p className="orders-status-pills">
+                            {STATUS_ORDER.map((status) => {
+                                const meta = STATUS_META[status];
+                                const isCurrent = status === statusModal.order.status;
+                                return (
+                                    <button
+                                        key={status}
+                                        type="button"
+                                        className="orders-status-pill"
+                                        aria-pressed={statusModal.selected === status}
+                                        onClick={() => selectStatus(status)}
+                                        disabled={isCurrent}
+                                    >
+                                        {meta.label}
+                                        {isCurrent ? ' (atual)' : ''}
+                                    </button>
+                                );
+                            })}
                         </p>
-                    )}
 
-                    <p>
-                        <button
-                            type="button"
-                            onClick={closeStatusModal}
-                            disabled={statusModal.saving}
-                        >
-                            Cancelar
-                        </button>{' '}
-                        <button
-                            type="button"
-                            onClick={confirmStatus}
-                            disabled={
-                                statusModal.saving ||
-                                statusModal.selected === statusModal.order.status
-                            }
-                        >
-                            {statusModal.saving ? 'A guardar...' : 'Confirmar status'}
-                        </button>
-                    </p>
-                </div>
+                        {STATUS_META[statusModal.selected]?.needsReason && (
+                            <p className="orders-status-reason">
+                                <label className="orders-status-label" htmlFor="status-reason">
+                                    Motivo (obrigatório para{' '}
+                                    {STATUS_META[statusModal.selected].label.toLowerCase()})
+                                </label>{' '}
+                                <textarea
+                                    id="status-reason"
+                                    rows={3}
+                                    maxLength={1000}
+                                    placeholder="Explique o motivo desta alteração..."
+                                    value={statusModal.reason}
+                                    onChange={(e) =>
+                                        setStatusModal((prev) => ({
+                                            ...prev,
+                                            reason: e.target.value,
+                                            error: '',
+                                        }))
+                                    }
+                                />
+                            </p>
+                        )}
+
+                        <p className="orders-status-actions">
+                            <button
+                                type="button"
+                                className="orders-status-cancel"
+                                onClick={closeStatusModal}
+                                disabled={statusModal.saving}
+                            >
+                                Cancelar
+                            </button>{' '}
+                            <button
+                                type="button"
+                                className="orders-status-confirm"
+                                onClick={confirmStatus}
+                                disabled={
+                                    statusModal.saving ||
+                                    statusModal.selected === statusModal.order.status
+                                }
+                            >
+                                {statusModal.saving ? 'A guardar...' : 'Confirmar status'}
+                            </button>
+                        </p>
+                    </div>
+                </Modal>
             )}
         </div>
     );
