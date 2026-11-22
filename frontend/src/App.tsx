@@ -17,7 +17,7 @@ import useIsMobile from './hooks/useIsMobile';
 import { HeaderActionsContext } from './components/ui/PageHeader';
 
 // Telas onde o sino e o perfil dividem a linha com o PageHeader (somente desktop)
-const HEADER_INLINE_VIEWS = ['admin', 'stock', 'history', 'menu'];
+const HEADER_INLINE_VIEWS = ['admin', 'stock', 'history', 'menu', 'reports'];
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
