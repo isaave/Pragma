@@ -45,6 +45,7 @@ export default function Modal({
     titleNode,
     headerActions,
     ariaLabel,
+    headerStart,
 }) {
     const [titleId] = useState(() => `pragma-modal-title-${++nextModalId}`);
 
@@ -105,16 +106,33 @@ export default function Modal({
             >
                 {closePlacement === 'top' ? (
                     <>
-                        <div
-                            style={{
-                                display: 'flex',
-                                justifyContent: 'flex-end',
-                                padding: '18px 20px 0',
-                            }}
-                        >
-                            {headerActions}
-                            <CloseButton onClick={onClose} />
-                        </div>
+                        {headerStart ? (
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    padding: '18px 20px 0',
+                                }}
+                            >
+                                {headerStart}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    {headerActions}
+                                    <CloseButton onClick={onClose} />
+                                </div>
+                            </div>
+                        ) : (
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    justifyContent: 'flex-end',
+                                    padding: '18px 20px 0',
+                                }}
+                            >
+                                {headerActions}
+                                <CloseButton onClick={onClose} />
+                            </div>
+                        )}
                         <div
                             style={{
                                 display: 'flex',

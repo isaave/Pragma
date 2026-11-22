@@ -1,5 +1,5 @@
 import React from 'react';
-import { Maximize2, Minimize2, Trash2 } from 'lucide-react';
+import { Maximize2, Trash2 } from 'lucide-react';
 import CloseButton from './ui/CloseButton';
 
 // Uso:
@@ -56,20 +56,6 @@ export default function ProductDetail({
                         <Maximize2 size={16} strokeWidth={2} aria-hidden="true" />
                     </button>
                     <CloseButton onClick={onClose} />
-                </div>
-            )}
-
-            {isModal && (
-                <div className="products-detail-modal-head">
-                    <button
-                        type="button"
-                        className="products-detail-expand"
-                        aria-label="Recolher"
-                        title="Recolher"
-                        onClick={onToggleExpand}
-                    >
-                        <Minimize2 size={16} strokeWidth={2} aria-hidden="true" />
-                    </button>
                 </div>
             )}
 

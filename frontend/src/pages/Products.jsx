@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Check, Trash2, X } from 'lucide-react';
+import { Check, Minimize2, Trash2, X } from 'lucide-react';
 import api from '../Services/api';
 import {
     exportProductCsv,
@@ -571,6 +571,19 @@ export default function Products() {
                     showDivider={false}
                     closePlacement="top"
                     title={selectedProduct.name}
+                    headerStart={
+                        !isMobile ? (
+                            <button
+                                type="button"
+                                className="products-detail__collapse"
+                                aria-label="Recolher"
+                                title="Recolher"
+                                onClick={() => setDetailExpanded(false)}
+                            >
+                                <Minimize2 size={16} />
+                            </button>
+                        ) : undefined
+                    }
                 >
                     <ProductDetail
                         product={selectedProduct}
