@@ -16,6 +16,7 @@ import ProductCard from '../components/ProductCard';
 import ProductDetail from '../components/ProductDetail';
 import Modal from '../components/ui/Modal';
 import useIsMobile from '../hooks/useIsMobile';
+import useAutoDismiss from '../hooks/useAutoDismiss';
 import '../styles/products.css';
 
 const CATEGORIES = [
@@ -78,6 +79,7 @@ export default function Products() {
 
     const [detailId, setDetailId] = useState(null);
     const [detailExpanded, setDetailExpanded] = useState(false);
+    useAutoDismiss(info, setInfo, 4000);
     const isMobile = useIsMobile();
 
     const loadProducts = useCallback(async () => {
@@ -274,7 +276,7 @@ export default function Products() {
             <PageHeader title="Produtos" subtitle="Gerencie produtos, preços e disponibilidade" />
 
             {error && <p className="products-message products-message--error">{error}</p>}
-            {info && <p className="products-message products-message--info">{info}</p>}
+            {info && <p className="products-message products-message--info" role="status" aria-live="polite">{info}</p>}
 
             {/* Filtros e busca */}
             <div className="products-controls">
