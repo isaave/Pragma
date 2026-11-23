@@ -1,0 +1,439 @@
+/* TODO: confirmar no Dev Mode do Figma (valores aproximados) */
+:root {
+    /* TODO: confirmar no Dev Mode do Figma (largura máxima da página de Estoque) */
+    --stock-page-max-width: 1280px;
+
+    --stock-text: var(--text-primary, #03071e);
+    --stock-secondary: var(--text-secondary, #475569);
+    --stock-purple: #3d2a9c; 
+    --stock-border: var(--text-primary, #03071e);
+    --stock-soft-border: var(--border-color, #e2e8f0);
+    --stock-card-bg: var(--card-bg, #ffffff);
+    --stock-input-bg: var(--input-bg, #fafbfd);
+    --stock-accent: var(--accent, #1d4ed8);
+    --stock-danger: var(--danger, #b91c1c);
+    --stock-success: var(--success, #15803d);
+
+    --stock-radius: 14px;
+    --stock-field-radius: 6px;
+    --stock-gap: 14px;
+    /* TODO: confirmar no Dev Mode do Figma (larguras e altura mínima do card) */
+    --stock-card-min-width: 170px;
+    --stock-card-max-width: 230px;
+    --stock-card-min-height: 120px;
+    --stock-label-size: 10px;
+    --stock-field-size: 12px;
+    --stock-field-height: 30px;
+}
+
+[data-theme="dark"] {
+    /* TODO: confirmar no Dev Mode do Figma (versão mais clara do roxo para o tema escuro) */
+   --stock-purple: #b3a8f5; 
+}
+
+/* ===== Página ===== */
+
+.stock-page {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    max-width: var(--stock-page-max-width);
+    min-width: 0;
+    padding: 4px 0 24px;
+}
+
+.stock-message {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 10px 12px;
+    border: 1px solid currentColor;
+    border-radius: 8px;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.stock-message--error {
+    color: var(--stock-danger);
+    background: color-mix(in srgb, var(--stock-danger) 8%, var(--stock-card-bg));
+}
+
+.stock-message--info {
+    color: var(--stock-success);
+    background: color-mix(in srgb, var(--stock-success) 8%, var(--stock-card-bg));
+}
+
+/* ===== Controles ===== */
+
+.stock-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    min-width: 0;
+}
+
+.stock-controls-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+/* Ordenação */
+.stock-ordenacao {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.stock-ordenacao-label {
+    color: var(--stock-text);
+    font-size: var(--stock-field-size);
+    white-space: nowrap;
+}
+
+.stock-ordenacao-select {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 240px;
+    height: var(--stock-field-height);
+    padding: 0 8px;
+    border: 1px solid var(--stock-soft-border);
+    border-radius: var(--stock-field-radius);
+    background: var(--stock-input-bg);
+    color: var(--stock-text);
+    font-family: inherit;
+    font-size: var(--stock-field-size);
+}
+
+.stock-ordenacao-select:focus {
+    outline: 2px solid var(--stock-accent);
+    outline-offset: 1px;
+}
+
+.stock-search {
+    display: flex;
+    min-width: 0;
+}
+
+.stock-search input {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 320px;
+    height: var(--stock-field-height);
+    padding: 0 10px;
+    border: 1px solid var(--stock-soft-border);
+    border-radius: var(--stock-field-radius);
+    background: var(--stock-input-bg);
+    color: var(--stock-text);
+    font-size: var(--stock-field-size);
+    font-family: inherit;
+}
+
+.stock-export-all {
+    position: relative;
+}
+
+.stock-export-all > summary {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    height: 30px;
+    padding: 0 12px;
+    border: 1px solid var(--stock-border);
+    border-radius: 999px;
+    background: var(--stock-card-bg);
+    color: var(--stock-text);
+    font-size: 12.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    list-style: none;
+}
+
+.stock-export-all > summary::-webkit-details-marker {
+    display: none;
+}
+
+.stock-export-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 120px;
+    padding: 6px;
+    border: 1px solid var(--stock-soft-border);
+    border-radius: 10px;
+    background: var(--stock-card-bg);
+    box-shadow: var(--card-shadow, 0 4px 16px rgba(3, 7, 30, 0.05));
+}
+
+.stock-export-menu button {
+    display: block;
+    width: 100%;
+    padding: 6px 8px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--stock-text);
+    font-size: 12px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.stock-export-menu button:hover:not(:disabled) {
+    background: var(--accent-light, #eff6ff);
+}
+
+.stock-export-menu button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ===== Grade de cards ===== */
+
+.stock-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(var(--stock-card-min-width), var(--stock-card-max-width)));
+    justify-content: start;
+    gap: var(--stock-gap);
+}
+
+.stock-card {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: var(--stock-card-min-height);
+    padding: 12px;
+    border: 1px solid var(--stock-border);
+    border-radius: var(--stock-radius);
+    background: var(--stock-card-bg);
+    color: var(--stock-text);
+    cursor: pointer;
+}
+
+.stock-card:hover {
+    background: var(--bg-tertiary, #f8fafc);
+    box-shadow: var(--card-shadow, 0 4px 16px rgba(3, 7, 30, 0.05));
+}
+
+.stock-card:focus-visible {
+    outline: 2px solid var(--stock-accent);
+    outline-offset: 2px;
+}
+
+.stock-card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.stock-card-name {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+.stock-card-edit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 22px;
+    height: 22px;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--stock-border);
+    border-radius: 50%;
+    background: transparent;
+    color: var(--stock-text);
+    cursor: pointer;
+}
+
+.stock-card-dates {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    margin-top: 4px;
+    color: var(--stock-purple);
+    font-size: 10px;
+    font-weight: 400;
+    line-height: 1.4;
+}
+
+.stock-card-expiry.is-near {
+    color: var(--stock-danger);
+}
+
+.stock-card-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: auto;
+    padding-top: 6px;
+}
+
+.stock-card-quantity {
+    color: var(--stock-purple);
+    font-size: 10px;
+    font-weight: 400;
+    line-height: 1.4;
+}
+
+.stock-card-percentage {
+    color: var(--stock-text);
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.stock-empty {
+    margin: 0;
+    padding: 24px 0;
+    color: var(--stock-secondary);
+    font-size: 13px;
+    text-align: center;
+}
+
+/* ===== Formulários dos pop-ups ===== */
+
+.stock-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 16px;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.stock-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.stock-field--full {
+    grid-column: 1 / -1;
+}
+
+.stock-field--quantity input {
+    max-width: 110px;
+}
+
+.stock-field label {
+    color: var(--stock-text);
+    font-size: var(--stock-label-size);
+    font-weight: 400;
+    line-height: 1.3;
+}
+
+.stock-field input {
+    box-sizing: border-box;
+    width: 100%;
+    height: var(--stock-field-height);
+    padding: 0 8px;
+    border: 1px solid var(--stock-soft-border);
+    border-radius: var(--stock-field-radius);
+    background: var(--stock-input-bg);
+    color: var(--stock-text);
+    font-family: inherit;
+    font-size: var(--stock-field-size);
+}
+
+.stock-field input:focus {
+    outline: 2px solid var(--stock-accent);
+    outline-offset: 1px;
+}
+
+.stock-form-primary {
+    box-sizing: border-box;
+    width: 100%;
+    height: 32px;
+    border: none;
+    border-radius: var(--stock-field-radius);
+    background: var(--stock-accent);
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.stock-form-divider {
+    grid-column: 1 / -1;
+    height: 1px;
+    background: var(--stock-soft-border);
+}
+
+.stock-form-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 8px;
+    grid-column: 1 / -1;
+}
+
+.stock-form-actions button {
+    height: 28px;
+    padding: 0 10px;
+    border: 1px solid var(--stock-border);
+    border-radius: var(--stock-field-radius);
+    background: transparent;
+    color: var(--stock-text);
+    font-size: 11px;
+    cursor: pointer;
+}
+
+.stock-form-actions .stock-form-danger {
+    border-color: var(--stock-danger);
+    color: var(--stock-danger);
+}
+
+/* ===== Responsivo ===== */
+
+@media (max-width: 419px) {
+    .stock-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .stock-card {
+        width: 100%;
+    }
+}
+
+@media (max-width: 760px) {
+    .stock-controls {
+        align-items: flex-start;
+    }
+
+    .stock-controls-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}
+
+@media (max-width: 560px) {
+    .stock-form {
+        grid-template-columns: 1fr;
+    }
+
+    .stock-ordenacao {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .stock-ordenacao-select {
+        max-width: none;
+    }
+}

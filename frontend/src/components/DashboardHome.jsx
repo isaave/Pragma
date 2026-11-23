@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Send } from 'lucide-react';
+import { Check, Pencil, Send, Utensils, X } from 'lucide-react';
 import api from '../Services/api';
 import { formatPrice } from '../lib/orderStatus';
+import PageHeader from '../components/ui/PageHeader';
+import Modal from '../components/ui/Modal';
+import '../styles/dashboard.css';
 
 const hours = ['11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00'];
 
@@ -51,30 +54,29 @@ const LineChart = ({ hours, sales, costs, profit }) => {
         `${pathFor(arr)} L${x(arr.length - 1).toFixed(1)},${y(0).toFixed(1)} L${x(0).toFixed(1)},${y(0).toFixed(1)} Z`;
 
     return (
-        <svg viewBox={`0 0 ${width} ${height}`} width="100%" height={220} role="img" aria-label="Fluxo de caixa operacional">
+        <svg className="dash-line-chart" viewBox={`0 0 ${width} ${height}`} width="100%" height={220} role="img" aria-label="Fluxo de caixa operacional">
             {[0.25, 0.5, 0.75, 1].map((f) => (
                 <line
                     key={f}
+                    className="dash-grid-line"
                     x1={pad.left}
                     x2={width - pad.right}
                     y1={y(maxVal * f)}
                     y2={y(maxVal * f)}
-                    stroke="#e5e7eb"
-                    strokeWidth="1"
                 />
             ))}
-            <path d={areaFor(sales)} fill="rgba(29, 78, 216, 0.12)" />
-            <path d={pathFor(sales)} fill="none" stroke="#1d4ed8" strokeWidth="2.5" strokeLinecap="round" />
-            <path d={pathFor(costs)} fill="none" stroke="#dc2626" strokeWidth="2.5" strokeLinecap="round" />
-            {profit && <path d={lineFor(profit)} fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" />}
+            <path d={areaFor(sales)} className="dash-line-area" />
+            <path d={pathFor(sales)} className="dash-line--sales" />
+            <path d={pathFor(costs)} className="dash-line--costs" />
+            {profit && <path d={lineFor(profit)} className="dash-line--profit" />}
             {sales.map((v, i) => (
-                <circle key={`s${i}`} cx={x(i)} cy={y(v)} r="3" fill="#1d4ed8" />
+                <circle key={`s${i}`} className="dash-line-point--sales" cx={x(i)} cy={y(v)} r="3" />
             ))}
             {costs.map((v, i) => (
-                <circle key={`c${i}`} cx={x(i)} cy={y(v)} r="3" fill="#dc2626" />
+                <circle key={`c${i}`} className="dash-line-point--costs" cx={x(i)} cy={y(v)} r="3" />
             ))}
             {hours.map((h, i) => (
-                <text key={h} x={x(i)} y={height - 8} fontSize="10" fill="#64748b" textAnchor="middle">
+                <text key={h} className="dash-axis-label" x={x(i)} y={height - 8} textAnchor="middle">
                     {h}
                 </text>
             ))}
@@ -99,26 +101,24 @@ const DonutChart = ({ data }) => {
     }));
 
     return (
-        <svg viewBox="0 0 180 180" width="180" height="180" role="img" aria-label="Faturamento por categoria">
-            <circle cx="90" cy="90" r={radius} fill="none" stroke="#eef2f7" strokeWidth="26" />
-            {segments.map((seg) => (
+        <svg className="dash-donut" viewBox="0 0 180 180" width="180" height="180" role="img" aria-label="Faturamento por categoria">
+            <circle className="dash-donut-track" cx="90" cy="90" r={radius} />
+            {segments.map((seg, index) => (
                 <circle
                     key={seg.label}
+                    className={`dash-donut-seg--${index}`}
                     cx="90"
                     cy="90"
                     r={radius}
-                    fill="none"
-                    stroke={seg.color}
-                    strokeWidth="26"
                     strokeDasharray={`${seg.dash} ${circumference - seg.dash}`}
                     strokeDashoffset={-seg.offset}
                     transform="rotate(-90 90 90)"
                 />
             ))}
-            <text x="90" y="86" textAnchor="middle" fontSize="22" fontWeight="800" fill="#0f172a">
+            <text className="dash-donut-percent" x="90" y="86" textAnchor="middle">
                 {Math.round(first.percent)}%
             </text>
-            <text x="90" y="106" textAnchor="middle" fontSize="11" fill="#64748b">
+            <text className="dash-donut-label" x="90" y="106" textAnchor="middle">
                 {first.label}
             </text>
         </svg>
@@ -129,20 +129,55 @@ const DonutChart = ({ data }) => {
 /*  Componentes modulares                                              */
 /* ------------------------------------------------------------------ */
 
-const Card = ({ title, children }) => (
-    <section>
-        {title ? <h3>{title}</h3> : null}
+const Card = ({ title, subtitle, aside, children }) => (
+    <section className="dash-card">
+        {title || subtitle || aside ? (
+            <div className="dash-card__header">
+                <div className="dash-card__heading">
+                    {title ? <h3 className="dash-card__title">{title}</h3> : null}
+                    {subtitle ? <p className="dash-card__subtitle">{subtitle}</p> : null}
+                </div>
+                {aside ? <div className="dash-card__aside">{aside}</div> : null}
+            </div>
+        ) : null}
         {children}
     </section>
 );
 
-const KpiCard = ({ label, value, change, hint }) => (
-    <div>
-        <span>{label}</span>
-        <span>{value}</span>
-        <span>{change} · {hint}</span>
-    </div>
-);
+const KpiCard = ({ label, value, change, hint, onEdit }) => {
+    const isDown = String(change).startsWith('-');
+    const isNeutral = change === '0,0%';
+    const changeClass = isNeutral
+        ? 'dash-kpi__change--neutral'
+        : isDown
+            ? 'dash-kpi__change--down'
+            : 'dash-kpi__change--up';
+    const changeText = isNeutral || isDown ? change : `+${change}`;
+
+    return (
+        <div className="dash-kpi">
+            <span className="dash-kpi__label">{label}</span>
+            <div className="dash-kpi__value-row">
+                <span className="dash-kpi__value">{value}</span>
+                {onEdit ? (
+                    <button
+                        type="button"
+                        className="dash-kpi__edit"
+                        aria-label="Editar saídas"
+                        title="Editar saídas"
+                        onClick={onEdit}
+                    >
+                        <Pencil size={12} aria-hidden="true" />
+                    </button>
+                ) : null}
+            </div>
+            <span className="dash-kpi__meta">
+                <span className={`dash-kpi__change ${changeClass}`}>{changeText}</span>
+                <span className="dash-kpi__hint">{hint}</span>
+            </span>
+        </div>
+    );
+};
 
 /* ------------------------------------------------------------------ */
 /*  Tela principal                                                    */
@@ -155,6 +190,10 @@ export default function DashboardHome() {
     const [question, setQuestion] = useState('');
     const [answer, setAnswer] = useState('');
     const [thinking, setThinking] = useState(false);
+    const [expenseOpen, setExpenseOpen] = useState(false);
+    const [expenseDraft, setExpenseDraft] = useState({ description: '', value: '' });
+    const [expenseItems, setExpenseItems] = useState([]);
+    const [expenseError, setExpenseError] = useState('');
 
     useEffect(() => {
         let active = true;
@@ -188,6 +227,34 @@ export default function DashboardHome() {
         } finally {
             setThinking(false);
         }
+    };
+
+    const addExpenseItem = () => {
+        const description = expenseDraft.description.trim();
+        const value = Number(expenseDraft.value);
+        if (!description || !(value > 0)) {
+            setExpenseError('Informe a descrição e um valor maior que zero.');
+            return;
+        }
+        setExpenseItems((items) => [...items, { id: Date.now(), description, value }]);
+        setExpenseDraft({ description: '', value: '' });
+        setExpenseError('');
+    };
+
+    const removeExpenseItem = (id) => {
+        setExpenseItems((items) => items.filter((item) => item.id !== id));
+    };
+
+    const closeExpense = () => {
+        setExpenseOpen(false);
+        setExpenseDraft({ description: '', value: '' });
+        setExpenseItems([]);
+        setExpenseError('');
+    };
+
+    const submitExpenses = () => {
+        // TODO: enviar expenseItems ao backend quando existir a rota de saídas e atualizar o valor do cartão Saída
+        closeExpense();
     };
 
     const { kpis, topProducts, categoryData, lowStock, activities, cashFlow } = useMemo(() => {
@@ -305,37 +372,56 @@ export default function DashboardHome() {
 
     if (error) {
         return (
-            <div>
-                <p>{error}</p>
+            <div className="dash-error">
+                <p className="dash-error__text">{error}</p>
             </div>
         );
     }
 
     return (
-        <div>
-            <div>
-                <h1>Dashboard</h1>
-                <p>Visão geral do negócio e assistente de IA</p>
-            </div>
+        <div className="dash-page">
+            <PageHeader title="Painel do Chefe" subtitle="Monitore faturamento, insumos e desempenho de vendas em tempo real" />
 
-            <div>
+            <div className="dash-kpi-grid">
                 {kpis.map((kpi) => (
-                    <KpiCard key={kpi.id} {...kpi} />
+                    <KpiCard
+                        key={kpi.id}
+                        {...kpi}
+                        onEdit={kpi.id === 'out' ? () => setExpenseOpen(true) : undefined}
+                    />
                 ))}
             </div>
 
-            <div>
-                <Card title="Fluxo de Caixa Operacional">
+            <div className="dash-row dash-row--charts">
+                <Card
+                    title="Fluxo de Caixa Operacional"
+                    subtitle="Comparativo em tempo real entre receitas e custos de produção"
+                    aside={
+                        <div className="dash-legend">
+                            <span className="dash-legend__item">
+                                <span className="dash-legend__dot dash-legend__dot--sales" />Vendas
+                            </span>
+                            <span className="dash-legend__item">
+                                <span className="dash-legend__dot dash-legend__dot--costs" />Custos
+                            </span>
+                        </div>
+                    }
+                >
                     <LineChart hours={cashFlow.hours} sales={cashFlow.sales} costs={cashFlow.costs} profit={cashFlow.profit} />
                 </Card>
 
-                <Card title="Faturamento por Categoria">
-                    <div>
-                        <DonutChart data={categoryData} />
-                        <div>
-                            {categoryData.map((item) => (
-                                <div key={item.label}>
-                                    {item.label} — {Math.round(item.percent)}% — {formatPrice(item.value)}
+                <Card title="Faturamento por Categoria" subtitle="Percentual das vendas por grupo de produto">
+                    <div className="dash-category">
+                        <div className="dash-category__chart">
+                            <DonutChart data={categoryData} />
+                        </div>
+                        <div className="dash-category__legend">
+                            {categoryData.map((item, index) => (
+                                <div className="dash-category__row" key={item.label}>
+                                    <span className={`dash-dot dash-dot--${index}`} />
+                                    <span className="dash-category__name">{item.label}</span>
+                                    <span className="dash-category__value">{formatPrice(item.value)}</span>
+                                    <span className="dash-category__percent">{Math.round(item.percent)}%</span>
                                 </div>
                             ))}
                         </div>
@@ -343,32 +429,45 @@ export default function DashboardHome() {
                 </Card>
             </div>
 
-            <div>
-                <Card title="Produtos Mais Vendidos">
-                    <div>
-                        {topProducts.map((p) => (
-                            <div key={p.name}>
-                                {p.name} — {p.units} unidades — {formatPrice(p.value)}
+            <div className="dash-row dash-row--lists">
+                <Card title="Produtos Mais Vendidos" subtitle="Os itens favoritos dos clientes">
+                    <div className="dash-list">
+                        {topProducts.map((p, index) => (
+                            <div className="dash-list__row dash-top-product" key={p.name}>
+                                <span className="dash-top-product__rank">{index + 1}</span>
+                                <span className="dash-top-product__thumb"><Utensils size={16} /></span>
+                                <span className="dash-top-product__info">
+                                    <span className="dash-top-product__name">{p.name}</span>
+                                    <span className="dash-top-product__meta">{p.units} vendidos</span>
+                                </span>
+                                <span className="dash-top-product__value">{formatPrice(p.value)}</span>
                             </div>
                         ))}
                     </div>
                 </Card>
 
-                <Card title="Alerta de Insumos">
-                    <div>
+                <Card title="Alerta de Insumos" subtitle="Itens com estoque abaixo do ponto crítico">
+                    <div className="dash-list">
                         {lowStock.map((item) => (
-                            <div key={item.name}>
-                                {item.name} — Atual: {item.current} · Mínimo: {item.min} — {item.badge}
+                            <div className="dash-list__row dash-alert" key={item.name}>
+                                <span className="dash-alert__info">
+                                    <span className="dash-alert__name">{item.name}</span>
+                                    <span className="dash-alert__meta">Atual: {item.current} / Mínimo: {item.min}</span>
+                                </span>
+                                <span className={`dash-badge ${item.badge === 'Crítico' ? 'dash-badge--critical' : 'dash-badge--warning'}`}>
+                                    {item.badge}
+                                </span>
                             </div>
                         ))}
                     </div>
                 </Card>
 
-                <Card title="Atividades Recentes">
-                    <div>
+                <Card title="Atividades Recentes" subtitle="Últimos eventos do sistema da hamburgueria">
+                    <div className="dash-list">
                         {activities.map((a) => (
-                            <div key={a.id}>
-                                {a.time} — {a.text}
+                            <div className="dash-list__row dash-activity" key={a.id}>
+                                <span className="dash-activity__time">{a.time}</span>
+                                <span className="dash-activity__text">{a.text}</span>
                             </div>
                         ))}
                     </div>
@@ -376,33 +475,118 @@ export default function DashboardHome() {
             </div>
 
             {/* ===== ASSISTENTE DE IA ===== */}
-            <section>
-                <h3>Assistente de IA</h3>
-                <p>
+            <section className="dash-assistant">
+                <h3 className="dash-assistant__title">Assistente de IA</h3>
+                <p className="dash-assistant__help">
                     Faça perguntas sobre vendas, movimentação de dinheiro, estoque e produtos.
                 </p>
 
-                <div>
+                <div className="dash-assistant__suggestions">
                     {suggestions.map((s) => (
-                        <button key={s} type="button" onClick={() => ask(s)}>{s}</button>
+                        <button className="dash-assistant__suggestion" key={s} type="button" onClick={() => ask(s)}>{s}</button>
                     ))}
                 </div>
 
-                <div>
+                <div className="dash-assistant__form">
                     <textarea
+                        className="dash-assistant__textarea"
                         placeholder="Ex.: Qual foi a receita total de hoje? Quais produtos mais vendem?"
                         value={question}
                         onChange={(e) => setQuestion(e.target.value)}
                         onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ask(); } }}
                     />
-                    <button type="button" onClick={() => ask()} disabled={thinking}>
+                    <button className="dash-assistant__submit" type="button" onClick={() => ask()} disabled={thinking}>
                         <Send size={16} /> {thinking ? 'A pensar...' : 'Enviar'}
                     </button>
                 </div>
 
-                {thinking && <p>A consultar os dados e a IA...</p>}
-                {answer && <p>{answer}</p>}
+                {thinking && <p className="dash-assistant__status">A consultar os dados e a IA...</p>}
+                {answer && <p className="dash-assistant__answer">{answer}</p>}
             </section>
+
+            <Modal
+                className="dash-expense-modal"
+                open={expenseOpen}
+                onClose={closeExpense}
+                maxWidth="520px"
+                showDivider={false}
+                title="Saída"
+            >
+                <div className="dash-expense">
+                    <div className="dash-expense__row">
+                        <div className="dash-expense__field dash-expense__field--description">
+                            <label className="dash-expense__label" htmlFor="dash-expense-description">Descrição</label>
+                            <input
+                                id="dash-expense-description"
+                                className="dash-expense__input dash-expense__input--description"
+                                type="text"
+                                placeholder="Ex.: Alface"
+                                value={expenseDraft.description}
+                                onChange={(e) => setExpenseDraft((draft) => ({ ...draft, description: e.target.value }))}
+                                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addExpenseItem(); } }}
+                            />
+                        </div>
+                        <div className="dash-expense__field dash-expense__field--value">
+                            <label className="dash-expense__label" htmlFor="dash-expense-value">Valor</label>
+                            <input
+                                id="dash-expense-value"
+                                className="dash-expense__input dash-expense__input--value"
+                                type="number"
+                                min="0.01"
+                                step="0.01"
+                                value={expenseDraft.value}
+                                onChange={(e) => setExpenseDraft((draft) => ({ ...draft, value: e.target.value }))}
+                                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addExpenseItem(); } }}
+                            />
+                        </div>
+                        <button
+                            type="button"
+                            className="dash-expense__add-item"
+                            aria-label="Adicionar item"
+                            title="Adicionar item"
+                            onClick={addExpenseItem}
+                        >
+                            <Check size={14} aria-hidden="true" />
+                        </button>
+                    </div>
+
+                    {expenseError && <p className="dash-expense__error" role="alert">{expenseError}</p>}
+
+                    <div className="dash-expense__items">
+                        {expenseItems.length === 0 ? (
+                            <p className="dash-expense__empty">Nenhuma saída adicionada.</p>
+                        ) : (
+                            <ul className="dash-expense__chips">
+                                {expenseItems.map((item) => (
+                                    <li className="dash-expense__chip" key={item.id}>
+                                        <span className="dash-expense__chip-text">{`${item.description} · ${formatPrice(item.value)}`}</span>
+                                        <button
+                                            type="button"
+                                            className="dash-expense__chip-remove"
+                                            aria-label={`Remover ${item.description}`}
+                                            title={`Remover ${item.description}`}
+                                            onClick={() => removeExpenseItem(item.id)}
+                                        >
+                                            <X size={12} aria-hidden="true" />
+                                        </button>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </div>
+
+                    <div className="dash-expense__footer">
+                        <button
+                            type="button"
+                            className="dash-expense__submit"
+                            disabled={expenseItems.length === 0}
+                            onClick={submitExpenses}
+                        >
+                            Adicionar
+                        </button>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 }

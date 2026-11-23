@@ -1,0 +1,643 @@
+/* TODO: confirmar no Dev Mode do Figma (valores aproximados) */
+:root {
+    /* TODO: confirmar no Dev Mode do Figma (largura máxima da página de Histórico) */
+    --history-page-max-width: 960px;
+
+    --history-text: var(--text-primary, #03071e);
+    --history-secondary: var(--text-secondary, #475569);
+    --history-purple: #3d2a9c;
+    --history-border: var(--text-primary, #03071e);
+    --history-hover-bg: var(--bg-tertiary, #f8fafc);
+    --history-accent: var(--accent, #1d4ed8);
+    --history-danger: var(--danger, #b91c1c);
+    --history-card-bg: var(--card-bg, #ffffff);
+    --history-input-bg: var(--input-bg, #fafbfd);
+
+    --history-year-size: 22px;
+    --history-total-size: 10px;
+    --history-bar-height: 40px;
+    --history-bar-padding: 12px;
+    --history-bar-radius: 8px;
+    --history-bar-font-size: 14px;
+    --history-gap: 12px;
+
+    /* TODO: confirmar no Dev Mode do Figma (TELA 2 e TELA 3) */
+    --history-blue: #1f6fb5;
+    --history-on-blue: #ffffff;
+    --history-card-max-width: 600px;
+    --history-card-offset: 16px;
+    --history-card-radius: 10px;
+    --history-card-padding: 12px 14px;
+    --history-card-gap: 10px;
+    --history-title-size: 18px;
+    --history-date-size: 10px;
+    --history-status-size: 10px;
+    --history-status-padding: 3px 12px;
+    --history-status-weight: 500;
+    --history-more-size: 10px;
+    --history-more-padding: 6px 14px;
+    --history-more-radius: 6px;
+    --history-note-size: 10px;
+    --history-order-code-size: 9px;
+    --history-order-date-size: 9px;
+    --history-modal-subtitle-size: 15px;
+    --history-item-size: 12px;
+    --history-thumb-size: 44px;
+    --history-thumb-radius: 8px;
+    --history-thumb-bg: var(--card-bg, #ffffff);
+    --history-icon-purple: #6d28d9;
+    --history-modal-total-size: 16px;
+    --history-modal-bg: #ececf1;
+    --history-modal-padding: 16px;
+    --history-export-height: 30px;
+    --history-export-size: 11px;
+    --history-export-weight: 500;
+    --history-divider-width: 1px;
+    --history-divider: #94a3b8;
+
+    /* TODO: confirmar no Dev Mode do Figma (espaçamento do cabeçalho do pop-up) */
+    --history-modal-header-top: 10px;
+    --history-modal-title-gap: 4px;
+    --history-modal-order-gap: 2px;
+    --history-modal-gap: 12px;
+    --history-modal-items-gap: 14px;
+}
+
+.history-page {
+    box-sizing: border-box;
+    max-width: var(--history-page-max-width);
+    margin: 0;
+    padding: 16px 0 32px;
+    color: var(--history-text);
+}
+
+/* ===== Tela 1: lista de meses ===== */
+
+.history-months-view {
+    display: flex;
+    flex-direction: column;
+    gap: var(--history-gap);
+}
+
+.history-year-block {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+}
+
+.history-year {
+    font-size: var(--history-year-size);
+    font-weight: 600;
+    color: var(--history-text);
+}
+
+.history-total {
+    font-size: var(--history-total-size);
+    font-weight: 700;
+    color: var(--history-purple);
+}
+
+.history-months {
+    display: flex;
+    flex-direction: column;
+    gap: var(--history-gap);
+}
+
+.history-month-button {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: var(--history-bar-height);
+    padding: 0 var(--history-bar-padding);
+    border: 1px solid var(--history-border);
+    border-radius: var(--history-bar-radius);
+    background: transparent;
+    color: var(--history-text);
+    font: inherit;
+    font-size: var(--history-bar-font-size);
+    font-weight: 700;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 150ms ease;
+}
+
+.history-month-button:hover {
+    background: var(--history-hover-bg);
+}
+
+.history-month-button:focus-visible {
+    outline: 2px solid var(--history-accent);
+    outline-offset: 2px;
+}
+
+.history-error {
+    color: var(--history-danger);
+}
+
+.history-empty {
+    color: var(--history-secondary);
+}
+
+/* ===== Visão do mês (ajustes mínimos) ===== */
+
+.history-month-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--history-gap);
+    margin-bottom: 16px;
+}
+
+.history-month-title {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    flex: 1 1 auto;
+}
+
+.history-month-heading {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+}
+
+.history-year-link,
+.history-month-name {
+    color: var(--history-text);
+    font-size: var(--history-year-size);
+    font-weight: 600;
+}
+
+.history-year-link {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font-family: inherit;
+    line-height: inherit;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.history-year-link:hover {
+    text-decoration: underline;
+}
+
+.history-year-link:focus-visible {
+    outline: 2px solid var(--history-accent);
+    outline-offset: 2px;
+}
+
+.history-month-total {
+    font-size: var(--history-total-size);
+    font-weight: 700;
+    color: var(--history-purple);
+}
+
+.history-actions {
+    margin-left: auto;
+}
+
+.history-section-title {
+    margin-bottom: 8px;
+}
+
+.history-stats,
+.history-count {
+    margin: 0 0 4px;
+    font-size: var(--history-note-size);
+    color: var(--history-secondary);
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.history-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--history-gap);
+    margin-bottom: 12px;
+}
+
+.history-filters > div {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.history-filters input,
+.history-filters select {
+    box-sizing: border-box;
+    max-width: 100%;
+    padding: 6px 8px;
+    border: 1px solid var(--history-border);
+    border-radius: 6px;
+    background: var(--history-input-bg);
+    color: var(--history-text);
+    font: inherit;
+}
+
+.history-filters input:focus-visible,
+.history-filters select:focus-visible {
+    outline: 2px solid var(--history-accent);
+    outline-offset: 2px;
+}
+
+/* ===== Tela 2: cards dos pedidos do mês ===== */
+
+.history-events {
+    display: flex;
+    flex-direction: column;
+    gap: var(--history-card-gap);
+    padding-left: var(--history-card-offset);
+    background: transparent;
+}
+
+.history-order-card {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: var(--history-card-max-width);
+    padding: var(--history-card-padding);
+    border: var(--history-divider-width) solid var(--history-border);
+    border-radius: var(--history-card-radius);
+    background: transparent;
+    color: var(--history-text);
+}
+
+.history-order-top,
+.history-order-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.history-order-title,
+.history-order-price {
+    min-width: 0;
+    color: var(--history-text);
+    font-size: var(--history-title-size);
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.history-order-price {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
+.history-order-date {
+    margin-top: 4px;
+    color: var(--history-purple);
+    font-size: var(--history-date-size);
+}
+
+.history-order-bottom {
+    margin-top: 8px;
+}
+
+.history-status {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--history-status-padding);
+    border-radius: 999px;
+    background: var(--history-blue);
+    color: var(--history-on-blue);
+    font-size: var(--history-status-size);
+    font-weight: var(--history-status-weight);
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.history-status--cancelled {
+    background: var(--danger);
+}
+
+.history-status--not_delivered,
+.history-status--late {
+    background: var(--warning);
+}
+
+.history-ver-mais {
+    flex: 0 0 auto;
+    padding: var(--history-more-padding);
+    border: 0;
+    border-radius: var(--history-more-radius);
+    background: var(--history-blue);
+    color: var(--history-on-blue);
+    font-family: inherit;
+    font-size: var(--history-more-size);
+    font-weight: 700;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.history-ver-mais:focus-visible,
+.history-export-summary:focus-visible {
+    outline: 2px solid var(--history-blue);
+    outline-offset: 2px;
+}
+
+/* ===== Tela 3: pop-up do pedido ===== */
+
+.history-modal-card {
+    background: var(--history-modal-bg) !important;
+}
+
+.history-modal-card > div {
+    padding-left: var(--history-modal-padding) !important;
+    padding-right: var(--history-modal-padding) !important;
+}
+
+.history-modal-card > div:nth-child(2) {
+    padding-top: var(--history-modal-header-top) !important;
+    padding-bottom: 0 !important;
+}
+
+.history-modal-card > div:last-child {
+    padding-top: var(--history-modal-title-gap) !important;
+}
+
+.history-modal {
+    display: flex;
+    flex-direction: column;
+    gap: var(--history-modal-gap);
+}
+
+.history-modal-orderline {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--history-modal-order-gap);
+    margin-bottom: calc(var(--history-modal-items-gap) - var(--history-modal-gap));
+}
+
+.history-order-code,
+.history-order-datetime {
+    margin: 0;
+}
+
+.history-order-code {
+    color: var(--history-purple);
+    font-size: var(--history-order-code-size);
+    font-weight: 400;
+}
+
+.history-order-datetime {
+    color: var(--history-text);
+    font-size: var(--history-order-date-size);
+    font-weight: 700;
+}
+
+.history-modal-subtitle {
+    margin: 0;
+    color: var(--history-text);
+    font-size: var(--history-modal-subtitle-size);
+    font-weight: 700;
+}
+
+.history-items-head,
+.history-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 48px 88px;
+    align-items: center;
+    gap: 8px;
+}
+
+.history-items-head {
+    padding-bottom: 6px;
+    border-bottom: var(--history-divider-width) solid var(--history-divider);
+    color: var(--history-purple);
+    font-size: var(--history-order-code-size);
+    font-weight: 700;
+}
+
+.history-items-head span:nth-child(2) {
+    text-align: center;
+}
+
+.history-items-head span:last-child {
+    text-align: right;
+}
+
+.history-items {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.history-item {
+    padding: 8px 0;
+    border-top: var(--history-divider-width) solid var(--history-divider);
+    font-size: var(--history-item-size);
+    font-weight: 400;
+}
+
+.history-item-main {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.history-item-image {
+    box-sizing: border-box;
+    flex: 0 0 auto;
+    width: var(--history-thumb-size);
+    height: var(--history-thumb-size);
+    border-radius: var(--history-thumb-radius);
+    background: var(--history-thumb-bg);
+    object-fit: cover;
+}
+
+.history-item-image--placeholder {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--history-icon-purple);
+}
+
+.history-item-info {
+    min-width: 0;
+}
+
+.history-item-name {
+    display: block;
+    overflow-wrap: anywhere;
+}
+
+.history-item-extra,
+.history-modal-notes,
+.history-status-log p {
+    font-size: var(--history-note-size);
+    color: var(--history-secondary);
+    overflow-wrap: anywhere;
+}
+
+.history-item-qty {
+    text-align: center;
+}
+
+.history-item-value {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.history-modal-total {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 8px;
+    border-top: var(--history-divider-width) solid var(--history-divider);
+    color: var(--history-text);
+    font-size: var(--history-modal-total-size);
+    font-weight: 700;
+}
+
+.history-modal-extra {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-top: 8px;
+    border-top: var(--history-divider-width) solid var(--history-divider);
+}
+
+.history-modal-notes {
+    margin: 0;
+}
+
+.history-modal-mini-title {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--history-note-size);
+    font-weight: 700;
+}
+
+.history-status-log {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.history-status-log p {
+    margin: 0;
+}
+
+.history-export-summary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 100%;
+    min-height: var(--history-export-height);
+    padding: 0 12px;
+    border-radius: var(--history-more-radius);
+    background: var(--history-blue);
+    color: var(--history-on-blue);
+    font-size: var(--history-export-size);
+    font-weight: var(--history-export-weight);
+    list-style: none;
+    cursor: pointer;
+}
+
+.history-export-summary::-webkit-details-marker {
+    display: none;
+}
+
+.history-export-summary::marker {
+    content: '';
+}
+
+.history-export-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.history-export-actions button {
+    flex: 1 1 auto;
+    padding: 6px 10px;
+    border: var(--history-divider-width) solid var(--history-blue);
+    border-radius: var(--history-more-radius);
+    background: transparent;
+    color: var(--history-blue);
+    font-family: inherit;
+    font-size: var(--history-note-size);
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* ===== Responsivo ===== */
+
+@media (max-width: 600px) {
+    .history-page {
+        padding: 12px 0 24px;
+    }
+
+    .history-month-header {
+        align-items: flex-start;
+    }
+
+    .history-month-title {
+        flex-basis: 100%;
+    }
+
+    .history-actions {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    .history-month-button {
+        width: 100%;
+    }
+
+    .history-filters > div {
+        width: 100%;
+    }
+
+    .history-filters input,
+    .history-filters select {
+        width: 100%;
+    }
+
+    .history-events {
+        padding-left: 0;
+    }
+
+    .history-order-card {
+        width: 100%;
+        max-width: none;
+    }
+
+    .history-order-title,
+    .history-order-price {
+        font-size: var(--history-bar-font-size);
+    }
+
+    .history-items-head {
+        display: none;
+    }
+
+    .history-item {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .history-item-qty,
+    .history-item-value {
+        text-align: left;
+    }
+
+    .history-export-actions button {
+        flex: 1 1 100%;
+    }
+}
