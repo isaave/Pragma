@@ -62,8 +62,15 @@ export default function NotificationButton() {
 
     return (
         <div style={{ position: 'relative' }}>
-            <button type="button" onClick={toggle} title="Notificações" aria-label="Notificações">
-                <Bell size={20} />
+            <button
+                type="button"
+                className="notification-button"
+                onClick={toggle}
+                title="Notificações"
+                aria-label="Notificações"
+                aria-expanded={open}
+            >
+                <Bell size={18} strokeWidth={2} />
             </button>
 
             {open && (
