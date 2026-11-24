@@ -15,7 +15,7 @@ const readUser = () => {
 const getErrorMessage = (err, fallback) =>
     err?.response?.data?.message || fallback;
 
-export default function StoreStatus({ compact = false }) {
+export default function StoreStatus({ compact = false, header = false }) {
     const [status, setStatus] = useState(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -73,8 +73,8 @@ export default function StoreStatus({ compact = false }) {
         <span
             aria-hidden="true"
             style={{
-                width: compact ? '8px' : '10px',
-                height: compact ? '8px' : '10px',
+                width: compact || header ? '8px' : '10px',
+                height: compact || header ? '8px' : '10px',
                 borderRadius: '50%',
                 background: isOpen ? 'var(--success)' : 'var(--danger)',
                 boxShadow: isOpen
@@ -104,6 +104,60 @@ export default function StoreStatus({ compact = false }) {
             {loading ? 'A carregar...' : isOpen ? 'Aberto' : 'Fechado'}
         </span>
     );
+
+    if (header) {
+        const headerLabel = saving
+            ? 'A guardar...'
+            : loading
+              ? 'A carregar...'
+              : isChefe
+                ? buttonLabel
+                : isOpen
+                  ? 'Negócio aberto'
+                  : 'Negócio fechado';
+
+        const headerStyle = isChefe
+            ? {
+                  '--store-bg': isOpen ? 'transparent' : 'var(--accent)',
+                  '--store-color': isOpen ? 'var(--danger)' : '#ffffff',
+                  '--store-border': isOpen ? 'var(--border-color)' : 'transparent',
+              }
+            : {
+                  '--store-bg': isOpen ? 'rgba(21, 128, 61, 0.12)' : 'rgba(185, 28, 28, 0.12)',
+                  '--store-color': isOpen ? 'var(--success)' : 'var(--danger)',
+                  '--store-border': 'transparent',
+              };
+
+        const headerTitle = isChefe
+            ? buttonLabel
+            : `Negócio ${isOpen ? 'aberto' : 'fechado'}. Apenas o chefe pode alterar o estado.`;
+
+        return (
+            <div className="store-status-header-wrap">
+                <button
+                    type="button"
+                    className="store-status-header"
+                    style={headerStyle}
+                    onClick={isChefe ? toggle : undefined}
+                    disabled={!isChefe || saving || loading}
+                    title={error || info || headerTitle}
+                    aria-label={headerTitle}
+                >
+                    {statusDot}
+                    {saving ? <Loader2 size={14} className="spin" /> : <Power size={14} />}
+                    <span className="store-status-header__label">{headerLabel}</span>
+                </button>
+                {(error || info) && (
+                    <span
+                        className="store-status-header__tip"
+                        role={error ? 'alert' : 'status'}
+                    >
+                        {error || info}
+                    </span>
+                )}
+            </div>
+        );
+    }
 
     if (compact) {
         return (

@@ -7,6 +7,7 @@ import UserProfile from './components/UserProfile';
 import Sidebar from './components/Sidebar';
 import ProfileButton from './components/ProfileButton';
 import NotificationButton from './components/NotificationButton';
+import StoreStatus from './components/StoreStatus';
 import History from './pages/History';
 import Orders from './pages/Orders';
 import Products from './pages/Products';
@@ -73,6 +74,7 @@ export default function App() {
 
   const headerActions = (
     <>
+      <StoreStatus header />
       <NotificationButton />
       {!isMobile && view !== 'profile' && <ProfileButton onNavigate={setView} currentUser={currentUser} />}
     </>
@@ -129,6 +131,7 @@ export default function App() {
           </button>
           {view !== 'profile' && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <StoreStatus header />
               <NotificationButton />
               <ProfileButton compact onNavigate={setView} currentUser={currentUser} />
             </div>

@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Check, Minus, Plus, X, Maximize2, Minimize2 } from 'lucide-react';
 import api from '../Services/api';
-import StoreStatus from '../components/StoreStatus';
 import PageHeader from '../components/ui/PageHeader';
 import SegmentedControl from '../components/ui/SegmentedControl';
 import ActionToolbar from '../components/ui/ActionToolbar';
@@ -587,10 +586,6 @@ export default function Orders() {
 
     return (
         <div className="orders-page">
-            <div className="orders-store-bar">
-                <StoreStatus compact />
-            </div>
-
             <PageHeader
                 title="Gestão de pedidos"
                 subtitle="Controle de entrada e saída de pedidos"
