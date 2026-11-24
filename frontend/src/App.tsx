@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Menu } from 'lucide-react';
 import Login from './pages/Login';
-import Home from './pages/Home';
 import AdminPanel from './pages/AdminPanel';
 import Profile from './pages/Profile';
 import UserProfile from './components/UserProfile';
@@ -21,7 +20,7 @@ const HEADER_INLINE_VIEWS = ['admin', 'stock', 'history', 'menu', 'reports', 'or
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [view, setView] = useState('home'); // home | admin | profile
+  const [view, setView] = useState('orders');
   const [currentUser, setCurrentUser] = useState(null);
   const isMobile = useIsMobile(900);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -58,7 +57,7 @@ export default function App() {
     setIsAuthenticated(true);
     const storedUser = localStorage.getItem('pragma_user');
     if (storedUser) setCurrentUser(JSON.parse(storedUser));
-    setView('home');
+    setView('orders');
   };
 
   const handleLogout = () => {
@@ -150,7 +149,6 @@ export default function App() {
           {view === 'reports' && <Reports />}
           {view === 'profile' && <UserProfile />}
           {view === 'admin' && <AdminPanel />}
-          {view === 'home' && <Home />}
           {view === 'stock' && <Stock />}
         </HeaderActionsContext.Provider>
       </main>
