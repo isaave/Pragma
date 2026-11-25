@@ -9,12 +9,19 @@ import {
 
 const statusLabel = (status) => STATUS_META[status]?.label || status || '—';
 
+const COPYRIGHT = '© 2026 Pragma — Isabella Avelina, Isadora Burgos e Pedro William. Todos os direitos reservados';
+
+const paddedDate = (date) => {
+    const pad = (value) => String(value).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+};
+
 const fileBaseName = (order) => {
     const date = new Date(order.created_at || Date.now());
-    const pad = (value) => String(value).padStart(2, '0');
-    const stamp = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-    return `pedido-${String(order.id).padStart(4, '0')}-${stamp}`;
+    return `pedido-${String(order.id).padStart(4, '0')}-${paddedDate(date)}`;
 };
+
+const listFileBaseName = () => `pedidos-${paddedDate(new Date())}`;
 
 const itemAddons = (item) =>
     (item.addons || [])
@@ -236,6 +243,152 @@ export const exportOrderPdf = (order) => {
 
         <p style="margin:32px 0 0;padding-top:12px;border-top:1px solid #e2e8f0;font-size:11px;color:#64748b;text-align:center;">
             © 2026 Pragma — Isabella Avelina, Isadora Burgos e Pedro William. Todos os direitos reservados
+        </p>
+    </div>
+    <script>
+        window.addEventListener('load', function () {
+            setTimeout(function () { window.print(); }, 150);
+        });
+    </script>
+</body>
+</html>`);
+
+    printWindow.document.close();
+    return true;
+};
+
+/* ------------------------------------------------------------------ */
+/*  Exportação da lista completa de pedidos                            */
+/* ------------------------------------------------------------------ */
+
+const orderRows = (orders) =>
+    (orders || []).map((order) => [
+        orderNumber(order.id),
+        order.customer_name || 'Sem cliente',
+        statusLabel(order.status),
+        formatDateTime(order.created_at),
+        order.user?.name || '—',
+        totalItems(order),
+        formatPrice(order.total),
+    ]);
+
+export const exportOrdersCsv = (orders) => {
+    const header = [
+        'Pedido',
+        'Cliente',
+        'Status',
+        'Data',
+        'Atendente',
+        'Itens',
+        'Total do pedido',
+    ];
+    const csv = [header, ...orderRows(orders)]
+        .map((row) => row.map(csvCell).join(';'))
+        .join('\r\n');
+
+    downloadFile(`${listFileBaseName()}.csv`, `\uFEFF${csv}`, 'text/csv;charset=utf-8;');
+};
+
+export const exportOrdersTxt = (orders) => {
+    const list = orders || [];
+    const lines = [
+        'PRAGMA — HOUSE BURGUER',
+        'Lista de pedidos',
+        '========================================',
+        `Total de pedidos: ${list.length}`,
+        `Emitido em: ${formatDateTime(new Date().toISOString())}`,
+        '----------------------------------------',
+    ];
+
+    if (list.length === 0) {
+        lines.push('Nenhum pedido cadastrado.');
+    } else {
+        list.forEach((order) => {
+            lines.push(
+                `${orderNumber(order.id)} · ${order.customer_name || 'Sem cliente'} · ${statusLabel(order.status)} · ${formatDateTime(order.created_at)} · ${totalItems(order)} item(ns) · ${formatPrice(order.total)}`
+            );
+        });
+    }
+
+    lines.push('----------------------------------------');
+    lines.push(`Valor total: ${formatPrice(list.reduce((sum, order) => sum + Number(order.total || 0), 0))}`);
+    lines.push('========================================');
+    lines.push(COPYRIGHT);
+
+    downloadFile(`${listFileBaseName()}.txt`, lines.join('\n'), 'text/plain;charset=utf-8;');
+};
+
+export const exportOrdersPdf = (orders) => {
+    const printWindow = window.open('', '_blank', 'width=900,height=900');
+    if (!printWindow) return false;
+
+    const logoUrl = new URL(logo, window.location.href).href;
+    const list = orders || [];
+    const total = list.reduce((sum, order) => sum + Number(order.total || 0), 0);
+
+    const rows = list
+        .map(
+            (order) => `<tr>
+                <td style="padding:8px;border-bottom:1px solid #e2e8f0;white-space:nowrap;"><strong>${escapeHtml(orderNumber(order.id))}</strong></td>
+                <td style="padding:8px;border-bottom:1px solid #e2e8f0;">${escapeHtml(order.customer_name || 'Sem cliente')}<div style="font-size:11px;color:#64748b;">${escapeHtml(order.user?.name || '—')}</div></td>
+                <td style="padding:8px;border-bottom:1px solid #e2e8f0;white-space:nowrap;">${escapeHtml(statusLabel(order.status))}</td>
+                <td style="padding:8px;border-bottom:1px solid #e2e8f0;white-space:nowrap;">${escapeHtml(formatDateTime(order.created_at))}</td>
+                <td style="padding:8px;border-bottom:1px solid #e2e8f0;text-align:center;">${totalItems(order)}</td>
+                <td style="padding:8px;border-bottom:1px solid #e2e8f0;text-align:right;white-space:nowrap;">${escapeHtml(formatPrice(order.total))}</td>
+            </tr>`
+        )
+        .join('');
+
+    const table =
+        list.length > 0
+            ? `<table style="width:100%;font-size:12px;border-collapse:collapse;">
+                    <thead>
+                        <tr>
+                            <th style="text-align:left;padding:8px;border-bottom:2px solid #0f172a;font-size:10.5px;text-transform:uppercase;letter-spacing:0.5px;">Pedido</th>
+                            <th style="text-align:left;padding:8px;border-bottom:2px solid #0f172a;font-size:10.5px;text-transform:uppercase;letter-spacing:0.5px;">Cliente / Atendente</th>
+                            <th style="text-align:left;padding:8px;border-bottom:2px solid #0f172a;font-size:10.5px;text-transform:uppercase;letter-spacing:0.5px;">Status</th>
+                            <th style="text-align:left;padding:8px;border-bottom:2px solid #0f172a;font-size:10.5px;text-transform:uppercase;letter-spacing:0.5px;">Data</th>
+                            <th style="text-align:center;padding:8px;border-bottom:2px solid #0f172a;font-size:10.5px;text-transform:uppercase;letter-spacing:0.5px;">Itens</th>
+                            <th style="text-align:right;padding:8px;border-bottom:2px solid #0f172a;font-size:10.5px;text-transform:uppercase;letter-spacing:0.5px;">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="5" style="padding:12px 8px;font-weight:700;font-size:14px;text-align:right;">Valor total</td>
+                            <td style="padding:12px 8px;text-align:right;font-weight:700;font-size:14px;white-space:nowrap;">${escapeHtml(formatPrice(total))}</td>
+                        </tr>
+                    </tfoot>
+                </table>`
+            : '<p style="font-size:13px;color:#64748b;">Nenhum pedido cadastrado.</p>';
+
+    printWindow.document.write(`<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <title>${escapeHtml(listFileBaseName())}</title>
+    <style>
+        @page { size: A4; margin: 12mm; }
+        body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    </style>
+</head>
+<body style="margin:0;padding:32px;font-family:Arial,Helvetica,sans-serif;color:#0f172a;background:#ffffff;">
+    <div style="max-width:100%;margin:0 auto;">
+        <div style="display:flex;align-items:center;gap:16px;border-bottom:2px solid #0f172a;padding-bottom:16px;">
+            <img src="${logoUrl}" alt="House Burguer" width="64" style="width:64px;height:auto;display:block;">
+            <div>
+                <h1 style="margin:0;font-size:20px;letter-spacing:1px;">HOUSE BURGUER</h1>
+                <p style="margin:4px 0 0;font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:2px;">Pragma</p>
+            </div>
+        </div>
+
+        <h2 style="margin:24px 0 4px;font-size:18px;">Lista de pedidos</h2>
+        <p style="margin:0 0 20px;font-size:13px;color:#64748b;">Total de pedidos: ${list.length} · Valor total: ${escapeHtml(formatPrice(total))} · Emitido em ${escapeHtml(formatDateTime(new Date().toISOString()))}</p>
+
+        ${table}
+
+        <p style="margin:32px 0 0;padding-top:12px;border-top:1px solid #e2e8f0;font-size:11px;color:#64748b;text-align:center;">
+            ${escapeHtml(COPYRIGHT)}
         </p>
     </div>
     <script>
