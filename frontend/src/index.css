@@ -28,6 +28,7 @@ html, body, #root, button, input, select, textarea, h1, h2, h3, h4, p, span, lab
     --card-shadow: 0 4px 16px rgba(3, 7, 30, 0.05);
     --accent: #1d4ed8;
     --accent-light: #eff6ff;
+    --segmented-idle-text: #312e81;
     --danger: #b91c1c;
     --success: #15803d;
     --warning: #92400e;
@@ -49,6 +50,7 @@ html, body, #root, button, input, select, textarea, h1, h2, h3, h4, p, span, lab
     --card-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
     --accent: #3b82f6;
     --accent-light: #1e3a5f;
+    --segmented-idle-text: var(--accent);
     --danger: #f87171;
     --success: #4ade80;
     --warning: #fbbf24;

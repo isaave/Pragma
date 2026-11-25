@@ -66,6 +66,10 @@
     --products-detail-top-offset: 16px;
 }
 
+[data-theme="dark"] {
+    --products-purple: var(--accent);
+}
+
 /* ===== Página ===== */
 
 .products-page {

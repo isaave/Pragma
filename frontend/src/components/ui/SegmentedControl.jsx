@@ -17,7 +17,7 @@ const COLORS = {
     border: '#03071e', // borda do container e fundo da opção selecionada
     selectedBackground: '#03071e', // azul-marinho quase preto
     selectedText: '#ffffff',
-    idleText: '#312e81', // índigo escuro (roxo-azulado)
+    idleText: 'var(--segmented-idle-text, #312e81)', // roxo no claro, azul do subtítulo no escuro
     focusRing: '#6366f1',
 };
 

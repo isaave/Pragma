@@ -116,6 +116,10 @@
     --orders-form-submit-size: 11px;
 }
 
+[data-theme="dark"] {
+    --orders-purple: var(--accent);
+}
+
 /* ===== Página ===== */
 
 .orders-page {

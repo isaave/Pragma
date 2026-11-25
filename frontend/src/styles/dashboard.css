@@ -37,6 +37,10 @@
     --dash-submit-height: 34px;
 }
 
+[data-theme="dark"] {
+    --dash-purple: var(--accent);
+}
+
 /* ===== Página ===== */
 
 .dash-page {

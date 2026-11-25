@@ -63,6 +63,11 @@
     --history-modal-items-gap: 14px;
 }
 
+[data-theme="dark"] {
+    --history-purple: var(--accent);
+    --history-icon-purple: var(--accent);
+}
+
 .history-page {
     box-sizing: border-box;
     max-width: var(--history-page-max-width);

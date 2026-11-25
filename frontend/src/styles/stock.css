@@ -27,8 +27,7 @@
 }
 
 [data-theme="dark"] {
-    /* TODO: confirmar no Dev Mode do Figma (versão mais clara do roxo para o tema escuro) */
-   --stock-purple: #b3a8f5; 
+    --stock-purple: var(--accent);
 }
 
 /* ===== Página ===== */
