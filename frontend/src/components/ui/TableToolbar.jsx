@@ -41,10 +41,6 @@ const INJECTED_CSS = `
     outline: ${SIZES.focusRingWidth} solid ${COLORS.focusRing};
     outline-offset: -1px;
 }
-[data-table-toolbar] [data-view-mode][aria-pressed='true'] {
-    background: transparent;
-    color: var(--table-toolbar-selected-icon, var(--segmented-idle-text, #312e81));
-}
 [data-table-toolbar] .tt-action,
 [data-table-toolbar] .tt-export-summary {
     width: var(--tt-action-width, auto);
@@ -92,12 +88,6 @@ const INJECTED_CSS = `
     }
 }
 `;
-
-// Seleção sem contorno nem fundo: só o ícone muda de cor.
-const selectedControlStyle = {
-    background: 'transparent',
-    color: 'var(--table-toolbar-selected-icon, var(--segmented-idle-text, #312e81))',
-};
 
 const controlStyle = {
     display: 'inline-flex',
@@ -237,7 +227,7 @@ export default function TableToolbar({
                     title={label}
                     aria-pressed={viewMode === value}
                     onClick={() => onViewModeChange?.(value)}
-                    style={viewMode === value ? { ...controlStyle, ...selectedControlStyle } : controlStyle}
+                    style={controlStyle}
                 >
                     <Icon size={SIZES.iconSize} strokeWidth={SIZES.iconStrokeWidth} aria-hidden="true" />
                 </button>
