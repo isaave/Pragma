@@ -9,13 +9,15 @@ const COLORS = {
     focusRing: '#6366f1',
 };
 
+// O container ajusta essas variáveis quando a linha de controles fica estreita.
 const SIZES = {
     height: '30px',
     borderRadius: '999px',
     borderWidth: '1px',
-    containerPadding: '1px',
-    buttonSize: '26px',
-    buttonGap: '4px',
+    containerPadding: 'var(--tt-padding, 1px)',
+    buttonSize: 'var(--tt-button-size, 26px)',
+    buttonHeight: 'var(--tt-button-height, 26px)',
+    buttonGap: 'var(--tt-gap, 4px)',
     iconSize: 17,
     iconStrokeWidth: 1.75,
     focusRingWidth: '2px',
@@ -39,6 +41,22 @@ const INJECTED_CSS = `
 [data-table-toolbar] summary::-webkit-details-marker {
     display: none;
 }
+@container (max-width: 760px) {
+    [data-table-toolbar] {
+        --tt-gap: 2px;
+        --tt-padding: 0px;
+        --tt-button-size: 24px;
+    }
+    [data-table-toolbar] details > summary svg:last-child {
+        display: none;
+    }
+}
+@container (max-width: 480px) {
+    [data-table-toolbar] {
+        --tt-gap: 0px;
+        --tt-button-size: 22px;
+    }
+}
 `;
 
 const controlStyle = {
@@ -48,7 +66,7 @@ const controlStyle = {
     flex: '0 0 auto',
     boxSizing: 'border-box',
     width: SIZES.buttonSize,
-    height: SIZES.buttonSize,
+    height: SIZES.buttonHeight,
     margin: 0,
     padding: 0,
     border: 'none',

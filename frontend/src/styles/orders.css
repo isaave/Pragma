@@ -187,6 +187,7 @@
     gap: var(--orders-section-gap);
     flex-wrap: wrap;
     min-width: 0;
+    container-type: inline-size;
 }
 
 .orders-controls > [data-segmented-control] {
