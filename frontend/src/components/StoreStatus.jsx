@@ -15,7 +15,7 @@ const readUser = () => {
 const getErrorMessage = (err, fallback) =>
     err?.response?.data?.message || fallback;
 
-export default function StoreStatus({ compact = false, header = false }) {
+export default function StoreStatus({ compact = false, header = false, onToggled }) {
     const [status, setStatus] = useState(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -52,6 +52,7 @@ export default function StoreStatus({ compact = false, header = false }) {
             const res = await api.put('/store/status', { is_open: !isOpen });
             setStatus(res.data);
             setInfo(res.data.message || (res.data.is_open ? 'Negócio aberto.' : 'Negócio fechado.'));
+            onToggled?.(res.data);
         } catch (err) {
             setError(getErrorMessage(err, 'Não foi possível alterar o estado do negócio.'));
         } finally {

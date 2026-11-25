@@ -74,7 +74,7 @@ export default function App() {
 
   const headerActions = (
     <>
-      <StoreStatus header />
+      <StoreStatus header onToggled={() => setView('history')} />
       <NotificationButton />
       {!isMobile && view !== 'profile' && <ProfileButton onNavigate={setView} currentUser={currentUser} />}
     </>
@@ -131,7 +131,7 @@ export default function App() {
           </button>
           {view !== 'profile' && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <StoreStatus header />
+              <StoreStatus header onToggled={() => setView('history')} />
               <NotificationButton />
               <ProfileButton compact onNavigate={setView} currentUser={currentUser} />
             </div>
