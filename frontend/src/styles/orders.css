@@ -69,11 +69,11 @@
     /* TODO: confirmar no Dev Mode do Figma (painel/pop-up de detalhe do pedido) */
     --orders-detail-width: 340px;
     --orders-detail-min-height: min(806px, calc(100vh - 160px));
-    --orders-detail-padding: 6px;
-    --orders-detail-gap: 3px;
+    --orders-detail-padding: 5px;
+    --orders-detail-gap: 2px;
     --orders-detail-top-offset: 8px;
     --orders-detail-height-offset: 32px;
-    --orders-round-size: 22px;
+    --orders-round-size: 32px;
     --orders-detail-name-size: 20px;
     --orders-detail-text-size: 13px;
     --orders-detail-status-size: 12px;
