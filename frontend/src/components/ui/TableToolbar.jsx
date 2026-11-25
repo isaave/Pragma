@@ -6,7 +6,9 @@ const COLORS = {
     border: 'var(--control-border, #03071e)',
     // Mesma lógica do SegmentedControl: marinho no claro, branco no escuro.
     icon: 'var(--table-toolbar-icon, #03071e)',
+    surface: 'var(--table-toolbar-bg, var(--card-bg, #ffffff))',
     hoverBackground: 'var(--table-toolbar-hover, rgba(3, 7, 30, 0.06))',
+    divider: 'var(--table-toolbar-divider, var(--control-border, #03071e))',
     focusRing: '#6366f1',
 };
 
@@ -21,6 +23,9 @@ const SIZES = {
     buttonGap: 'var(--tt-gap, 4px)',
     iconSize: 17,
     iconStrokeWidth: 1.75,
+    actionPaddingX: '10px',
+    labelSize: '11.5px',
+    dividerHeight: '18px',
     focusRingWidth: '2px',
 };
 
@@ -34,11 +39,33 @@ const INJECTED_CSS = `
 [data-table-toolbar] button:focus-visible,
 [data-table-toolbar] summary:focus-visible {
     outline: ${SIZES.focusRingWidth} solid ${COLORS.focusRing};
-    outline-offset: 0;
+    outline-offset: -1px;
 }
 [data-table-toolbar] [data-view-mode][aria-pressed='true'] {
     background: var(--table-toolbar-selected, #a2bfda);
     color: var(--table-toolbar-selected-icon, #040927);
+}
+[data-table-toolbar] .tt-action,
+[data-table-toolbar] .tt-export-summary {
+    width: var(--tt-action-width, auto);
+    padding: var(--tt-action-padding, 0 ${SIZES.actionPaddingX});
+    gap: 6px;
+    border-radius: 999px;
+}
+[data-table-toolbar] .tt-label {
+    font-size: ${SIZES.labelSize};
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+}
+[data-table-toolbar] .tt-divider {
+    flex: 0 0 auto;
+    width: 1px;
+    height: ${SIZES.dividerHeight};
+    margin: 0 2px;
+    border-radius: 1px;
+    background: ${COLORS.divider};
+    opacity: 0.55;
 }
 [data-table-toolbar] summary {
     list-style: none;
@@ -46,20 +73,22 @@ const INJECTED_CSS = `
 [data-table-toolbar] summary::-webkit-details-marker {
     display: none;
 }
-@container (max-width: 760px) {
+@media (max-width: 900px) {
     [data-table-toolbar] {
-        --tt-gap: 2px;
-        --tt-padding: 0px;
-        --tt-button-size: 24px;
+        --tt-action-width: var(--tt-button-size, 26px);
+        --tt-action-padding: 0;
     }
+    [data-table-toolbar] .tt-label,
     [data-table-toolbar] details > summary svg:last-child {
         display: none;
     }
 }
-@container (max-width: 480px) {
+@media (max-width: 600px) {
     [data-table-toolbar] {
-        --tt-gap: 0px;
-        --tt-button-size: 22px;
+        --tt-gap: 2px;
+        --tt-padding: 0px;
+        --tt-button-size: 24px;
+        --tt-button-height: 24px;
     }
 }
 `;
@@ -90,6 +119,24 @@ const controlStyle = {
     WebkitAppearance: 'none',
 };
 
+const actionControlStyle = {
+    ...controlStyle,
+    width: 'var(--tt-action-width, auto)',
+    height: SIZES.buttonHeight,
+    padding: 'var(--tt-action-padding, 0 10px)',
+    gap: '6px',
+    borderRadius: '999px',
+};
+
+const dividerStyle = {
+    flex: '0 0 auto',
+    width: '1px',
+    height: SIZES.dividerHeight,
+    margin: '0 2px',
+    background: COLORS.divider,
+    opacity: 0.55,
+};
+
 const styles = {
     container: {
         display: 'inline-flex',
@@ -98,7 +145,7 @@ const styles = {
         boxSizing: 'border-box',
         height: SIZES.height,
         padding: SIZES.containerPadding,
-        background: 'transparent',
+        background: COLORS.surface,
         border: `${SIZES.borderWidth} solid ${COLORS.border}`,
         borderRadius: SIZES.borderRadius,
         fontFamily: FONT_FAMILY,
@@ -111,7 +158,7 @@ const styles = {
         flex: '0 0 auto',
     },
     exportSummary: {
-        ...controlStyle,
+        ...actionControlStyle,
     },
     exportMenu: {
         position: 'absolute',
@@ -163,7 +210,7 @@ export default function TableToolbar({
     const actions = [];
     if (onAdd) actions.push({ key: 'add', label: 'Adicionar', Icon: Plus, onClick: onAdd });
     if (onFilter) actions.push({ key: 'filter', label: 'Filtrar', Icon: SlidersHorizontal, onClick: onFilter });
-    if (onSearch) actions.push({ key: 'search', label: 'Pesquisar', Icon: Search, onClick: onSearch });
+    if (onSearch) actions.push({ key: 'search', label: 'Buscar', Icon: Search, onClick: onSearch });
 
     const viewIcons = { cards: LayoutGrid, card: LayoutGrid, grid: LayoutGrid, list: List, table: Table2 };
     const viewButtons = viewModes.map((mode) => {
@@ -194,22 +241,36 @@ export default function TableToolbar({
                     <Icon size={SIZES.iconSize} strokeWidth={SIZES.iconStrokeWidth} aria-hidden="true" />
                 </button>
             ))}
+            {viewButtons.length > 0 && actions.length > 0 && (
+                <span className="tt-divider" style={dividerStyle} aria-hidden="true" />
+            )}
             {actions.map(({ key, label, Icon, onClick }) => (
                 <button
                     key={key}
                     type="button"
+                    className="tt-action"
                     aria-label={label}
                     title={label}
                     onClick={onClick}
-                    style={controlStyle}
+                    style={actionControlStyle}
                 >
                     <Icon size={SIZES.iconSize} strokeWidth={SIZES.iconStrokeWidth} aria-hidden="true" />
+                    <span className="tt-label">{label}</span>
                 </button>
             ))}
+            {exportOptions.length > 0 && (viewButtons.length > 0 || actions.length > 0) && (
+                <span className="tt-divider" style={dividerStyle} aria-hidden="true" />
+            )}
             {exportOptions.length > 0 && (
                 <details style={styles.exportWrap}>
-                    <summary style={styles.exportSummary} aria-label="Exportar tudo" title="Exportar tudo">
+                    <summary
+                        className="tt-action tt-export-summary"
+                        style={styles.exportSummary}
+                        aria-label="Exportar tudo"
+                        title="Exportar tudo"
+                    >
                         <Download size={SIZES.iconSize} strokeWidth={SIZES.iconStrokeWidth} aria-hidden="true" />
+                        <span className="tt-label">Exportar</span>
                         <ChevronDown size={11} strokeWidth={SIZES.iconStrokeWidth} aria-hidden="true" />
                     </summary>
                     <div style={styles.exportMenu}>

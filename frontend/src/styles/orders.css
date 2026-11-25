@@ -46,23 +46,23 @@
     --orders-search-max-width: 340px;
 
     /* TODO: confirmar no Dev Mode do Figma (proporções do card de pedido) */
-    --orders-card-min: 186px;
-    --orders-card-max: 210px;
-    --orders-card-min-height: 140px;
-    --orders-card-padding: 4px;
-    --orders-card-gap: 2px;
+    --orders-card-min: 200px;
+    --orders-card-max: 230px;
+    --orders-card-min-height: 178px;
+    --orders-card-padding: 10px;
+    --orders-card-gap: 6px;
     --orders-card-name-size: 18px;
     --orders-card-order-size: 11px;
     --orders-card-time-size: 11px;
     --orders-badge-size: 11px;
-    --orders-badge-padding: 1px 6px;
+    --orders-badge-padding: 3px 9px;
     --orders-card-table-head-size: 11px;
     --orders-card-table-size: 12px;
-    --orders-qty-column: 22px;
-    --orders-table-head-padding: 0px;
-    --orders-table-row-padding: 0px;
+    --orders-qty-column: 26px;
+    --orders-table-head-padding: 4px 6px;
+    --orders-table-row-padding: 3px 6px;
     --orders-card-total-size: 16px;
-    --orders-finalize-height: 22px;
+    --orders-finalize-height: 24px;
     --orders-finalize-size: 11px;
     --orders-selected-border-width: 2px;
 
@@ -296,7 +296,7 @@ body:has(.orders-page) main {
 
 .orders-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(var(--orders-card-min), var(--orders-card-max)));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--orders-card-min)), var(--orders-card-max)));
     justify-content: start;
     align-content: start;
     align-items: stretch;
@@ -327,9 +327,10 @@ body:has(.orders-page) main {
     padding: var(--orders-card-padding);
     border: var(--orders-border-width) solid var(--orders-border);
     border-radius: var(--orders-radius);
-    background: transparent;
+    background: var(--orders-card-bg);
     color: var(--orders-text);
     cursor: pointer;
+    justify-content: space-between;
 }
 
 .orders-card:hover {
@@ -401,6 +402,14 @@ body:has(.orders-page) main {
     background: var(--warning);
 }
 
+.orders-card-table {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 0;
+}
+
 .orders-card-table-head,
 .orders-card-table-row {
     display: grid;
@@ -431,7 +440,9 @@ body:has(.orders-page) main {
 
 .orders-card-item-name {
     min-width: 0;
-    overflow-wrap: anywhere;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .orders-card-qty,
@@ -453,6 +464,11 @@ body:has(.orders-page) main {
     justify-content: space-between;
     gap: var(--orders-top-gap);
     font-size: var(--orders-card-total-size);
+}
+
+.orders-card-total {
+    padding-top: 6px;
+    border-top: 1px solid var(--orders-soft);
 }
 
 .orders-card-finalize {
