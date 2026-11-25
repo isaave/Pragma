@@ -4,8 +4,9 @@ import { ChevronDown, Download, Plus, Search, SlidersHorizontal } from 'lucide-r
 // Toolbar de ações alinhada ao SegmentedControl: mesma altura, borda e raio.
 const COLORS = {
     border: '#03071e',
-    icon: '#03071e',
-    hoverBackground: 'rgba(3, 7, 30, 0.06)',
+    // Mesma lógica do SegmentedControl: marinho no claro, branco no escuro.
+    icon: 'var(--table-toolbar-icon, #03071e)',
+    hoverBackground: 'var(--table-toolbar-hover, rgba(3, 7, 30, 0.06))',
     focusRing: '#6366f1',
 };
 
