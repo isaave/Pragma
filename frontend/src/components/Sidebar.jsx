@@ -37,9 +37,9 @@ export default function Sidebar({ currentView, onNavigate, onLogout, currentUser
         { view: 'orders', icon: Bell, label: 'Gestão de Pedidos' },
         { view: 'history', icon: History, label: 'Históricos de pedidos' },
         { view: 'menu', icon: Utensils, label: 'Produtos' },
+        { view: 'stock', icon: Package, label: 'Estoque' },
         { view: 'reports', icon: BarChart3, label: 'Relatórios' },
         { view: 'admin', icon: Users, label: 'Usuários' },
-        { view: 'stock', icon: Package, label: 'Estoque' },
     ];
 
     // ===== Modo mobile: drawer lateral (desliza por cima do conteúdo) =====
