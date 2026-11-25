@@ -202,6 +202,7 @@ export default function Orders() {
     const [mostrarBusca, setMostrarBusca] = useState(false);
     const [mostrarFiltros, setMostrarFiltros] = useState(false);
     const [detailId, setDetailId] = useState(null);
+    const [detailMode, setDetailMode] = useState('detail'); // detail | edit | status
     const [detailExpanded, setDetailExpanded] = useState(false);
     const [exporting, setExporting] = useState(false);
     const isMobile = useIsMobile();
@@ -280,11 +281,13 @@ export default function Orders() {
             closeNewOrder();
         } else {
             resetForm();
+            setStatusModal(null);
+            setDetailMode('detail');
             setShowNewOrder(true);
         }
     };
 
-    const startEditOrder = (order) => {
+    const startEditOrder = (order, inline = false) => {
         setEditingOrder(order);
         setCustomerName(order.customer_name || '');
         setOrderNotes(order.notes || '');
@@ -304,7 +307,14 @@ export default function Orders() {
         );
         setError('');
         setSuccess('');
-        setShowNewOrder(true);
+        if (inline) {
+            setShowNewOrder(false);
+            setStatusModal(null);
+            setDetailId(order.id);
+            setDetailMode('edit');
+        } else {
+            setShowNewOrder(true);
+        }
     };
 
     /* ---------------- Carrinho ---------------- */
@@ -404,6 +414,7 @@ export default function Orders() {
                 const res = await api.put(`/orders/${editingOrder.id}`, payload);
                 setSuccess(res.data.message);
                 setShowNewOrder(false);
+                setDetailMode('detail');
                 resetForm();
             } else {
                 const res = await api.post('/orders', payload);
@@ -522,9 +533,14 @@ export default function Orders() {
             saving: false,
             error: '',
         });
+        setDetailId(order.id);
+        setDetailMode('status');
     };
 
-    const closeStatusModal = () => setStatusModal(null);
+    const closeStatusModal = () => {
+        setStatusModal(null);
+        setDetailMode('detail');
+    };
 
     const selectStatus = (status) => {
         setStatusModal((prev) =>
@@ -554,6 +570,7 @@ export default function Orders() {
             });
             setSuccess(res.data.message);
             setStatusModal(null);
+            setDetailMode('detail');
             await loadOrders();
         } catch (err) {
             setStatusModal((prev) => ({
@@ -603,7 +620,8 @@ export default function Orders() {
     const canEdit = (order) => !['delivered', 'cancelled'].includes(order.status);
 
     const finalizeOrder = (order) => {
-        setDetailId(null);
+        setDetailId(order.id);
+        setDetailMode('status');
         setStatusModal({ order, selected: 'delivered', reason: '', saving: false, error: '' });
     };
 
@@ -627,18 +645,13 @@ export default function Orders() {
               order: selectedOrder,
               expanded: detailExpanded,
               onToggleExpand: () => setDetailExpanded((v) => !v),
-              onClose: () => setDetailId(null),
-              onEdit: () => {
-                  const order = selectedOrder;
+              onClose: () => {
                   setDetailId(null);
-                  startEditOrder(order);
+                  setDetailMode('detail');
               },
+              onEdit: () => startEditOrder(selectedOrder, true),
               onFinalize: finalizeOrder,
-              onChangeStatus: () => {
-                  const order = selectedOrder;
-                  setDetailId(null);
-                  openStatusModal(order);
-              },
+              onChangeStatus: () => openStatusModal(selectedOrder),
               onCopy: copyOrder,
               onPrint: printOrder,
               onDelete: deleteOrder,
@@ -655,6 +668,271 @@ export default function Orders() {
               getHistory,
           }
         : null;
+
+    const renderOrderForm = () => (
+        <form onSubmit={finishOrder} ref={formRef} className="orders-form">
+            <div className="orders-form__customer">
+                <input
+                    id="customer-name"
+                    type="text"
+                    className="orders-form__field orders-form__customer-input"
+                    placeholder="Nome pedido"
+                    maxLength={120}
+                    aria-label="Nome do pedido"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                />
+                {editingOrder && (
+                    <span className="orders-form__order-number">
+                        {`Ordem ${orderNumber(editingOrder.id)}`}
+                    </span>
+                )}
+            </div>
+
+            {error && <p className="orders-form__error" role="alert">{error}</p>}
+
+            <div className="orders-form__items-head">
+                <h3 className="orders-form__title">Itens</h3>
+                <div className="orders-form__labels">
+                    <span>Produto</span>
+                    <span>Qts</span>
+                </div>
+            </div>
+
+            <div className="orders-form__divider" />
+
+            <div className="orders-form__add-row">
+                <select
+                    id="product-select"
+                    className="orders-form__field orders-form__select"
+                    value={selectedProductId}
+                    onChange={(e) => setSelectedProductId(e.target.value)}
+                    disabled={loading || products.length === 0}
+                    aria-label="Produto"
+                >
+                    <option value="">
+                        {loading
+                            ? 'A carregar produtos...'
+                            : products.length === 0
+                              ? 'Nenhum produto cadastrado'
+                              : 'Selecione um produto...'}
+                    </option>
+                    {products.map((product) => (
+                        <option
+                            key={product.id}
+                            value={product.id}
+                            disabled={!product.available}
+                        >
+                            {product.name} — {formatPrice(product.price)}
+                            {product.available ? '' : ' (indisponível)'}
+                        </option>
+                    ))}
+                </select>
+                <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    aria-label="Quantidade"
+                    className="orders-form__field orders-form__qty"
+                    value={pickQty}
+                    onChange={(e) => setPickQty(e.target.value)}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            addPicked();
+                        }
+                    }}
+                />
+                <button
+                    type="button"
+                    className="orders-form__check"
+                    aria-label="Adicionar produto"
+                    title="Adicionar produto"
+                    onClick={addPicked}
+                    disabled={!selectedProductId}
+                >
+                    <Check size={14} aria-hidden="true" />
+                </button>
+            </div>
+
+            <div className="orders-form__divider" />
+
+            {cart.length === 0 ? (
+                <p className="orders-form__empty">Selecione um produto acima para começar.</p>
+            ) : (
+                <ul className="orders-form__cart">
+                    {cart.map((entry, index) => (
+                        <li key={entry.product.id} className="orders-form__cart-item">
+                            <div className="orders-form__cart-main">
+                                <span className="orders-form__chip">
+                                    {`${entry.quantity}× ${entry.product.name}`}
+                                    <button
+                                        type="button"
+                                        className="orders-form__chip-button"
+                                        aria-label={`Diminuir ${entry.product.name}`}
+                                        onClick={() => changeQuantity(index, -1)}
+                                    >
+                                        <Minus size={10} aria-hidden="true" />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="orders-form__chip-button"
+                                        aria-label={`Aumentar ${entry.product.name}`}
+                                        onClick={() => changeQuantity(index, 1)}
+                                    >
+                                        <Plus size={10} aria-hidden="true" />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="orders-form__chip-button"
+                                        aria-label={`Remover ${entry.product.name}`}
+                                        onClick={() => removeItem(index)}
+                                    >
+                                        <X size={10} aria-hidden="true" />
+                                    </button>
+                                </span>
+                                <span className="orders-form__item-value">
+                                    {formatPrice(
+                                        Number(entry.product.price) * entry.quantity +
+                                            (entry.addons || []).reduce(
+                                                (sum, addon) => sum + Number(addon.price) * addon.quantity,
+                                                0
+                                            )
+                                    )}
+                                </span>
+                            </div>
+
+                            {(entry.addons || []).map((addon, addonIndex) => (
+                                <div key={`${addon.product_addon_id}-${addonIndex}`} className="orders-form__addon">
+                                    {`+ ${addon.quantity}× ${addon.name} — ${formatPrice(Number(addon.price) * addon.quantity)}`}
+                                </div>
+                            ))}
+
+                            <input
+                                id={`item-note-${index}`}
+                                type="text"
+                                className="orders-form__field orders-form__item-note"
+                                maxLength={1000}
+                                placeholder="Ex.: salada sem cebola"
+                                aria-label="Observação do item"
+                                value={entry.notes}
+                                onChange={(e) => changeItemNote(index, e.target.value)}
+                            />
+                        </li>
+                    ))}
+                </ul>
+            )}
+
+            <div className="orders-form__notes">
+                <label className="orders-form__label" htmlFor="order-notes">Observações do pedido</label>
+                <textarea
+                    id="order-notes"
+                    className="orders-form__field orders-form__textarea"
+                    rows={2}
+                    maxLength={1000}
+                    placeholder="Ex.: entregar na portaria, ponto da carne..."
+                    aria-label="Observações do pedido"
+                    value={orderNotes}
+                    onChange={(e) => setOrderNotes(e.target.value)}
+                />
+            </div>
+
+            <div className="orders-form__divider" />
+
+            <div className="orders-form__total">
+                <strong>Total</strong>
+                <strong>{formatPrice(cartTotal)}</strong>
+            </div>
+
+            <button
+                type="submit"
+                className="orders-form__submit"
+                disabled={cart.length === 0 || submitting}
+            >
+                {submitting
+                    ? 'A guardar...'
+                    : editingOrder
+                      ? 'Guardar alterações'
+                      : 'Criar Pedido'}
+            </button>
+        </form>
+    );
+
+    const renderStatusPanel = () => {
+        if (!statusModal) return null;
+        return (
+            <div className="orders-status-modal">
+                {statusModal.error && (
+                    <p className="orders-status-error" role="alert">{statusModal.error}</p>
+                )}
+
+                <p className="orders-status-pills">
+                    {STATUS_ORDER.map((status) => {
+                        const meta = STATUS_META[status];
+                        const isCurrent = status === statusModal.order.status;
+                        return (
+                            <button
+                                key={status}
+                                type="button"
+                                className="orders-status-pill"
+                                aria-pressed={statusModal.selected === status}
+                                onClick={() => selectStatus(status)}
+                                disabled={isCurrent}
+                            >
+                                {meta.label}
+                                {isCurrent ? ' (atual)' : ''}
+                            </button>
+                        );
+                    })}
+                </p>
+
+                {STATUS_META[statusModal.selected]?.needsReason && (
+                    <p className="orders-status-reason">
+                        <label className="orders-status-label" htmlFor="status-reason">
+                            Motivo (obrigatório para{' '}
+                            {STATUS_META[statusModal.selected].label.toLowerCase()})
+                        </label>{' '}
+                        <textarea
+                            id="status-reason"
+                            rows={3}
+                            maxLength={1000}
+                            placeholder="Explique o motivo desta alteração..."
+                            value={statusModal.reason}
+                            onChange={(e) =>
+                                setStatusModal((prev) => ({
+                                    ...prev,
+                                    reason: e.target.value,
+                                    error: '',
+                                }))
+                            }
+                        />
+                    </p>
+                )}
+
+                <p className="orders-status-actions">
+                    <button
+                        type="button"
+                        className="orders-status-cancel"
+                        onClick={closeStatusModal}
+                        disabled={statusModal.saving}
+                    >
+                        Cancelar
+                    </button>{' '}
+                    <button
+                        type="button"
+                        className="orders-status-confirm"
+                        onClick={confirmStatus}
+                        disabled={
+                            statusModal.saving ||
+                            statusModal.selected === statusModal.order.status
+                        }
+                    >
+                        {statusModal.saving ? 'A guardar...' : 'Confirmar status'}
+                    </button>
+                </p>
+            </div>
+        );
+    };
 
     /* ---------------- Render ---------------- */
 
@@ -682,15 +960,15 @@ export default function Orders() {
             )}
 
             {/* ================= CRIAÇÃO / EDIÇÃO ================= */}
-            {showNewOrder && (
+            {showNewOrder && !editingOrder && (
                 <Modal
                     open
                     onClose={closeNewOrder}
                     maxWidth={formWide ? '760px' : '520px'}
                     showDivider={false}
                     closePlacement="top"
-                    ariaLabel={editingOrder ? `Editar pedido ${orderNumber(editingOrder.id)}` : 'Novo pedido'}
-                    titleNode={<span className="orders-sr-only">{editingOrder ? `Editar pedido ${orderNumber(editingOrder.id)}` : 'Novo pedido'}</span>}
+                    ariaLabel="Novo pedido"
+                    titleNode={<span className="orders-sr-only">Novo pedido</span>}
                     headerStart={
                         <button
                             type="button"
@@ -703,192 +981,7 @@ export default function Orders() {
                         </button>
                     }
                 >
-                    <form onSubmit={finishOrder} ref={formRef} className="orders-form">
-                        <div className="orders-form__customer">
-                            <input
-                                id="customer-name"
-                                type="text"
-                                className="orders-form__field orders-form__customer-input"
-                                placeholder="Nome pedido"
-                                maxLength={120}
-                                aria-label="Nome do pedido"
-                                value={customerName}
-                                onChange={(e) => setCustomerName(e.target.value)}
-                            />
-                            {editingOrder && (
-                                <span className="orders-form__order-number">
-                                    {`Ordem ${orderNumber(editingOrder.id)}`}
-                                </span>
-                            )}
-                        </div>
-
-                        {error && <p className="orders-form__error" role="alert">{error}</p>}
-
-                        <div className="orders-form__items-head">
-                            <h3 className="orders-form__title">Itens</h3>
-                            <div className="orders-form__labels">
-                                <span>Produto</span>
-                                <span>Qts</span>
-                            </div>
-                        </div>
-
-                        <div className="orders-form__divider" />
-
-                        <div className="orders-form__add-row">
-                            <select
-                                id="product-select"
-                                className="orders-form__field orders-form__select"
-                                value={selectedProductId}
-                                onChange={(e) => setSelectedProductId(e.target.value)}
-                                disabled={loading || products.length === 0}
-                                aria-label="Produto"
-                            >
-                                <option value="">
-                                    {loading
-                                        ? 'A carregar produtos...'
-                                        : products.length === 0
-                                          ? 'Nenhum produto cadastrado'
-                                          : 'Selecione um produto...'}
-                                </option>
-                                {products.map((product) => (
-                                    <option
-                                        key={product.id}
-                                        value={product.id}
-                                        disabled={!product.available}
-                                    >
-                                        {product.name} — {formatPrice(product.price)}
-                                        {product.available ? '' : ' (indisponível)'}
-                                    </option>
-                                ))}
-                            </select>
-                            <input
-                                type="number"
-                                min="1"
-                                step="1"
-                                aria-label="Quantidade"
-                                className="orders-form__field orders-form__qty"
-                                value={pickQty}
-                                onChange={(e) => setPickQty(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                        e.preventDefault();
-                                        addPicked();
-                                    }
-                                }}
-                            />
-                            <button
-                                type="button"
-                                className="orders-form__check"
-                                aria-label="Adicionar produto"
-                                title="Adicionar produto"
-                                onClick={addPicked}
-                                disabled={!selectedProductId}
-                            >
-                                <Check size={14} aria-hidden="true" />
-                            </button>
-                        </div>
-
-                        <div className="orders-form__divider" />
-
-                        {cart.length === 0 ? (
-                            <p className="orders-form__empty">Selecione um produto acima para começar.</p>
-                        ) : (
-                            <ul className="orders-form__cart">
-                                {cart.map((entry, index) => (
-                                    <li key={entry.product.id} className="orders-form__cart-item">
-                                        <div className="orders-form__cart-main">
-                                            <span className="orders-form__chip">
-                                                {`${entry.quantity}× ${entry.product.name}`}
-                                                <button
-                                                    type="button"
-                                                    className="orders-form__chip-button"
-                                                    aria-label={`Diminuir ${entry.product.name}`}
-                                                    onClick={() => changeQuantity(index, -1)}
-                                                >
-                                                    <Minus size={10} aria-hidden="true" />
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    className="orders-form__chip-button"
-                                                    aria-label={`Aumentar ${entry.product.name}`}
-                                                    onClick={() => changeQuantity(index, 1)}
-                                                >
-                                                    <Plus size={10} aria-hidden="true" />
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    className="orders-form__chip-button"
-                                                    aria-label={`Remover ${entry.product.name}`}
-                                                    onClick={() => removeItem(index)}
-                                                >
-                                                    <X size={10} aria-hidden="true" />
-                                                </button>
-                                            </span>
-                                            <span className="orders-form__item-value">
-                                                {formatPrice(
-                                                    Number(entry.product.price) * entry.quantity +
-                                                        (entry.addons || []).reduce(
-                                                            (sum, addon) => sum + Number(addon.price) * addon.quantity,
-                                                            0
-                                                        )
-                                                )}
-                                            </span>
-                                        </div>
-
-                                        {(entry.addons || []).map((addon, addonIndex) => (
-                                            <div key={`${addon.product_addon_id}-${addonIndex}`} className="orders-form__addon">
-                                                {`+ ${addon.quantity}× ${addon.name} — ${formatPrice(Number(addon.price) * addon.quantity)}`}
-                                            </div>
-                                        ))}
-
-                                        <input
-                                            id={`item-note-${index}`}
-                                            type="text"
-                                            className="orders-form__field orders-form__item-note"
-                                            maxLength={1000}
-                                            placeholder="Ex.: salada sem cebola"
-                                            aria-label="Observação do item"
-                                            value={entry.notes}
-                                            onChange={(e) => changeItemNote(index, e.target.value)}
-                                        />
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-
-                        <div className="orders-form__notes">
-                            <label className="orders-form__label" htmlFor="order-notes">Observações do pedido</label>
-                            <textarea
-                                id="order-notes"
-                                className="orders-form__field orders-form__textarea"
-                                rows={2}
-                                maxLength={1000}
-                                placeholder="Ex.: entregar na portaria, ponto da carne..."
-                                aria-label="Observações do pedido"
-                                value={orderNotes}
-                                onChange={(e) => setOrderNotes(e.target.value)}
-                            />
-                        </div>
-
-                        <div className="orders-form__divider" />
-
-                        <div className="orders-form__total">
-                            <strong>Total</strong>
-                            <strong>{formatPrice(cartTotal)}</strong>
-                        </div>
-
-                        <button
-                            type="submit"
-                            className="orders-form__submit"
-                            disabled={cart.length === 0 || submitting}
-                        >
-                            {submitting
-                                ? 'A guardar...'
-                                : editingOrder
-                                  ? 'Guardar alterações'
-                                  : 'Criar Pedido'}
-                        </button>
-                    </form>
+                    {renderOrderForm()}
                 </Modal>
             )}
 
@@ -979,6 +1072,8 @@ export default function Orders() {
                                             selected={order.id === detailId}
                                             onOpen={(opened) => {
                                                 setDetailId(opened.id);
+                                                setDetailMode('detail');
+                                                setStatusModal(null);
                                                 setDetailExpanded(false);
                                             }}
                                             onFinalize={finalizeOrder}
@@ -992,103 +1087,59 @@ export default function Orders() {
                         </div>
                     )}
 
-                    {selectedOrder && detailProps && (
+                    {selectedOrder && (
                         <aside
-                            className={`orders-detail${detailExpanded ? ' orders-detail--fullscreen' : ''}`}
+                            className={`orders-detail${detailExpanded ? ' orders-detail--fullscreen' : ''}${detailMode === 'edit' ? ' orders-detail--editing' : ''}`}
                             ref={detailRef}
                         >
-                            <OrderDetail
-                                {...detailProps}
-                                variant={detailExpanded ? 'fullscreen' : 'panel'}
-                            />
+                            {detailMode === 'edit' ? (
+                                <div className="orders-detail-inline">
+                                    <div className="orders-detail-inline__head">
+                                        <strong className="orders-detail-inline__title">
+                                            {`Editar pedido ${orderNumber(selectedOrder.id)}`}
+                                        </strong>
+                                        <button
+                                            type="button"
+                                            className="orders-detail-inline__back"
+                                            onClick={() => {
+                                                resetForm();
+                                                setDetailMode('detail');
+                                            }}
+                                        >
+                                            Voltar
+                                        </button>
+                                    </div>
+                                    {renderOrderForm()}
+                                </div>
+                            ) : detailMode === 'status' ? (
+                                <div className="orders-detail-inline">
+                                    <div className="orders-detail-inline__head">
+                                        <strong className="orders-detail-inline__title">
+                                            {`Alterar status ${orderNumber(selectedOrder.id)}`}
+                                        </strong>
+                                        <button
+                                            type="button"
+                                            className="orders-detail-inline__back"
+                                            onClick={closeStatusModal}
+                                        >
+                                            Voltar
+                                        </button>
+                                    </div>
+                                    {renderStatusPanel()}
+                                </div>
+                            ) : (
+                                detailProps && (
+                                    <OrderDetail
+                                        {...detailProps}
+                                        variant={detailExpanded ? 'fullscreen' : 'panel'}
+                                    />
+                                )
+                            )}
                         </aside>
                     )}
                 </div>
             </section>
 
-            {/* ================= MODAL DE STATUS ================= */}
-            {statusModal && (
-                <Modal
-                    open={!!statusModal}
-                    onClose={closeStatusModal}
-                    maxWidth="480px"
-                    showDivider={false}
-                    closePlacement="top"
-                    title={`Alterar status ${orderNumber(statusModal.order.id)}`}
-                    subtitle="Escolha o novo status do pedido."
-                >
-                    <div className="orders-status-modal">
-                        {statusModal.error && (
-                            <p className="orders-status-error" role="alert">{statusModal.error}</p>
-                        )}
-
-                        <p className="orders-status-pills">
-                            {STATUS_ORDER.map((status) => {
-                                const meta = STATUS_META[status];
-                                const isCurrent = status === statusModal.order.status;
-                                return (
-                                    <button
-                                        key={status}
-                                        type="button"
-                                        className="orders-status-pill"
-                                        aria-pressed={statusModal.selected === status}
-                                        onClick={() => selectStatus(status)}
-                                        disabled={isCurrent}
-                                    >
-                                        {meta.label}
-                                        {isCurrent ? ' (atual)' : ''}
-                                    </button>
-                                );
-                            })}
-                        </p>
-
-                        {STATUS_META[statusModal.selected]?.needsReason && (
-                            <p className="orders-status-reason">
-                                <label className="orders-status-label" htmlFor="status-reason">
-                                    Motivo (obrigatório para{' '}
-                                    {STATUS_META[statusModal.selected].label.toLowerCase()})
-                                </label>{' '}
-                                <textarea
-                                    id="status-reason"
-                                    rows={3}
-                                    maxLength={1000}
-                                    placeholder="Explique o motivo desta alteração..."
-                                    value={statusModal.reason}
-                                    onChange={(e) =>
-                                        setStatusModal((prev) => ({
-                                            ...prev,
-                                            reason: e.target.value,
-                                            error: '',
-                                        }))
-                                    }
-                                />
-                            </p>
-                        )}
-
-                        <p className="orders-status-actions">
-                            <button
-                                type="button"
-                                className="orders-status-cancel"
-                                onClick={closeStatusModal}
-                                disabled={statusModal.saving}
-                            >
-                                Cancelar
-                            </button>{' '}
-                            <button
-                                type="button"
-                                className="orders-status-confirm"
-                                onClick={confirmStatus}
-                                disabled={
-                                    statusModal.saving ||
-                                    statusModal.selected === statusModal.order.status
-                                }
-                            >
-                                {statusModal.saving ? 'A guardar...' : 'Confirmar status'}
-                            </button>
-                        </p>
-                    </div>
-                </Modal>
-            )}
         </div>
     );
 }

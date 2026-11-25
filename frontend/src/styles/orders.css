@@ -555,6 +555,68 @@ body:has(.orders-page) main {
     font-size: var(--orders-detail-plain-row-size);
 }
 
+/* Edição e alteração de status acontecem dentro do próprio painel. */
+.orders-detail-inline {
+    display: flex;
+    flex-direction: column;
+    gap: var(--orders-detail-gap);
+    min-width: 0;
+}
+
+.orders-detail-inline__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--orders-top-gap);
+}
+
+.orders-detail-inline__title {
+    font-size: var(--orders-detail-name-size);
+    font-weight: 700;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+}
+
+.orders-detail-inline__back {
+    box-sizing: border-box;
+    flex: 0 0 auto;
+    height: var(--orders-secondary-height);
+    padding: 0 var(--orders-button-padding-x);
+    border: var(--orders-border-width) solid var(--orders-border);
+    border-radius: var(--orders-field-radius);
+    background: transparent;
+    color: var(--orders-text);
+    font-family: inherit;
+    font-size: var(--orders-card-table-size);
+    cursor: pointer;
+}
+
+.orders-detail--editing .orders-form {
+    gap: var(--orders-detail-gap);
+}
+
+.orders-detail--editing .orders-form__field,
+.orders-detail--editing .orders-form__submit {
+    height: var(--orders-secondary-height);
+}
+
+.orders-detail--editing .orders-form__cart {
+    gap: var(--orders-item-gap);
+}
+
+.orders-detail--editing .orders-form__cart-item {
+    gap: 2px;
+}
+
+.orders-detail--editing .orders-form__item-note {
+    height: 20px;
+}
+
+.orders-detail--editing .orders-form__textarea {
+    height: 34px;
+    resize: none;
+}
+
 .orders-detail-top {
     display: flex;
     align-items: center;
