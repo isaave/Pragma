@@ -98,7 +98,7 @@
 }
 
 .users-segmented {
-    flex: 1 1 220px;
+    flex: 0 1 auto;
     min-width: 0;
     max-width: 100%;
 }
@@ -108,18 +108,11 @@
     max-width: 100%;
 }
 
-/* O componente não aceita className nas opções: ajuste só por CSS,
-   sem editar o SegmentedControl. !important é necessário porque as
-   opções têm flex/padding definidos em estilo inline. */
+/* O segmented control acompanha o tamanho natural dos botões e
+   só rola horizontalmente quando o espaço disponível é menor. */
 .users-segmented [data-segmented-control] {
-    width: 100%;
-}
-
-.users-segmented [data-segmented-control] button {
-    flex: 1 1 0 !important;
-    min-width: 0;
-    padding-left: 8px !important;
-    padding-right: 8px !important;
+    width: max-content;
+    max-width: 100%;
 }
 
 .users-search,

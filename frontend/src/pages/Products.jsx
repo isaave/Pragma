@@ -285,11 +285,9 @@ export default function Products() {
                     value={filter}
                     onChange={setFilter}
                     style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(6, minmax(max-content, 1fr))',
-                        flex: '1 1 220px',
+                        flex: '0 1 auto',
                         minWidth: 0,
-                        width: 'auto',
+                        width: 'max-content',
                     }}
                 />
                 <TableToolbar

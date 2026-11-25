@@ -75,7 +75,8 @@
 }
 
 .stock-controls > [data-segmented-control] {
-    flex: 1 1 220px;
+    flex: 0 1 auto;
+    width: max-content;
     min-width: 0;
     max-width: 100%;
 }
