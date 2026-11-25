@@ -1,5 +1,5 @@
 import React from 'react';
-import { Copy, Maximize2, Trash2, Utensils } from 'lucide-react';
+import { Copy, Maximize2, Minimize2, Trash2, Utensils } from 'lucide-react';
 import CloseButton from './ui/CloseButton';
 import { STATUS_META } from '../lib/orderStatus';
 import timeAgo from '../lib/timeAgo';
@@ -36,7 +36,8 @@ export default function OrderDetail({
     orderNumber,
     getHistory,
 }) {
-    const isModal = variant === 'modal';
+    const isFullscreen = variant === 'fullscreen';
+    const isModal = variant === 'modal' || isFullscreen;
     const meta = STATUS_META[order.status] || { label: order.status };
     const tone =
         order.status === 'cancelled'
@@ -130,16 +131,20 @@ export default function OrderDetail({
             className={`orders-detail-content${isModal ? ' orders-detail-content--modal' : ' orders-detail-content--panel'}`}
             data-expanded={expanded ? 'true' : 'false'}
         >
-            {!isModal && (
+            {(!isModal || isFullscreen) && (
                 <div className="orders-detail-top">
                     <button
                         type="button"
                         className="orders-detail-expand"
-                        aria-label="Expandir"
-                        title="Expandir"
+                        aria-label={isFullscreen ? 'Recolher' : 'Expandir'}
+                        title={isFullscreen ? 'Recolher' : 'Expandir'}
                         onClick={onToggleExpand}
                     >
-                        <Maximize2 size={16} strokeWidth={2} aria-hidden="true" />
+                        {isFullscreen ? (
+                            <Minimize2 size={16} strokeWidth={2} aria-hidden="true" />
+                        ) : (
+                            <Maximize2 size={16} strokeWidth={2} aria-hidden="true" />
+                        )}
                     </button>
                     <CloseButton onClick={onClose} />
                 </div>

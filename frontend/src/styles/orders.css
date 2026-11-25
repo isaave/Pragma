@@ -67,7 +67,7 @@
     --orders-selected-border-width: 2px;
 
     /* TODO: confirmar no Dev Mode do Figma (painel/pop-up de detalhe do pedido) */
-    --orders-detail-width: 250px;
+    --orders-detail-width: calc(2 * var(--orders-card-max) + var(--orders-gap));
     --orders-detail-min-height: 420px;
     --orders-detail-padding: 12px;
     --orders-detail-gap: 10px;
@@ -468,6 +468,27 @@
 
 .orders-detail-content--panel {
     min-height: calc(var(--orders-detail-min-height) - var(--orders-detail-padding) - var(--orders-detail-padding));
+}
+
+/* Detalhe em tela cheia: ocupa toda a área de conteúdo, sem popup. */
+.orders-layout--expanded {
+    width: 100%;
+}
+
+.orders-detail--fullscreen {
+    position: static;
+    flex: 1 1 auto;
+    width: 100%;
+    max-width: none;
+    min-height: calc(100vh - 200px);
+    max-height: none;
+    overflow: visible;
+    padding: 18px;
+}
+
+.orders-detail--fullscreen .orders-detail-content {
+    max-width: 920px;
+    margin: 0 auto;
 }
 
 .orders-detail-top {
@@ -1173,8 +1194,24 @@
 /* ===== Responsivo ===== */
 
 @media (max-width: 900px) {
+    .orders-layout {
+        flex-direction: column;
+    }
+
+    .orders-layout > .orders-grid {
+        width: 100%;
+    }
+
     .orders-detail {
-        display: none;
+        position: static;
+        flex: 1 1 auto;
+        width: 100%;
+        max-width: none;
+        max-height: none;
+    }
+
+    .orders-detail--fullscreen {
+        min-height: calc(100vh - 200px);
     }
 }
 

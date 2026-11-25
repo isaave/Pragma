@@ -188,6 +188,7 @@ export default function Orders() {
     const [pickQty, setPickQty] = useState('1');
     const [formWide, setFormWide] = useState(false);
     const formRef = useRef(null);
+    const detailRef = useRef(null);
 
     // Filtros da lista
     const [filter, setFilter] = useState('all');
@@ -267,6 +268,12 @@ export default function Orders() {
     useEffect(() => {
         if (lastCreated) closeNewOrder();
     }, [lastCreated]);
+
+    // Em telas pequenas o detalhe aparece abaixo da grade; leva o usuário até ele.
+    useEffect(() => {
+        if (!detailId || detailExpanded || !isMobile) return;
+        detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, [detailId, detailExpanded, isMobile]);
 
     const toggleNewOrder = () => {
         if (showNewOrder) {
@@ -600,8 +607,6 @@ export default function Orders() {
         setStatusModal({ order, selected: 'delivered', reason: '', saving: false, error: '' });
     };
 
-    /* ---------------- Render ---------------- */
-
     const renderTimeline = (order) => (
         <div>
             {getHistory(order).map((entry) => {
@@ -616,6 +621,42 @@ export default function Orders() {
             })}
         </div>
     );
+
+    const detailProps = selectedOrder
+        ? {
+              order: selectedOrder,
+              expanded: detailExpanded,
+              onToggleExpand: () => setDetailExpanded((v) => !v),
+              onClose: () => setDetailId(null),
+              onEdit: () => {
+                  const order = selectedOrder;
+                  setDetailId(null);
+                  startEditOrder(order);
+              },
+              onFinalize: finalizeOrder,
+              onChangeStatus: () => {
+                  const order = selectedOrder;
+                  setDetailId(null);
+                  openStatusModal(order);
+              },
+              onCopy: copyOrder,
+              onPrint: printOrder,
+              onDelete: deleteOrder,
+              onToggleHistory: () =>
+                  setExpandedId(expandedId === selectedOrder.id ? null : selectedOrder.id),
+              historyOpen: expandedId === selectedOrder.id,
+              copied: copiedId === selectedOrder.id,
+              canEdit: canEdit(selectedOrder),
+              canFinalize: canFinalize(selectedOrder),
+              renderTimeline,
+              formatDateTime,
+              formatPrice,
+              orderNumber,
+              getHistory,
+          }
+        : null;
+
+    /* ---------------- Render ---------------- */
 
     return (
         <div className="orders-page">
@@ -911,141 +952,59 @@ export default function Orders() {
                     </p>
                 )}
 
-                <div className="orders-layout">
-                    <div className="orders-grid">
-                        {loading ? (
-                            <p className="orders-empty">A carregar pedidos...</p>
-                        ) : visibleOrders.length === 0 ? (
-                            <p className="orders-empty">Nenhum pedido encontrado com estes filtros.</p>
-                        ) : (
-                            visibleOrders.map((order) => {
-                                const meta = STATUS_META[order.status] || {
-                                    label: order.status,
-                                };
-                                const tone =
-                                    order.status === 'cancelled'
-                                        ? 'danger'
-                                        : order.status === 'not_delivered' ||
-                                            order.status === 'late'
-                                          ? 'warning'
-                                          : 'info';
+                <div className={`orders-layout${detailExpanded && selectedOrder ? ' orders-layout--expanded' : ''}`}>
+                    {(!detailExpanded || !selectedOrder) && (
+                        <div className="orders-grid">
+                            {loading ? (
+                                <p className="orders-empty">A carregar pedidos...</p>
+                            ) : visibleOrders.length === 0 ? (
+                                <p className="orders-empty">Nenhum pedido encontrado com estes filtros.</p>
+                            ) : (
+                                visibleOrders.map((order) => {
+                                    const meta = STATUS_META[order.status] || {
+                                        label: order.status,
+                                    };
+                                    const tone =
+                                        order.status === 'cancelled'
+                                            ? 'danger'
+                                            : order.status === 'not_delivered' ||
+                                                order.status === 'late'
+                                              ? 'warning'
+                                              : 'info';
 
-                                return (
-                                    <OrderCard
-                                        key={order.id}
-                                        order={order}
-                                        selected={order.id === detailId}
-                                        onOpen={(opened) => {
-                                            setDetailId(opened.id);
-                                            setDetailExpanded(false);
-                                        }}
-                                        onFinalize={finalizeOrder}
-                                        canFinalize={canFinalize(order)}
-                                        statusLabel={meta.label}
-                                        tone={tone}
-                                    />
-                                );
-                            })
-                        )}
-                    </div>
+                                    return (
+                                        <OrderCard
+                                            key={order.id}
+                                            order={order}
+                                            selected={order.id === detailId}
+                                            onOpen={(opened) => {
+                                                setDetailId(opened.id);
+                                                setDetailExpanded(false);
+                                            }}
+                                            onFinalize={finalizeOrder}
+                                            canFinalize={canFinalize(order)}
+                                            statusLabel={meta.label}
+                                            tone={tone}
+                                        />
+                                    );
+                                })
+                            )}
+                        </div>
+                    )}
 
-                    {selectedOrder && !detailExpanded && !isMobile && (
-                        <aside className="orders-detail">
+                    {selectedOrder && detailProps && (
+                        <aside
+                            className={`orders-detail${detailExpanded ? ' orders-detail--fullscreen' : ''}`}
+                            ref={detailRef}
+                        >
                             <OrderDetail
-                                order={selectedOrder}
-                                variant="panel"
-                                expanded={detailExpanded}
-                                onToggleExpand={() => setDetailExpanded(v => !v)}
-                                onClose={() => setDetailId(null)}
-                                onEdit={() => {
-                                    const order = selectedOrder;
-                                    setDetailId(null);
-                                    startEditOrder(order);
-                                }}
-                                onFinalize={finalizeOrder}
-                                onChangeStatus={() => {
-                                    const order = selectedOrder;
-                                    setDetailId(null);
-                                    openStatusModal(order);
-                                }}
-                                onCopy={copyOrder}
-                                onPrint={printOrder}
-                                onDelete={deleteOrder}
-                                onToggleHistory={() =>
-                                    setExpandedId(expandedId === selectedOrder.id ? null : selectedOrder.id)
-                                }
-                                historyOpen={expandedId === selectedOrder.id}
-                                copied={copiedId === selectedOrder.id}
-                                canEdit={canEdit(selectedOrder)}
-                                canFinalize={canFinalize(selectedOrder)}
-                                renderTimeline={renderTimeline}
-                                formatDateTime={formatDateTime}
-                                formatPrice={formatPrice}
-                                orderNumber={orderNumber}
-                                getHistory={getHistory}
+                                {...detailProps}
+                                variant={detailExpanded ? 'fullscreen' : 'panel'}
                             />
                         </aside>
                     )}
                 </div>
             </section>
-
-            {selectedOrder && (detailExpanded || isMobile) && (
-                <Modal
-                    open
-                    onClose={() => setDetailId(null)}
-                    maxWidth="520px"
-                    showDivider={false}
-                    closePlacement="top"
-                    title={`Pedido ${orderNumber(selectedOrder.id)}`}
-                    headerStart={
-                        !isMobile ? (
-                            <button
-                                type="button"
-                                className="orders-detail__collapse"
-                                aria-label="Recolher"
-                                title="Recolher"
-                                onClick={() => setDetailExpanded(false)}
-                            >
-                                <Minimize2 size={16} />
-                            </button>
-                        ) : undefined
-                    }
-                >
-                    <OrderDetail
-                        order={selectedOrder}
-                        variant="modal"
-                        expanded={detailExpanded}
-                        onToggleExpand={() => setDetailExpanded(v => !v)}
-                        onClose={() => setDetailId(null)}
-                        onEdit={() => {
-                            const order = selectedOrder;
-                            setDetailId(null);
-                            startEditOrder(order);
-                        }}
-                        onFinalize={finalizeOrder}
-                        onChangeStatus={() => {
-                            const order = selectedOrder;
-                            setDetailId(null);
-                            openStatusModal(order);
-                        }}
-                        onCopy={copyOrder}
-                        onPrint={printOrder}
-                        onDelete={deleteOrder}
-                        onToggleHistory={() =>
-                            setExpandedId(expandedId === selectedOrder.id ? null : selectedOrder.id)
-                        }
-                        historyOpen={expandedId === selectedOrder.id}
-                        copied={copiedId === selectedOrder.id}
-                        canEdit={canEdit(selectedOrder)}
-                        canFinalize={canFinalize(selectedOrder)}
-                        renderTimeline={renderTimeline}
-                        formatDateTime={formatDateTime}
-                        formatPrice={formatPrice}
-                        orderNumber={orderNumber}
-                        getHistory={getHistory}
-                    />
-                </Modal>
-            )}
 
             {/* ================= MODAL DE STATUS ================= */}
             {statusModal && (
