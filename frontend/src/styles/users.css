@@ -336,6 +336,11 @@
         width: 100%;
     }
 
+    .users-controls > [data-table-toolbar] {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
     .page-header {
         align-items: flex-start;
     }

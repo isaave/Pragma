@@ -167,7 +167,6 @@ export default function AdminPanel() {
                         } : undefined}
                         onFilter={() => setMostrarFiltros(v => !v)}
                         onSearch={() => setMostrarBusca(v => !v)}
-                        style={{ borderColor: 'transparent' }}
                         ariaLabel="Ações dos usuários"
                     />
                 </div>
