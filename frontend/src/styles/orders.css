@@ -67,8 +67,8 @@
     --orders-selected-border-width: 2px;
 
     /* TODO: confirmar no Dev Mode do Figma (painel/pop-up de detalhe do pedido) */
-    --orders-detail-width: calc(2 * var(--orders-card-max) + var(--orders-gap));
-    --orders-detail-min-height: 420px;
+    --orders-detail-width: 380px;
+    --orders-detail-min-height: calc(100vh - 64px);
     --orders-detail-padding: 12px;
     --orders-detail-gap: 10px;
     --orders-detail-top-offset: 16px;
@@ -480,14 +480,14 @@
     flex: 1 1 auto;
     width: 100%;
     max-width: none;
-    min-height: calc(100vh - 200px);
+    min-height: calc(100vh - 120px);
     max-height: none;
     overflow: visible;
     padding: 18px;
 }
 
 .orders-detail--fullscreen .orders-detail-content {
-    max-width: 920px;
+    max-width: 640px;
     margin: 0 auto;
 }
 
@@ -1211,7 +1211,7 @@
     }
 
     .orders-detail--fullscreen {
-        min-height: calc(100vh - 200px);
+        min-height: calc(100vh - 120px);
     }
 }
 
