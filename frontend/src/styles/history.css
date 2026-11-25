@@ -736,14 +736,6 @@
     container-type: inline-size;
 }
 
-/* Toolbar do histórico sem fundo, sombra nem contorno azul. */
-.history-controls [data-table-toolbar] {
-    --table-toolbar-bg: transparent;
-    --table-toolbar-hover: transparent;
-    border-color: transparent !important;
-    box-shadow: none !important;
-}
-
 .history-month-section + .history-month-section {
     margin-top: 24px;
 }

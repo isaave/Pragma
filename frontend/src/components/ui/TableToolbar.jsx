@@ -42,8 +42,8 @@ const INJECTED_CSS = `
     outline-offset: -1px;
 }
 [data-table-toolbar] [data-view-mode][aria-pressed='true'] {
-    background: var(--table-toolbar-selected, #a2bfda);
-    color: var(--table-toolbar-selected-icon, #040927);
+    background: var(--table-toolbar-selected, var(--control-border, #03071e));
+    color: var(--table-toolbar-selected-icon, var(--card-bg, #ffffff));
 }
 [data-table-toolbar] .tt-action,
 [data-table-toolbar] .tt-export-summary {
@@ -93,9 +93,11 @@ const INJECTED_CSS = `
 }
 `;
 
+// Seleção sem o azul acinzentado: usa a mesma cor do contorno da toolbar,
+// com o ícone invertido para manter contraste (marinho/claro e branco/escuro).
 const selectedControlStyle = {
-    background: 'var(--table-toolbar-selected, #a2bfda)',
-    color: 'var(--table-toolbar-selected-icon, #040927)',
+    background: 'var(--table-toolbar-selected, var(--control-border, #03071e))',
+    color: 'var(--table-toolbar-selected-icon, var(--card-bg, #ffffff))',
 };
 
 const controlStyle = {
