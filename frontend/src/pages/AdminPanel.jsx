@@ -3,7 +3,7 @@ import { Pencil, Trash2 } from 'lucide-react';
 import api from '../Services/api';
 import PageHeader from '../components/ui/PageHeader';
 import SegmentedControl from '../components/ui/SegmentedControl';
-import ActionToolbar from '../components/ui/ActionToolbar';
+import TableToolbar from '../components/ui/TableToolbar';
 import Modal from '../components/ui/Modal';
 import '../styles/users.css';
 
@@ -160,7 +160,7 @@ export default function AdminPanel() {
                             style={{ width: '100%' }}
                         />
                     </div>
-                    <ActionToolbar
+                    <TableToolbar
                         onAdd={isChefe ? () => {
                             resetForm();
                             setModal('create');
@@ -168,6 +168,7 @@ export default function AdminPanel() {
                         onFilter={() => setMostrarFiltros(v => !v)}
                         onSearch={() => setMostrarBusca(v => !v)}
                         style={{ borderColor: 'transparent' }}
+                        ariaLabel="Ações dos usuários"
                     />
                 </div>
 

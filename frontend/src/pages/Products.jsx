@@ -11,7 +11,7 @@ import {
 } from '../lib/exportProduct';
 import PageHeader from '../components/ui/PageHeader';
 import SegmentedControl from '../components/ui/SegmentedControl';
-import ActionToolbar from '../components/ui/ActionToolbar';
+import TableToolbar from '../components/ui/TableToolbar';
 import ProductCard from '../components/ProductCard';
 import ProductDetail from '../components/ProductDetail';
 import Modal from '../components/ui/Modal';
@@ -287,25 +287,22 @@ export default function Products() {
                     style={{
                         display: 'grid',
                         gridTemplateColumns: 'repeat(6, minmax(max-content, 1fr))',
-                        width: '100%',
+                        flex: '1 1 auto',
                         minWidth: 0,
+                        width: 'auto',
                     }}
                 />
-                <div className="products-controls-actions">
-                    <ActionToolbar
-                        onAdd={openCreate}
-                        onSearch={() => setMostrarBusca(v => !v)}
-                        onFilter={() => setMostrarOrdenacao(v => !v)}
-                    />
-                    <details className="products-export-all">
-                        <summary>Exportar tudo</summary>
-                        <div className="products-export-menu">
-                            <button type="button" onClick={(e) => { e.currentTarget.closest('details').open = false; exportAll('pdf'); }} disabled={exporting}>PDF</button>
-                            <button type="button" onClick={(e) => { e.currentTarget.closest('details').open = false; exportAll('csv'); }} disabled={exporting}>CSV</button>
-                            <button type="button" onClick={(e) => { e.currentTarget.closest('details').open = false; exportAll('txt'); }} disabled={exporting}>TXT</button>
-                        </div>
-                    </details>
-                </div>
+                <TableToolbar
+                    onAdd={openCreate}
+                    onSearch={() => setMostrarBusca(v => !v)}
+                    onFilter={() => setMostrarOrdenacao(v => !v)}
+                    exportOptions={[
+                        { label: 'PDF', onClick: () => exportAll('pdf'), disabled: exporting },
+                        { label: 'CSV', onClick: () => exportAll('csv'), disabled: exporting },
+                        { label: 'TXT', onClick: () => exportAll('txt'), disabled: exporting },
+                    ]}
+                    ariaLabel="Ações dos produtos"
+                />
             </div>
 
             {mostrarOrdenacao && (

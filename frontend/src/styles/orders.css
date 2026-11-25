@@ -1167,7 +1167,7 @@
         align-items: flex-start;
     }
 
-    .orders-controls > [data-action-toolbar] {
+    .orders-controls > [data-table-toolbar] {
         width: 100%;
         justify-content: flex-end;
     }

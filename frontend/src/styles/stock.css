@@ -71,15 +71,8 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     min-width: 0;
-}
-
-.stock-controls-actions {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-shrink: 0;
 }
 
 /* Ordenação */
@@ -132,69 +125,6 @@
     color: var(--stock-text);
     font-size: var(--stock-field-size);
     font-family: inherit;
-}
-
-.stock-export-all {
-    position: relative;
-}
-
-.stock-export-all > summary {
-    box-sizing: border-box;
-    display: inline-flex;
-    align-items: center;
-    height: 30px;
-    padding: 0 12px;
-    border: 1px solid var(--stock-border);
-    border-radius: 999px;
-    background: var(--stock-card-bg);
-    color: var(--stock-text);
-    font-size: 12.5px;
-    font-weight: 600;
-    white-space: nowrap;
-    cursor: pointer;
-    list-style: none;
-}
-
-.stock-export-all > summary::-webkit-details-marker {
-    display: none;
-}
-
-.stock-export-menu {
-    position: absolute;
-    top: calc(100% + 4px);
-    right: 0;
-    z-index: 10;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    min-width: 120px;
-    padding: 6px;
-    border: 1px solid var(--stock-soft-border);
-    border-radius: 10px;
-    background: var(--stock-card-bg);
-    box-shadow: var(--card-shadow, 0 4px 16px rgba(3, 7, 30, 0.05));
-}
-
-.stock-export-menu button {
-    display: block;
-    width: 100%;
-    padding: 6px 8px;
-    border: none;
-    border-radius: 6px;
-    background: transparent;
-    color: var(--stock-text);
-    font-size: 12px;
-    text-align: left;
-    cursor: pointer;
-}
-
-.stock-export-menu button:hover:not(:disabled) {
-    background: var(--accent-light, #eff6ff);
-}
-
-.stock-export-menu button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
 }
 
 /* ===== Grade de cards ===== */
@@ -415,9 +345,10 @@
 @media (max-width: 760px) {
     .stock-controls {
         align-items: flex-start;
+        flex-wrap: wrap;
     }
 
-    .stock-controls-actions {
+    .stock-controls > [data-table-toolbar] {
         width: 100%;
         justify-content: flex-end;
     }

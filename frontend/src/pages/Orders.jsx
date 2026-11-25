@@ -3,7 +3,7 @@ import { Check, Minus, Plus, X, Maximize2, Minimize2 } from 'lucide-react';
 import api from '../Services/api';
 import PageHeader from '../components/ui/PageHeader';
 import SegmentedControl from '../components/ui/SegmentedControl';
-import ActionToolbar from '../components/ui/ActionToolbar';
+import TableToolbar from '../components/ui/TableToolbar';
 import Modal from '../components/ui/Modal';
 import OrderCard from '../components/OrderCard';
 import OrderDetail from '../components/OrderDetail';
@@ -831,10 +831,11 @@ export default function Orders() {
                         value={grupo}
                         onChange={setGrupo}
                     />
-                    <ActionToolbar
+                    <TableToolbar
                         onAdd={toggleNewOrder}
                         onSearch={() => setMostrarBusca(v => !v)}
                         onFilter={() => setMostrarFiltros(v => !v)}
+                        ariaLabel="Ações dos pedidos"
                     />
                 </div>
 

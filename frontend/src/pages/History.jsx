@@ -12,7 +12,7 @@ import {
     orderNumber,
 } from '../lib/orderStatus';
 import PageHeader from '../components/ui/PageHeader';
-import ActionToolbar from '../components/ui/ActionToolbar';
+import TableToolbar from '../components/ui/TableToolbar';
 import Modal from '../components/ui/Modal';
 import '../styles/history.css';
 
@@ -234,9 +234,10 @@ export default function History() {
                             </span>
                         </div>
                         <div className="history-actions">
-                            <ActionToolbar
+                            <TableToolbar
                                 onSearch={() => setMostrarBusca(v => !v)}
                                 onFilter={() => setMostrarFiltros(v => !v)}
+                                ariaLabel="Ações do histórico"
                             />
                         </div>
                     </div>

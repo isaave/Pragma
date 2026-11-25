@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import api from '../Services/api';
 import { exportStockCsv, exportStockListCsv, exportStockListPdf, exportStockListTxt, exportStockPdf, exportStockTxt } from '../lib/exportStock';
 import SegmentedControl from '../components/ui/SegmentedControl';
-import ActionToolbar from '../components/ui/ActionToolbar';
+import TableToolbar from '../components/ui/TableToolbar';
 import Modal from '../components/ui/Modal';
 import PageHeader from '../components/ui/PageHeader';
 import StatusBadge from '../components/ui/StatusBadge';
@@ -271,21 +271,17 @@ export default function Stock() {
                     value={filter}
                     onChange={setFilter}
                 />
-                <div className="stock-controls-actions">
-                    <ActionToolbar
-                        onAdd={openCreate}
-                        onFilter={() => setMostrarOrdenacao(v => !v)}
-                        onSearch={() => setMostrarBusca(v => !v)}
-                    />
-                    <details className="stock-export-all">
-                        <summary>Exportar tudo</summary>
-                        <div className="stock-export-menu">
-                            <button type="button" onClick={(e) => { e.currentTarget.closest('details').open = false; exportAll('pdf'); }} disabled={exporting}>PDF</button>
-                            <button type="button" onClick={(e) => { e.currentTarget.closest('details').open = false; exportAll('csv'); }} disabled={exporting}>CSV</button>
-                            <button type="button" onClick={(e) => { e.currentTarget.closest('details').open = false; exportAll('txt'); }} disabled={exporting}>TXT</button>
-                        </div>
-                    </details>
-                </div>
+                <TableToolbar
+                    onAdd={openCreate}
+                    onFilter={() => setMostrarOrdenacao(v => !v)}
+                    onSearch={() => setMostrarBusca(v => !v)}
+                    exportOptions={[
+                        { label: 'PDF', onClick: () => exportAll('pdf'), disabled: exporting },
+                        { label: 'CSV', onClick: () => exportAll('csv'), disabled: exporting },
+                        { label: 'TXT', onClick: () => exportAll('txt'), disabled: exporting },
+                    ]}
+                    ariaLabel="Ações do estoque"
+                />
             </div>
 
             {mostrarOrdenacao && (
