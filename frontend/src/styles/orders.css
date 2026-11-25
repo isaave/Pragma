@@ -31,7 +31,7 @@
     --orders-item-gap: 3px;
     /* TODO: confirmar no Dev Mode do Figma (espaço entre as ações do detalhe) */
     --orders-actions-gap: 6px;
-    --orders-heading-gap: 2px;
+    --orders-heading-gap: 4px;
     --orders-border-width: 1px;
     --orders-divider-size: 1px;
     --orders-message-size: 13px;
@@ -50,14 +50,15 @@
     --orders-card-max: 230px;
     --orders-card-min-height: 178px;
     --orders-card-padding: 10px;
-    --orders-card-gap: 6px;
+    --orders-card-gap: 8px;
     --orders-card-name-size: 18px;
     --orders-card-order-size: 11px;
     --orders-card-time-size: 11px;
     --orders-badge-size: 11px;
-    --orders-badge-padding: 3px 9px;
+    --orders-badge-padding: 3px 8px;
     --orders-card-table-head-size: 11px;
     --orders-card-table-size: 12px;
+    --orders-card-item-size: 13px;
     --orders-qty-column: 26px;
     --orders-table-head-padding: 4px 6px;
     --orders-table-row-padding: 3px 6px;
@@ -351,7 +352,7 @@ body:has(.orders-page) main {
 
 .orders-card-top {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
     gap: var(--orders-top-gap);
 }
@@ -443,6 +444,7 @@ body:has(.orders-page) main {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    font-size: var(--orders-card-item-size);
 }
 
 .orders-card-qty,
