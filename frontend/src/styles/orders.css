@@ -450,8 +450,8 @@
     flex: 0 0 var(--orders-detail-width);
     width: var(--orders-detail-width);
     min-height: var(--orders-detail-min-height);
-    max-height: calc(100vh - var(--orders-detail-height-offset));
-    overflow-y: auto;
+    max-height: none;
+    overflow: visible;
     padding: var(--orders-detail-padding);
     border: var(--orders-border-width) solid var(--orders-border);
     border-radius: var(--orders-radius);
