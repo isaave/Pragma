@@ -23,7 +23,7 @@
     --orders-selected-shadow: var(--card-shadow, 0 4px 16px rgba(3, 7, 30, 0.05));
 
     /* TODO: confirmar no Dev Mode do Figma (estrutura e campos) */
-    --orders-radius: 14px;
+    --orders-radius: 18px;
     --orders-field-radius: 6px;
     --orders-gap: 10px;
     --orders-section-gap: 6px;
@@ -424,7 +424,8 @@ body:has(.orders-page) main {
 }
 
 .orders-card-table-row {
-    padding: var(--orders-table-row-padding) 0;
+    padding: var(--orders-table-row-padding) 8px;
+    border-radius: 8px;
     font-size: var(--orders-card-table-size);
 }
 

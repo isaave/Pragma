@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronDown, Download, Plus, Search, SlidersHorizontal } from 'lucide-react';
+import { ChevronDown, Download, LayoutGrid, List, Plus, Search, SlidersHorizontal, Table2 } from 'lucide-react';
 
 // Toolbar de ações alinhada ao SegmentedControl: mesma altura, borda e raio.
 const COLORS = {
@@ -36,6 +36,10 @@ const INJECTED_CSS = `
     outline: ${SIZES.focusRingWidth} solid ${COLORS.focusRing};
     outline-offset: 0;
 }
+[data-table-toolbar] [data-view-mode][aria-pressed='true'] {
+    background: var(--table-toolbar-selected, #a2bfda);
+    color: var(--table-toolbar-selected-icon, #040927);
+}
 [data-table-toolbar] summary {
     list-style: none;
 }
@@ -59,6 +63,11 @@ const INJECTED_CSS = `
     }
 }
 `;
+
+const selectedControlStyle = {
+    background: 'var(--table-toolbar-selected, #a2bfda)',
+    color: 'var(--table-toolbar-selected-icon, #040927)',
+};
 
 const controlStyle = {
     display: 'inline-flex',
@@ -140,19 +149,51 @@ const styles = {
     },
 };
 
-export default function TableToolbar({ onAdd, onFilter, onSearch, exportOptions = [], ariaLabel = 'Ações', style }) {
+export default function TableToolbar({
+    onAdd,
+    onFilter,
+    onSearch,
+    exportOptions = [],
+    viewModes = [],
+    viewMode,
+    onViewModeChange,
+    ariaLabel = 'Ações',
+    style,
+}) {
     const actions = [];
     if (onAdd) actions.push({ key: 'add', label: 'Adicionar', Icon: Plus, onClick: onAdd });
     if (onFilter) actions.push({ key: 'filter', label: 'Filtrar', Icon: SlidersHorizontal, onClick: onFilter });
     if (onSearch) actions.push({ key: 'search', label: 'Pesquisar', Icon: Search, onClick: onSearch });
 
-    if (actions.length === 0 && exportOptions.length === 0) {
+    const viewIcons = { cards: LayoutGrid, card: LayoutGrid, grid: LayoutGrid, list: List, table: Table2 };
+    const viewButtons = viewModes.map((mode) => {
+        if (typeof mode === 'string') {
+            return { value: mode, label: mode, Icon: viewIcons[mode] || LayoutGrid };
+        }
+        return { ...mode, Icon: mode.Icon || viewIcons[mode.value] || LayoutGrid };
+    });
+
+    if (actions.length === 0 && exportOptions.length === 0 && viewButtons.length === 0) {
         return null;
     }
 
     return (
         <div data-table-toolbar="" role="toolbar" aria-label={ariaLabel} style={{ ...styles.container, ...style }}>
             <style>{INJECTED_CSS}</style>
+            {viewButtons.map(({ value, label, Icon }) => (
+                <button
+                    key={value}
+                    type="button"
+                    data-view-mode=""
+                    aria-label={label}
+                    title={label}
+                    aria-pressed={viewMode === value}
+                    onClick={() => onViewModeChange?.(value)}
+                    style={viewMode === value ? { ...controlStyle, ...selectedControlStyle } : controlStyle}
+                >
+                    <Icon size={SIZES.iconSize} strokeWidth={SIZES.iconStrokeWidth} aria-hidden="true" />
+                </button>
+            ))}
             {actions.map(({ key, label, Icon, onClick }) => (
                 <button
                     key={key}

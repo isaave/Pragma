@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Utensils } from 'lucide-react';
+import { LayoutGrid, List, Table2, Utensils } from 'lucide-react';
 import api from '../Services/api';
 import { exportOrderCsv, exportOrderPdf, exportOrderTxt } from '../lib/exportOrder';
 import {
@@ -8,7 +8,6 @@ import {
     formatDateTime,
     formatPrice,
     getErrorMessage,
-    getHistory,
     orderNumber,
 } from '../lib/orderStatus';
 import PageHeader from '../components/ui/PageHeader';
@@ -31,371 +30,392 @@ const MONTHS = [
     'Dezembro',
 ];
 
-const year = new Date().getFullYear();
-const pad = (value) => String(value).padStart(2, '0');
-
 const SEARCH_MODES = [
-    { value: 'all', label: 'Todos os campos', placeholder: 'Nº, cliente, status, data, atendente...' },
+    { value: 'all', label: 'Todos os campos', placeholder: 'Dia, abertura, cliente, status...' },
+    { value: 'session', label: 'Abertura da loja', placeholder: 'Ex.: 25/11/2026 14:30' },
     { value: 'order', label: 'Nº do pedido', placeholder: 'Ex.: 0003' },
     { value: 'customer', label: 'Cliente', placeholder: 'Nome do cliente' },
     { value: 'status', label: 'Status', placeholder: 'Ex.: Entregue' },
     { value: 'date', label: 'Data', placeholder: 'Ex.: 25/11/2026' },
     { value: 'attendant', label: 'Atendente', placeholder: 'Nome do atendente' },
     { value: 'reason', label: 'Motivo', placeholder: 'Motivo da alteração' },
-    { value: 'session', label: 'Abertura da sessão', placeholder: 'Ex.: 25/11/2026 14:30' },
 ];
 
+const VIEW_OPTIONS = [
+    { value: 'cards', label: 'Visualizar em cards', Icon: LayoutGrid },
+    { value: 'list', label: 'Visualizar em lista', Icon: List },
+    { value: 'table', label: 'Visualizar em tabela', Icon: Table2 },
+];
+
+const monthKey = (value) => {
+    const date = new Date(value);
+    return `${date.getFullYear()}-${date.getMonth()}`;
+};
+
+const monthLabel = (key) => {
+    const [year, month] = key.split('-').map(Number);
+    return `${MONTHS[month]} ${year}`;
+};
+
+const sessionDay = (value) =>
+    new Date(value).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).replace('.', '');
+
+const timeOnly = (value) =>
+    value
+        ? new Date(value).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+        : '—';
+
+const sessionDuration = (session) => {
+    if (!session.opened_at || !session.closed_at) return 'Em aberto';
+    const minutes = Math.max(
+        0,
+        Math.round((new Date(session.closed_at) - new Date(session.opened_at)) / 60000)
+    );
+    if (minutes < 60) return `${minutes} min`;
+    const hours = Math.floor(minutes / 60);
+    const rest = minutes % 60;
+    return rest ? `${hours}h ${rest}min` : `${hours}h`;
+};
+
 export default function History() {
-    const [orders, setOrders] = useState([]);
+    const [sessions, setSessions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [search, setSearch] = useState('');
     const [searchMode, setSearchMode] = useState('all');
     const [statusFilter, setStatusFilter] = useState('all');
     const [dateFilter, setDateFilter] = useState('');
-    const [expandedKey, setExpandedKey] = useState(null);
-    const [selectedMonth, setSelectedMonth] = useState(null);
-    const [mostrarFiltros, setMostrarFiltros] = useState(false);
+    const [sort, setSort] = useState('recent');
+    const [viewMode, setViewMode] = useState('cards');
+    const [showSearch, setShowSearch] = useState(false);
+    const [showFilters, setShowFilters] = useState(false);
+    const [selectedSessionId, setSelectedSessionId] = useState(null);
 
-    const loadOrders = useCallback(async () => {
+    const loadSessions = useCallback(async () => {
         setLoading(true);
         setError('');
         try {
-            const res = await api.get('/orders/history');
-            setOrders(res.data || []);
+            const res = await api.get('/store/sessions');
+            setSessions(res.data || []);
         } catch (err) {
-            setError(getErrorMessage(err, 'Erro ao carregar o histórico de pedidos.'));
+            setError(getErrorMessage(err, 'Erro ao carregar os dias de funcionamento.'));
         } finally {
             setLoading(false);
         }
     }, []);
 
     useEffect(() => {
-        loadOrders();
-    }, [loadOrders]);
+        loadSessions();
+        const refresh = () => loadSessions();
+        window.addEventListener('pragma:store-toggled', refresh);
+        return () => window.removeEventListener('pragma:store-toggled', refresh);
+    }, [loadSessions]);
 
-    // O backend devolve aqui apenas pedidos de sessões já encerradas.
-    const sessionOrders = useMemo(() => orders, [orders]);
-
-    /* Todos os eventos de status, do mais recente para o mais antigo */
-    const events = useMemo(() => {
-        const list = [];
-        sessionOrders.forEach((order) => {
-            getHistory(order).forEach((entry) => {
-                list.push({
-                    key: `${order.id}-${entry.id ?? entry.created_at}-${entry.status}`,
-                    order,
-                    status: entry.status,
-                    reason: entry.reason,
-                    created_at: entry.created_at,
-                    user: entry.user,
-                });
-            });
-        });
-        list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-        return list;
-    }, [sessionOrders]);
-
-    const stats = useMemo(
-        () => ({
-            orders: sessionOrders.length,
-            events: events.length,
-            cancelled: events.filter((event) => event.status === 'cancelled').length,
-            problems: events.filter((event) =>
-                ['not_delivered', 'late'].includes(event.status)
-            ).length,
-        }),
-        [sessionOrders, events]
-    );
-
-    const filteredEvents = useMemo(() => {
+    const filteredSessions = useMemo(() => {
         const term = search.trim().toLowerCase();
-        return events.filter((event) => {
-            if (statusFilter !== 'all' && event.status !== statusFilter) return false;
-            if (dateFilter && String(event.created_at).slice(0, 10) !== dateFilter) {
+
+        return sessions.filter((session) => {
+            const orders = session.orders || [];
+
+            if (
+                dateFilter &&
+                ![session.opened_at, session.closed_at].some(
+                    (value) => value && String(value).slice(0, 10) === dateFilter
+                ) &&
+                !orders.some((order) => String(order.created_at).slice(0, 10) === dateFilter)
+            ) {
                 return false;
             }
+
+            if (statusFilter !== 'all' && !orders.some((order) => order.status === statusFilter)) {
+                return false;
+            }
+
             if (!term) return true;
 
-            const paddedOrder = String(event.order.id).padStart(4, '0');
-            const eventDate = new Date(event.created_at);
-            const session = event.order.store_session;
-            const sessionDates = [
-                session?.opened_at,
-                session?.closed_at,
-                session?.opened_at ? formatDateTime(session.opened_at) : '',
-                session?.closed_at ? formatDateTime(session.closed_at) : '',
+            const sessionFields = [
+                sessionDay(session.opened_at),
+                formatDateTime(session.opened_at),
+                formatDateTime(session.closed_at),
+                session.opened_by,
+                session.closed_by,
+                sessionDuration(session),
             ];
+            const orderFields = orders.flatMap((order) => [
+                order.id,
+                String(order.id).padStart(4, '0'),
+                order.customer_name,
+                STATUS_META[order.status]?.label,
+                order.status,
+                order.created_at,
+                order.user?.name,
+                ...(order.status_history || []).map((entry) => entry.reason),
+            ]);
+
             const fields = {
-                all: [
-                    event.order.id,
-                    paddedOrder,
-                    event.order.customer_name,
-                    STATUS_META[event.status]?.label,
-                    event.status,
-                    event.created_at,
-                    eventDate.toLocaleDateString('pt-BR'),
-                    event.user?.name,
-                    event.reason,
-                    ...sessionDates,
-                ],
-                order: [event.order.id, paddedOrder, `pedido ${paddedOrder}`],
-                customer: [event.order.customer_name],
-                status: [STATUS_META[event.status]?.label, event.status],
+                all: [...sessionFields, ...orderFields],
+                session: sessionFields,
+                order: orderFields,
+                customer: orders.map((order) => order.customer_name),
+                status: orders.flatMap((order) => [STATUS_META[order.status]?.label, order.status]),
                 date: [
-                    event.created_at,
-                    String(event.created_at).slice(0, 10),
-                    eventDate.toLocaleDateString('pt-BR'),
+                    ...sessionFields.slice(0, 3),
+                    ...orders.map((order) => [order.created_at, formatDateTime(order.created_at)]).flat(),
                 ],
-                attendant: [event.user?.name],
-                reason: [event.reason],
-                session: sessionDates,
+                attendant: [session.opened_by, session.closed_by, ...orders.map((order) => order.user?.name)],
+                reason: orders.flatMap((order) =>
+                    (order.status_history || []).map((entry) => entry.reason)
+                ),
             };
+
             const values = fields[searchMode] || fields.all;
-            return values.some((value) => String(value || '').toLowerCase().includes(term));
+            return values.some((value) => String(value ?? '').toLowerCase().includes(term));
         });
-    }, [events, search, searchMode, statusFilter, dateFilter]);
+    }, [sessions, search, searchMode, statusFilter, dateFilter]);
 
-    const monthCounts = useMemo(() => {
-        const counts = Array(12).fill(0);
-        events.forEach((event) => {
-            const date = new Date(event.created_at);
-            const month = date.getMonth();
-            if (date.getFullYear() === year && month >= 0 && month < 12) {
-                counts[month] += 1;
+    const sortedSessions = useMemo(() => {
+        const list = [...filteredSessions];
+        if (sort === 'oldest') {
+            list.sort((a, b) => new Date(a.opened_at) - new Date(b.opened_at));
+        } else if (sort === 'value') {
+            list.sort((a, b) => Number(b.total) - Number(a.total));
+        } else {
+            list.sort((a, b) => new Date(b.opened_at) - new Date(a.opened_at));
+        }
+        return list;
+    }, [filteredSessions, sort]);
+
+    const groups = useMemo(() => {
+        const byMonth = new Map();
+        sortedSessions.forEach((session) => {
+            const key = monthKey(session.opened_at);
+            if (!byMonth.has(key)) {
+                byMonth.set(key, []);
             }
+            byMonth.get(key).push(session);
         });
-        return counts;
-    }, [events]);
+        return [...byMonth.entries()].map(([key, list]) => ({
+            key,
+            label: monthLabel(key),
+            sessions: list,
+            total: list.reduce((sum, session) => sum + Number(session.total || 0), 0),
+        }));
+    }, [sortedSessions]);
 
-    const yearTotal = monthCounts.reduce((sum, count) => sum + count, 0);
-
-    // Só aparecem os meses que realmente têm registos neste ano.
-    const monthsWithRecords = MONTHS.map((month, index) => ({
-        month,
-        index,
-        count: monthCounts[index],
-    })).filter(({ count }) => count > 0);
-
-    const monthEvents = useMemo(
-        () =>
-            filteredEvents.filter((event) => {
-                const date = new Date(event.created_at);
-                return date.getFullYear() === year && date.getMonth() === selectedMonth;
-            }),
-        [filteredEvents, selectedMonth]
-    );
-
-    const selectedEvent = events.find((e) => e.key === expandedKey) || null;
-    const selectedOrder = selectedEvent?.order || null;
-    const modalTitle = selectedOrder
-        ? selectedOrder.customer_name || orderNumber(selectedOrder.id)
-        : '';
-
-    const toggleDetails = (key) => {
-        setExpandedKey((prev) => (prev === key ? null : key));
-    };
-
-    const hasSearch = search.trim().length > 0;
+    const selectedSession = sessions.find((session) => session.id === selectedSessionId) || null;
     const activeSearchMode =
         SEARCH_MODES.find((mode) => mode.value === searchMode) || SEARCH_MODES[0];
-
-    const renderEvents = (list) => {
-        if (loading) return <p className="history-empty">A carregar histórico...</p>;
-        if (list.length === 0) {
-            return <p className="history-empty">Nenhum pedido encontrado no histórico.</p>;
-        }
-        return (
-            <ul className="history-events">
-                {list.map((event) => (
-                    <li key={event.key} className="history-order-card">
-                        <div className="history-order-top">
-                            <span className="history-order-title">
-                                Pedido {event.order.customer_name || orderNumber(event.order.id)}
-                            </span>
-                            <span className="history-order-price">{formatPrice(event.order.total)}</span>
-                        </div>
-                        <div className="history-order-date">
-                            {new Date(event.created_at).toLocaleDateString('pt-BR')}
-                            {event.order.store_session?.opened_at && (
-                                <span className="history-order-session">
-                                    {` · Sessão ${formatDateTime(event.order.store_session.opened_at)}`}
-                                </span>
-                            )}
-                        </div>
-                        <div className="history-order-bottom">
-                            <span className={`history-status history-status--${event.status}`}>
-                                {STATUS_META[event.status]?.label || event.status}
-                            </span>
-                            <button
-                                type="button"
-                                className="history-ver-mais"
-                                onClick={() => toggleDetails(event.key)}
-                            >
-                                Ver mais
-                            </button>
-                        </div>
-                    </li>
-                ))}
-            </ul>
-        );
-    };
 
     const handleExport = (order, format) => {
         if (format === 'csv') {
             exportOrderCsv(order);
             return;
         }
-
         if (format === 'txt') {
             exportOrderTxt(order);
             return;
         }
-
         if (!exportOrderPdf(order)) {
             setError('Não foi possível abrir a janela de exportação. Permita pop-ups para exportar em PDF.');
         }
     };
 
+    const toggleSearch = () => {
+        setShowSearch((visible) => {
+            if (!visible) {
+                setTimeout(() => document.getElementById('history-search')?.focus(), 0);
+            }
+            return !visible;
+        });
+    };
+
+    const sessionBadge = (session) => (
+        <span className={`history-session-status history-session-status--${session.is_open ? 'open' : 'closed'}`}>
+            {session.is_open ? 'Em aberto' : 'Encerrada'}
+        </span>
+    );
+
+    const renderCards = (list) => (
+        <div className="history-session-grid">
+            {list.map((session) => (
+                <button
+                    key={session.id}
+                    type="button"
+                    className="history-session-card"
+                    onClick={() => setSelectedSessionId(session.id)}
+                >
+                    <span className="history-session-card__top">
+                        <strong className="history-session-card__day">{sessionDay(session.opened_at)}</strong>
+                        {sessionBadge(session)}
+                    </span>
+                    <span className="history-session-card__times">
+                        <span>Abertura <strong>{timeOnly(session.opened_at)}</strong></span>
+                        <span>Fechamento <strong>{session.is_open ? '—' : timeOnly(session.closed_at)}</strong></span>
+                    </span>
+                    <span className="history-session-card__values">
+                        <span><small>Vendas</small><strong>{formatPrice(session.total)}</strong></span>
+                        <span><small>Pedidos</small><strong>{session.orders_count}</strong></span>
+                        <span><small>Itens</small><strong>{session.items_count}</strong></span>
+                    </span>
+                </button>
+            ))}
+        </div>
+    );
+
+    const renderList = (list) => (
+        <ul className="history-session-list">
+            {list.map((session) => (
+                <li key={session.id}>
+                    <button
+                        type="button"
+                        className="history-session-row"
+                        onClick={() => setSelectedSessionId(session.id)}
+                    >
+                        <strong className="history-session-row__day">{sessionDay(session.opened_at)}</strong>
+                        <span className="history-session-row__times">
+                            {timeOnly(session.opened_at)} — {session.is_open ? 'em aberto' : timeOnly(session.closed_at)}
+                        </span>
+                        {sessionBadge(session)}
+                        <span className="history-session-row__orders">{session.orders_count} pedido(s)</span>
+                        <span className="history-session-row__items">{session.items_count} item(ns)</span>
+                        <strong className="history-session-row__total">{formatPrice(session.total)}</strong>
+                    </button>
+                </li>
+            ))}
+        </ul>
+    );
+
+    const renderTable = (list) => (
+        <div className="history-session-table-wrap">
+            <table className="history-session-table">
+                <thead>
+                    <tr>
+                        <th>Dia</th>
+                        <th>Abertura</th>
+                        <th>Fechamento</th>
+                        <th>Estado</th>
+                        <th>Pedidos</th>
+                        <th>Itens</th>
+                        <th>Vendas</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {list.map((session) => (
+                        <tr
+                            key={session.id}
+                            tabIndex={0}
+                            onClick={() => setSelectedSessionId(session.id)}
+                            onKeyDown={(event) => {
+                                if (event.key === 'Enter' || event.key === ' ') {
+                                    event.preventDefault();
+                                    setSelectedSessionId(session.id);
+                                }
+                            }}
+                        >
+                            <td>{sessionDay(session.opened_at)}</td>
+                            <td>{timeOnly(session.opened_at)}</td>
+                            <td>{session.is_open ? '—' : timeOnly(session.closed_at)}</td>
+                            <td>{sessionBadge(session)}</td>
+                            <td>{session.orders_count}</td>
+                            <td>{session.items_count}</td>
+                            <td>{formatPrice(session.total)}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    );
+
     const detailModal = (
         <Modal
             className="history-modal-card"
-            open={!!selectedEvent}
-            onClose={() => setExpandedKey(null)}
-            maxWidth="480px"
+            open={!!selectedSession}
+            onClose={() => setSelectedSessionId(null)}
+            maxWidth="640px"
             showDivider={false}
             closePlacement="top"
-            title={modalTitle}
-            titleExtra={
-                selectedEvent ? (
-                    <span className={`history-status history-status--${selectedEvent.status}`}>
-                        {STATUS_META[selectedEvent.status]?.label || selectedEvent.status}
-                    </span>
-                ) : null
-            }
+            title={selectedSession ? `Loja aberta em ${formatDateTime(selectedSession.opened_at)}` : ''}
+            titleExtra={selectedSession ? sessionBadge(selectedSession) : null}
         >
-            {selectedOrder && (
+            {selectedSession && (
                 <div className="history-modal">
-                    <div className="history-modal-orderline">
-                        <p className="history-order-code">Ordem {orderNumber(selectedOrder.id)}</p>
-                        <p className="history-order-datetime">
-                            {formatDateTime(selectedOrder.created_at || selectedEvent?.created_at)}
-                        </p>
-                        {selectedOrder.store_session?.opened_at && (
-                            <p className="history-order-datetime">
-                                {`Sessão aberta em ${formatDateTime(selectedOrder.store_session.opened_at)}`}
-                                {selectedOrder.store_session.closed_at
-                                    ? ` · fechada em ${formatDateTime(selectedOrder.store_session.closed_at)}`
-                                    : ''}
-                            </p>
-                        )}
+                    <div className="history-session-detail">
+                        <div>
+                            <span>Abertura</span>
+                            <strong>{formatDateTime(selectedSession.opened_at)}</strong>
+                        </div>
+                        <div>
+                            <span>Fechamento</span>
+                            <strong>
+                                {selectedSession.is_open ? 'Em aberto' : formatDateTime(selectedSession.closed_at)}
+                            </strong>
+                        </div>
+                        <div>
+                            <span>Duração</span>
+                            <strong>{sessionDuration(selectedSession)}</strong>
+                        </div>
+                        <div>
+                            <span>Total vendido</span>
+                            <strong>{formatPrice(selectedSession.total)}</strong>
+                        </div>
+                        <div>
+                            <span>Pedidos</span>
+                            <strong>{selectedSession.orders_count}</strong>
+                        </div>
+                        <div>
+                            <span>Itens vendidos</span>
+                            <strong>{selectedSession.items_count}</strong>
+                        </div>
                     </div>
 
-                    <h3 className="history-modal-subtitle">Itens</h3>
-                    <div className="history-items-head">
-                        <span>Item</span>
-                        <span>Qts</span>
-                        <span>Valor</span>
-                    </div>
-                    <ul className="history-items">
-                        {(selectedOrder.items || []).map((item) => {
-                            const productImage =
-                                item.product?.image ||
-                                item.product?.image_url ||
-                                item.product?.photo;
-                            return (
-                                <li key={item.id} className="history-item">
-                                    <div className="history-item-main">
-                                        {productImage ? (
-                                            <img
-                                                className="history-item-image"
-                                                src={productImage}
-                                                alt=""
-                                            />
-                                        ) : (
-                                            <span
-                                                className="history-item-image history-item-image--placeholder"
-                                                aria-hidden="true"
-                                            >
-                                                <Utensils size={18} />
-                                            </span>
-                                        )}
-                                        <div className="history-item-info">
-                                            <span className="history-item-name">
-                                                {item.product?.name || 'Produto'}
-                                            </span>
-                                            {(item.addons || []).map((addon) => (
-                                                <div className="history-item-extra" key={addon.id}>
-                                                    + {addon.quantity}×{' '}
-                                                    {addon.addon?.name || 'Adicional'}
-                                                </div>
-                                            ))}
-                                            {item.notes && (
-                                                <div className="history-item-extra">Obs.: {item.notes}</div>
-                                            )}
-                                        </div>
+                    <h3 className="history-modal-subtitle">Pedidos desta abertura</h3>
+                    {(selectedSession.orders || []).length === 0 ? (
+                        <p className="history-empty">Nenhum pedido registado nesta abertura.</p>
+                    ) : (
+                        <ul className="history-session-orders">
+                            {selectedSession.orders.map((order) => (
+                                <li key={order.id}>
+                                    <div>
+                                        <strong>
+                                            {order.customer_name || `Pedido ${orderNumber(order.id)}`}
+                                        </strong>
+                                        <span className={`history-status history-status--${order.status}`}>
+                                            {STATUS_META[order.status]?.label || order.status}
+                                        </span>
                                     </div>
-                                    <span className="history-item-qty">
-                                        {String(item.quantity).padStart(2, '0')}
-                                    </span>
-                                    <span className="history-item-value">{formatPrice(item.subtotal)}</span>
+                                    <div>
+                                        <span>{formatDateTime(order.created_at)}</span>
+                                        <strong>{formatPrice(order.total)}</strong>
+                                    </div>
+                                    <div className="history-export-actions">
+                                        <button type="button" onClick={() => handleExport(order, 'pdf')}>PDF</button>
+                                        <button type="button" onClick={() => handleExport(order, 'csv')}>CSV</button>
+                                        <button type="button" onClick={() => handleExport(order, 'txt')}>TXT</button>
+                                    </div>
+                                    {(order.items || []).length > 0 && (
+                                        <ul className="history-session-order-items">
+                                            {order.items.map((item) => (
+                                                <li key={item.id}>
+                                                    {item.product?.image ? (
+                                                        <img className="history-item-image" src={item.product.image} alt="" />
+                                                    ) : (
+                                                        <span className="history-item-image history-item-image--placeholder" aria-hidden="true">
+                                                            <Utensils size={16} />
+                                                        </span>
+                                                    )}
+                                                    <span>
+                                                        {item.quantity}× {item.product?.name || 'Produto'}
+                                                        {item.notes ? ` — ${item.notes}` : ''}
+                                                    </span>
+                                                    <strong>{formatPrice(item.subtotal)}</strong>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
                                 </li>
-                            );
-                        })}
-                    </ul>
-
-                    <div className="history-modal-total">
-                        <span>Total</span>
-                        <strong>{formatPrice(selectedOrder.total)}</strong>
-                    </div>
-
-                    <details className="history-export">
-                        <summary className="history-export-summary">Exportar Pedido</summary>
-                        <div className="history-export-actions">
-                            <button
-                                type="button"
-                                onClick={() => handleExport(selectedOrder, 'pdf')}
-                            >
-                                PDF (comprovante)
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => handleExport(selectedOrder, 'csv')}
-                            >
-                                CSV (Excel)
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => handleExport(selectedOrder, 'txt')}
-                            >
-                                TXT (recibo)
-                            </button>
-                        </div>
-                    </details>
-
-                    <div className="history-modal-extra">
-                        {selectedOrder.notes && (
-                            <p className="history-modal-notes">
-                                <strong>Observações do pedido:</strong> {selectedOrder.notes}
-                            </p>
-                        )}
-
-                        <h3 className="history-modal-mini-title">Histórico</h3>
-                        <div className="history-status-log">
-                            {getHistory(selectedOrder).map((entry) => {
-                                const entryMeta = STATUS_META[entry.status] || {
-                                    label: entry.status,
-                                };
-                                return (
-                                    <p key={entry.id}>
-                                        {entryMeta.label} — {formatDateTime(entry.created_at)}
-                                        {entry.user?.name ? ` · por ${entry.user.name}` : ''}
-                                        {entry.reason ? ` — Motivo: ${entry.reason}` : ''}
-                                    </p>
-                                );
-                            })}
-                        </div>
-                    </div>
+                            ))}
+                        </ul>
+                    )}
                 </div>
             )}
         </Modal>
@@ -405,166 +425,114 @@ export default function History() {
         <div className="history-page">
             <PageHeader title="Histórico de pedidos" subtitle="Controle de pedidos passados" />
 
-            <div className="history-finder">
-                <label htmlFor="history-search-mode">Buscar por</label>
-                <select
-                    id="history-search-mode"
-                    value={searchMode}
-                    onChange={(e) => {
-                        setSearchMode(e.target.value);
-                        setStatusFilter('all');
-                        setDateFilter('');
-                    }}
-                    aria-label="Critério de busca do histórico"
-                >
-                    {SEARCH_MODES.map((mode) => (
-                        <option key={mode.value} value={mode.value}>
-                            {mode.label}
-                        </option>
-                    ))}
-                </select>
-                <input
-                    id="history-search"
-                    type="search"
-                    placeholder={activeSearchMode.placeholder}
-                    aria-label={`Buscar no histórico por ${activeSearchMode.label.toLowerCase()}`}
-                    value={search}
-                    onChange={(e) => {
-                        setSearch(e.target.value);
-                        if (e.target.value) {
+            <div className="history-controls">
+                <TableToolbar
+                    viewModes={VIEW_OPTIONS}
+                    viewMode={viewMode}
+                    onViewModeChange={setViewMode}
+                    onSearch={toggleSearch}
+                    onFilter={() => setShowFilters((visible) => !visible)}
+                    ariaLabel="Ações do histórico"
+                />
+            </div>
+
+            {showSearch && (
+                <div className="history-finder">
+                    <label htmlFor="history-search-mode">Buscar por</label>
+                    <select
+                        id="history-search-mode"
+                        value={searchMode}
+                        onChange={(event) => {
+                            setSearchMode(event.target.value);
                             setStatusFilter('all');
                             setDateFilter('');
-                        }
-                    }}
-                />
-                {hasSearch && (
-                    <button
-                        type="button"
-                        className="history-finder__clear"
-                        onClick={() => setSearch('')}
+                        }}
+                        aria-label="Critério de busca do histórico"
                     >
-                        Limpar
-                    </button>
-                )}
-            </div>
+                        {SEARCH_MODES.map((mode) => (
+                            <option key={mode.value} value={mode.value}>
+                                {mode.label}
+                            </option>
+                        ))}
+                    </select>
+                    <input
+                        id="history-search"
+                        type="search"
+                        placeholder={activeSearchMode.placeholder}
+                        aria-label={`Buscar no histórico por ${activeSearchMode.label.toLowerCase()}`}
+                        value={search}
+                        onChange={(event) => setSearch(event.target.value)}
+                    />
+                    {search && (
+                        <button type="button" className="history-finder__clear" onClick={() => setSearch('')}>
+                            Limpar
+                        </button>
+                    )}
+                </div>
+            )}
+
+            {showFilters && (
+                <div className="history-filters">
+                    <div className="history-status-field">
+                        <label htmlFor="history-status">Status</label>
+                        <select
+                            id="history-status"
+                            value={statusFilter}
+                            onChange={(event) => setStatusFilter(event.target.value)}
+                        >
+                            <option value="all">Todos os status</option>
+                            {STATUS_ORDER.map((status) => (
+                                <option key={status} value={status}>
+                                    {STATUS_META[status].label}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="history-date-field">
+                        <label htmlFor="history-date">Data</label>
+                        <input
+                            id="history-date"
+                            type="date"
+                            value={dateFilter}
+                            onChange={(event) => setDateFilter(event.target.value)}
+                        />
+                    </div>
+
+                    <div className="history-sort-field">
+                        <label htmlFor="history-sort">Organizar</label>
+                        <select id="history-sort" value={sort} onChange={(event) => setSort(event.target.value)}>
+                            <option value="recent">Mais recente</option>
+                            <option value="oldest">Mais antiga</option>
+                            <option value="value">Maior valor</option>
+                        </select>
+                    </div>
+                </div>
+            )}
 
             {error && <p className="history-error" role="alert">{error}</p>}
 
-            {hasSearch ? (
-                <section className="history-section">
-                    <h2 className="history-section-title sr-only">Resultados da busca</h2>
-                    <p className="history-count">
-                        {filteredEvents.length} registo(s) encontrado(s) em todo o histórico.
-                    </p>
-                    {renderEvents(filteredEvents)}
-                </section>
-            ) : selectedMonth === null ? (
-                <div className="history-months-view">
-                    <div className="history-year-block">
-                        <div className="history-year">{year}</div>
-                        <div className="history-total">Total: {pad(yearTotal)}</div>
-                    </div>
-
-                    {loading ? (
-                        <p className="history-empty">A carregar histórico...</p>
-                    ) : (
-                        <div className="history-months">
-                            {monthsWithRecords.length === 0 ? (
-                                <p className="history-empty">Nenhum mês com registos neste ano.</p>
-                            ) : (
-                                monthsWithRecords.map(({ month, index, count }) => (
-                                    <button
-                                        key={month}
-                                        type="button"
-                                        className="history-month-button"
-                                        aria-label={`${month}, ${count} registro(s)`}
-                                        onClick={() => {
-                                            setSelectedMonth(index);
-                                            setMostrarFiltros(false);
-                                        }}
-                                    >
-                                        {month}
-                                    </button>
-                                ))
-                            )}
-                        </div>
-                    )}
-                </div>
+            {loading ? (
+                <p className="history-empty">A carregar dias de funcionamento...</p>
+            ) : groups.length === 0 ? (
+                <p className="history-empty">Nenhum dia de funcionamento encontrado.</p>
             ) : (
-                <>
-                    <div className="history-month-header">
-                        <div className="history-month-title">
-                            <div className="history-month-heading">
-                                <button
-                                    type="button"
-                                    className="history-year-link"
-                                    aria-label="Voltar para os meses"
-                                    title="Voltar para os meses"
-                                    onClick={() => setSelectedMonth(null)}
-                                >
-                                    {year}
-                                </button>
-                                <span className="history-month-name"> / {MONTHS[selectedMonth]}</span>
-                            </div>
+                groups.map((group) => (
+                    <section key={group.key} className="history-month-section">
+                        <div className="history-month-header">
+                            <div className="history-month-title">{group.label}</div>
                             <span className="history-month-total">
-                                Total: {pad(monthEvents.length)}
+                                {group.sessions.length} abertura(s) · {formatPrice(group.total)}
                             </span>
                         </div>
-                        <div className="history-actions">
-                            <TableToolbar
-                                onSearch={() => document.getElementById('history-search')?.focus()}
-                                onFilter={() => setMostrarFiltros(v => !v)}
-                                ariaLabel="Ações do histórico"
-                            />
-                        </div>
-                    </div>
 
-                    <p className="history-stats">
-                        Pedidos registados: {stats.orders} · Alterações de status: {stats.events} ·
-                        Cancelamentos: {stats.cancelled} · Atrasos / não entregues: {stats.problems}
-                    </p>
-
-                    <section className="history-section">
-                        <h2 className="history-section-title sr-only">Linha do tempo</h2>
-                        <p className="history-count">{monthEvents.length} registo(s) encontrados.</p>
-
-                        <div className="history-filters">
-                            {(mostrarFiltros || statusFilter !== 'all' || dateFilter) && (
-                                <>
-                                    <div className="history-status-field">
-                                        <label htmlFor="history-status">Status</label>
-                                        <select
-                                            id="history-status"
-                                            value={statusFilter}
-                                            onChange={(e) => setStatusFilter(e.target.value)}
-                                        >
-                                            <option value="all">Todos os status</option>
-                                            {STATUS_ORDER.map((status) => (
-                                                <option key={status} value={status}>
-                                                    {STATUS_META[status].label}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-
-                                    <div className="history-date-field">
-                                        <label htmlFor="history-date">Data</label>
-                                        <input
-                                            id="history-date"
-                                            type="date"
-                                            value={dateFilter}
-                                            onChange={(e) => setDateFilter(e.target.value)}
-                                        />
-                                    </div>
-                                </>
-                            )}
-                        </div>
-
-                {renderEvents(monthEvents)}
-
+                        {viewMode === 'cards' && renderCards(group.sessions)}
+                        {viewMode === 'list' && renderList(group.sessions)}
+                        {viewMode === 'table' && renderTable(group.sessions)}
                     </section>
-                </>
+                ))
             )}
+
             {detailModal}
         </div>
     );

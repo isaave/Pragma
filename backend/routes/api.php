@@ -47,6 +47,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/orders/history', [OrderController::class, 'history']);
     Route::apiResource('orders', OrderController::class);
     Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus']);
+    Route::get('/store/sessions', [StoreController::class, 'sessions']);
     Route::get('/store/status', [StoreController::class, 'show']);
     Route::put('/store/status', [StoreController::class, 'update']);
     Route::post('/ai/ask', [AiController::class, 'ask']);

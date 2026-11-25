@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Menu } from 'lucide-react';
 import Login from './pages/Login';
 import AdminPanel from './pages/AdminPanel';
-import Profile from './pages/Profile';
 import UserProfile from './components/UserProfile';
 import Sidebar from './components/Sidebar';
 import ProfileButton from './components/ProfileButton';
@@ -61,6 +60,11 @@ export default function App() {
     setView('orders');
   };
 
+  const handleStoreToggled = () => {
+    setView('history');
+    window.dispatchEvent(new Event('pragma:store-toggled'));
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('pragma_token');
     localStorage.removeItem('pragma_user');
@@ -74,7 +78,7 @@ export default function App() {
 
   const headerActions = (
     <>
-      <StoreStatus header onToggled={() => setView('history')} />
+      <StoreStatus header onToggled={handleStoreToggled} />
       <NotificationButton />
       {!isMobile && view !== 'profile' && <ProfileButton onNavigate={setView} currentUser={currentUser} />}
     </>
@@ -131,7 +135,7 @@ export default function App() {
           </button>
           {view !== 'profile' && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <StoreStatus header onToggled={() => setView('history')} />
+              <StoreStatus header onToggled={handleStoreToggled} />
               <NotificationButton />
               <ProfileButton compact onNavigate={setView} currentUser={currentUser} />
             </div>

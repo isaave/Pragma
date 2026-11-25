@@ -18,6 +18,42 @@ class StoreController extends Controller
     }
 
     /**
+     * Dias/sessões em que o negócio ficou aberto, com vendas da sessão.
+     */
+    public function sessions()
+    {
+        $sessions = StoreSession::with([
+            'openedBy:id,name',
+            'closedBy:id,name',
+            'orders' => function ($query) {
+                $query->with('items.product', 'items.addons.addon', 'user', 'statusHistory.user')
+                    ->withCount('statusHistory')
+                    ->latest();
+            },
+        ])
+            ->latest('opened_at')
+            ->get()
+            ->map(function (StoreSession $session) {
+                $orders = $session->orders;
+
+                return [
+                    'id' => $session->id,
+                    'opened_at' => optional($session->opened_at)->toIso8601String(),
+                    'closed_at' => optional($session->closed_at)->toIso8601String(),
+                    'is_open' => $session->closed_at === null,
+                    'opened_by' => $session->openedBy?->name,
+                    'closed_by' => $session->closedBy?->name,
+                    'orders_count' => $orders->count(),
+                    'items_count' => $orders->sum(fn ($order) => $order->items->sum('quantity')),
+                    'total' => (float) $orders->sum('total'),
+                    'orders' => $orders,
+                ];
+            });
+
+        return response()->json($sessions);
+    }
+
+    /**
      * Abrir ou fechar o negócio. Apenas o chefe pode alterar.
      */
     public function update(Request $request)
