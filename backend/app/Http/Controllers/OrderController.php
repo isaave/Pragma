@@ -9,6 +9,7 @@ use App\Models\OrderItem;
 use App\Models\OrderStatusHistory;
 use App\Models\Product;
 use App\Models\ProductAddon;
+use App\Models\StoreSession;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -18,17 +19,55 @@ class OrderController extends Controller
     // Status que exigem um motivo quando são aplicados
     private const STATUS_WITH_REASON = ['cancelled', 'not_delivered', 'late'];
 
-    // Listar pedidos (com histórico de status e utilizador)
+    // Listar apenas os pedidos da sessão atual (enquanto o negócio está aberto)
     public function index(Request $request)
     {
-        $query = Order::with('items.product', 'items.addons.addon', 'user', 'statusHistory.user')
-            ->withCount('statusHistory');
+        $session = $this->openSession();
+        if (! $session) {
+            return response()->json([]);
+        }
+
+        $query = $this->ordersQuery()->where('store_session_id', $session->id);
 
         if ($status = trim((string) $request->query('status', ''))) {
             $query->where('status', $status);
         }
 
         return response()->json($query->latest()->get());
+    }
+
+    // Pedidos das sessões já encerradas (usado pelo histórico)
+    public function history(Request $request)
+    {
+        $query = $this->ordersQuery()->where(function ($query) {
+            $query->whereHas('storeSession', function ($query) {
+                $query->whereNotNull('closed_at');
+            })->orWhereNull('store_session_id');
+        });
+
+        if ($status = trim((string) $request->query('status', ''))) {
+            $query->where('status', $status);
+        }
+
+        return response()->json($query->latest()->get());
+    }
+
+    private function ordersQuery()
+    {
+        return Order::with(
+            'items.product',
+            'items.addons.addon',
+            'user',
+            'statusHistory.user',
+            'storeSession'
+        )->withCount('statusHistory');
+    }
+
+    private function openSession(): ?StoreSession
+    {
+        return StoreSession::whereNull('closed_at')
+            ->latest('opened_at')
+            ->first();
     }
 
     // Mostrar um pedido com todos os itens
@@ -54,6 +93,13 @@ class OrderController extends Controller
             'notes'              => 'nullable|string|max:1000',
         ]);
 
+        $session = $this->openSession();
+        if (! $session) {
+            return response()->json([
+                'message' => 'Negócio fechado. Abra o negócio para registrar pedidos.',
+            ], 422);
+        }
+
         DB::beginTransaction();
 
         try {
@@ -75,11 +121,12 @@ class OrderController extends Controller
 
             // 2) Criar a ordem
             $order = Order::create([
-                'user_id'       => $user->id,
-                'customer_name' => $data['customer_name'] ?? null,
-                'total'         => 0,
-                'status'        => 'pending',
-                'notes'         => $data['notes'] ?? null,
+                'user_id'           => $user->id,
+                'store_session_id'  => $session->id,
+                'customer_name'     => $data['customer_name'] ?? null,
+                'total'             => 0,
+                'status'            => 'pending',
+                'notes'             => $data['notes'] ?? null,
             ]);
 
             // 2.1) Registar o status inicial no histórico

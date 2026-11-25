@@ -10,6 +10,7 @@ class Order extends Model
 {
     protected $fillable = [
         'user_id',
+        'store_session_id',
         'customer_name',
         'total',
         'status',
@@ -18,6 +19,7 @@ class Order extends Model
 
     protected $casts = [
         'total' => 'float',
+        'store_session_id' => 'integer',
     ];
 
     protected $with = ['items.product', 'items.addons.addon', 'user'];
@@ -25,6 +27,11 @@ class Order extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function storeSession(): BelongsTo
+    {
+        return $this->belongsTo(StoreSession::class);
     }
 
     public function items(): HasMany

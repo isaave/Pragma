@@ -42,6 +42,7 @@ const SEARCH_MODES = [
     { value: 'date', label: 'Data', placeholder: 'Ex.: 25/11/2026' },
     { value: 'attendant', label: 'Atendente', placeholder: 'Nome do atendente' },
     { value: 'reason', label: 'Motivo', placeholder: 'Motivo da alteração' },
+    { value: 'session', label: 'Abertura da sessão', placeholder: 'Ex.: 25/11/2026 14:30' },
 ];
 
 export default function History() {
@@ -60,7 +61,7 @@ export default function History() {
         setLoading(true);
         setError('');
         try {
-            const res = await api.get('/orders');
+            const res = await api.get('/orders/history');
             setOrders(res.data || []);
         } catch (err) {
             setError(getErrorMessage(err, 'Erro ao carregar o histórico de pedidos.'));
@@ -73,24 +74,13 @@ export default function History() {
         loadOrders();
     }, [loadOrders]);
 
-    // Só pedidos com estado final (concluído ou cancelado) entram no histórico
-    const concludedOrders = useMemo(
-        () =>
-            orders.filter((order) =>
-                [
-                    'delivered',
-                    'cancelled',
-                    'not_delivered',
-                    'late',
-                ].includes(order.status)
-            ),
-        [orders]
-    );
+    // O backend devolve aqui apenas pedidos de sessões já encerradas.
+    const sessionOrders = useMemo(() => orders, [orders]);
 
     /* Todos os eventos de status, do mais recente para o mais antigo */
     const events = useMemo(() => {
         const list = [];
-        concludedOrders.forEach((order) => {
+        sessionOrders.forEach((order) => {
             getHistory(order).forEach((entry) => {
                 list.push({
                     key: `${order.id}-${entry.id ?? entry.created_at}-${entry.status}`,
@@ -104,18 +94,18 @@ export default function History() {
         });
         list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
         return list;
-    }, [concludedOrders]);
+    }, [sessionOrders]);
 
     const stats = useMemo(
         () => ({
-            orders: concludedOrders.length,
+            orders: sessionOrders.length,
             events: events.length,
             cancelled: events.filter((event) => event.status === 'cancelled').length,
             problems: events.filter((event) =>
                 ['not_delivered', 'late'].includes(event.status)
             ).length,
         }),
-        [concludedOrders, events]
+        [sessionOrders, events]
     );
 
     const filteredEvents = useMemo(() => {
@@ -129,6 +119,13 @@ export default function History() {
 
             const paddedOrder = String(event.order.id).padStart(4, '0');
             const eventDate = new Date(event.created_at);
+            const session = event.order.store_session;
+            const sessionDates = [
+                session?.opened_at,
+                session?.closed_at,
+                session?.opened_at ? formatDateTime(session.opened_at) : '',
+                session?.closed_at ? formatDateTime(session.closed_at) : '',
+            ];
             const fields = {
                 all: [
                     event.order.id,
@@ -140,6 +137,7 @@ export default function History() {
                     eventDate.toLocaleDateString('pt-BR'),
                     event.user?.name,
                     event.reason,
+                    ...sessionDates,
                 ],
                 order: [event.order.id, paddedOrder, `pedido ${paddedOrder}`],
                 customer: [event.order.customer_name],
@@ -151,6 +149,7 @@ export default function History() {
                 ],
                 attendant: [event.user?.name],
                 reason: [event.reason],
+                session: sessionDates,
             };
             const values = fields[searchMode] || fields.all;
             return values.some((value) => String(value || '').toLowerCase().includes(term));
@@ -197,7 +196,7 @@ export default function History() {
     const renderEvents = (list) => {
         if (loading) return <p className="history-empty">A carregar histórico...</p>;
         if (list.length === 0) {
-            return <p className="history-empty">Nenhuma alteração de status encontrada.</p>;
+            return <p className="history-empty">Nenhum pedido encontrado no histórico.</p>;
         }
         return (
             <ul className="history-events">
@@ -211,6 +210,11 @@ export default function History() {
                         </div>
                         <div className="history-order-date">
                             {new Date(event.created_at).toLocaleDateString('pt-BR')}
+                            {event.order.store_session?.opened_at && (
+                                <span className="history-order-session">
+                                    {` · Sessão ${formatDateTime(event.order.store_session.opened_at)}`}
+                                </span>
+                            )}
                         </div>
                         <div className="history-order-bottom">
                             <span className={`history-status history-status--${event.status}`}>
@@ -270,6 +274,14 @@ export default function History() {
                         <p className="history-order-datetime">
                             {formatDateTime(selectedOrder.created_at || selectedEvent?.created_at)}
                         </p>
+                        {selectedOrder.store_session?.opened_at && (
+                            <p className="history-order-datetime">
+                                {`Sessão aberta em ${formatDateTime(selectedOrder.store_session.opened_at)}`}
+                                {selectedOrder.store_session.closed_at
+                                    ? ` · fechada em ${formatDateTime(selectedOrder.store_session.closed_at)}`
+                                    : ''}
+                            </p>
+                        )}
                     </div>
 
                     <h3 className="history-modal-subtitle">Itens</h3>

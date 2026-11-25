@@ -44,6 +44,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/products/{product}/addons', [ProductController::class, 'addProductAddon']);
     Route::put('/products/{product}/addons/{addon}', [ProductController::class, 'updateProductAddon']);
     Route::delete('/products/{product}/addons/{addon}', [ProductController::class, 'destroyProductAddon']);
+    Route::get('/orders/history', [OrderController::class, 'history']);
     Route::apiResource('orders', OrderController::class);
     Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus']);
     Route::get('/store/status', [StoreController::class, 'show']);

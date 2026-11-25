@@ -129,8 +129,9 @@ export default function StoreStatus({ compact = false, header = false, onToggled
                   '--store-border': 'transparent',
               };
 
+        const openedAt = status?.opened_at ? formatDateTime(status.opened_at) : null;
         const headerTitle = isChefe
-            ? buttonLabel
+            ? `${buttonLabel}${isOpen && openedAt ? ` · Aberto em ${openedAt}` : ''}`
             : `Negócio ${isOpen ? 'aberto' : 'fechado'}. Apenas o chefe pode alterar o estado.`;
 
         return (

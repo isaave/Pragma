@@ -361,6 +361,10 @@
     font-size: var(--history-date-size);
 }
 
+.history-order-session {
+    color: var(--history-secondary);
+}
+
 .history-order-bottom {
     margin-top: 8px;
 }
