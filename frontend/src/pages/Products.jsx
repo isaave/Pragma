@@ -287,7 +287,7 @@ export default function Products() {
                     style={{
                         display: 'grid',
                         gridTemplateColumns: 'repeat(6, minmax(max-content, 1fr))',
-                        flex: '1 1 auto',
+                        flex: '1 1 220px',
                         minWidth: 0,
                         width: 'auto',
                     }}

@@ -92,15 +92,20 @@
 .users-controls {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: 12px;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     min-width: 0;
 }
 
 .users-segmented {
-    flex: 1 1 auto;
+    flex: 1 1 220px;
     min-width: 0;
+    max-width: 100%;
+}
+
+.users-controls > [data-table-toolbar] {
+    margin-left: auto;
+    max-width: 100%;
 }
 
 /* O componente não aceita className nas opções: ajuste só por CSS,
@@ -325,22 +330,8 @@
     font-weight: 500;
 }
 
-/* Celular: filtro e ações em duas linhas, sem estourar a largura */
+/* Celular: cabeçalho alinhado ao topo */
 @media (max-width: 900px) {
-    .users-controls {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .users-segmented {
-        width: 100%;
-    }
-
-    .users-controls > [data-table-toolbar] {
-        width: 100%;
-        justify-content: flex-end;
-    }
-
     .page-header {
         align-items: flex-start;
     }

@@ -195,6 +195,7 @@
 
 .history-actions {
     margin-left: auto;
+    max-width: 100%;
 }
 
 .history-section-title {
@@ -595,6 +596,7 @@
     .history-actions {
         width: 100%;
         margin-left: 0;
+        justify-content: flex-end;
     }
 
     .history-month-button {

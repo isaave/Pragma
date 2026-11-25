@@ -184,10 +184,20 @@
 .orders-controls {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: var(--orders-section-gap);
     flex-wrap: wrap;
     min-width: 0;
+}
+
+.orders-controls > [data-segmented-control] {
+    flex: 1 1 220px;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.orders-controls > [data-table-toolbar] {
+    margin-left: auto;
+    max-width: 100%;
 }
 
 .orders-filter-row {
@@ -1162,22 +1172,7 @@
     }
 }
 
-@media (max-width: 760px) {
-    .orders-controls {
-        align-items: flex-start;
-    }
-
-    .orders-controls > [data-table-toolbar] {
-        width: 100%;
-        justify-content: flex-end;
-    }
-}
-
 @media (max-width: 560px) {
-    .orders-controls > [data-segmented-control] {
-        width: 100%;
-    }
-
     .orders-detail-main-actions--modal {
         flex-direction: column;
     }

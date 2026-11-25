@@ -105,10 +105,20 @@
 .products-controls {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: 12px;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     min-width: 0;
+}
+
+.products-controls > [data-segmented-control] {
+    flex: 1 1 220px;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.products-controls > [data-table-toolbar] {
+    margin-left: auto;
+    max-width: 100%;
 }
 
 /* Ordenação */
@@ -873,18 +883,6 @@
 
     .products-card {
         width: 100%;
-    }
-}
-
-@media (max-width: 760px) {
-    .products-controls {
-        align-items: flex-start;
-        flex-wrap: wrap;
-    }
-
-    .products-controls > [data-table-toolbar] {
-        width: 100%;
-        justify-content: flex-end;
     }
 }
 

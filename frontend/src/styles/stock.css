@@ -69,10 +69,20 @@
 .stock-controls {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: 12px;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     min-width: 0;
+}
+
+.stock-controls > [data-segmented-control] {
+    flex: 1 1 220px;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.stock-controls > [data-table-toolbar] {
+    margin-left: auto;
+    max-width: 100%;
 }
 
 /* Ordenação */
@@ -339,18 +349,6 @@
 
     .stock-card {
         width: 100%;
-    }
-}
-
-@media (max-width: 760px) {
-    .stock-controls {
-        align-items: flex-start;
-        flex-wrap: wrap;
-    }
-
-    .stock-controls > [data-table-toolbar] {
-        width: 100%;
-        justify-content: flex-end;
     }
 }
 

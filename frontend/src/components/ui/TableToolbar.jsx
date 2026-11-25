@@ -75,6 +75,7 @@ const styles = {
         borderRadius: SIZES.borderRadius,
         fontFamily: FONT_FAMILY,
         flexShrink: 0,
+        maxWidth: '100%',
     },
     exportWrap: {
         position: 'relative',
@@ -93,6 +94,7 @@ const styles = {
         flexDirection: 'column',
         gap: '2px',
         minWidth: '104px',
+        maxWidth: 'calc(100vw - 32px)',
         padding: '6px',
         boxSizing: 'border-box',
         background: 'var(--card-bg)',
