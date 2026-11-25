@@ -29,6 +29,7 @@ html, body, #root, button, input, select, textarea, h1, h2, h3, h4, p, span, lab
     --accent: #1d4ed8;
     --accent-light: #eff6ff;
     --segmented-idle-text: #312e81;
+    --control-border: #03071e;
     --table-toolbar-icon: #03071e;
     --table-toolbar-hover: rgba(3, 7, 30, 0.06);
     --danger: #b91c1c;
@@ -53,6 +54,7 @@ html, body, #root, button, input, select, textarea, h1, h2, h3, h4, p, span, lab
     --accent: #3b82f6;
     --accent-light: #1e3a5f;
     --segmented-idle-text: var(--accent);
+    --control-border: #ffffff;
     --table-toolbar-icon: var(--text-primary);
     --table-toolbar-hover: rgba(241, 245, 249, 0.12);
     --danger: #f87171;
