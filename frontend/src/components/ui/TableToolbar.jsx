@@ -42,8 +42,8 @@ const INJECTED_CSS = `
     outline-offset: -1px;
 }
 [data-table-toolbar] [data-view-mode][aria-pressed='true'] {
-    background: var(--table-toolbar-selected, var(--control-border, #03071e));
-    color: var(--table-toolbar-selected-icon, var(--card-bg, #ffffff));
+    background: transparent;
+    color: var(--table-toolbar-selected-icon, var(--segmented-idle-text, #312e81));
 }
 [data-table-toolbar] .tt-action,
 [data-table-toolbar] .tt-export-summary {
@@ -93,11 +93,10 @@ const INJECTED_CSS = `
 }
 `;
 
-// Seleção sem o azul acinzentado: usa a mesma cor do contorno da toolbar,
-// com o ícone invertido para manter contraste (marinho/claro e branco/escuro).
+// Seleção sem contorno nem fundo: só o ícone muda de cor.
 const selectedControlStyle = {
-    background: 'var(--table-toolbar-selected, var(--control-border, #03071e))',
-    color: 'var(--table-toolbar-selected-icon, var(--card-bg, #ffffff))',
+    background: 'transparent',
+    color: 'var(--table-toolbar-selected-icon, var(--segmented-idle-text, #312e81))',
 };
 
 const controlStyle = {
@@ -240,7 +239,11 @@ export default function TableToolbar({
                     onClick={() => onViewModeChange?.(value)}
                     style={viewMode === value ? { ...controlStyle, ...selectedControlStyle } : controlStyle}
                 >
-                    <Icon size={SIZES.iconSize} strokeWidth={SIZES.iconStrokeWidth} aria-hidden="true" />
+                    <Icon
+                        size={SIZES.iconSize}
+                        strokeWidth={viewMode === value ? 2.2 : SIZES.iconStrokeWidth}
+                        aria-hidden="true"
+                    />
                 </button>
             ))}
             {viewButtons.length > 0 && actions.length > 0 && (
