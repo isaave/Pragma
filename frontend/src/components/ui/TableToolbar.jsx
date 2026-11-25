@@ -239,11 +239,7 @@ export default function TableToolbar({
                     onClick={() => onViewModeChange?.(value)}
                     style={viewMode === value ? { ...controlStyle, ...selectedControlStyle } : controlStyle}
                 >
-                    <Icon
-                        size={SIZES.iconSize}
-                        strokeWidth={viewMode === value ? 2.2 : SIZES.iconStrokeWidth}
-                        aria-hidden="true"
-                    />
+                    <Icon size={SIZES.iconSize} strokeWidth={SIZES.iconStrokeWidth} aria-hidden="true" />
                 </button>
             ))}
             {viewButtons.length > 0 && actions.length > 0 && (
