@@ -170,6 +170,13 @@ export default function History() {
 
     const yearTotal = monthCounts.reduce((sum, count) => sum + count, 0);
 
+    // Só aparecem os meses que realmente têm registos neste ano.
+    const monthsWithRecords = MONTHS.map((month, index) => ({
+        month,
+        index,
+        count: monthCounts[index],
+    })).filter(({ count }) => count > 0);
+
     const monthEvents = useMemo(
         () =>
             filteredEvents.filter((event) => {
@@ -462,20 +469,24 @@ export default function History() {
                         <p className="history-empty">A carregar histórico...</p>
                     ) : (
                         <div className="history-months">
-                            {MONTHS.map((month, index) => (
-                                <button
-                                    key={month}
-                                    type="button"
-                                    className="history-month-button"
-                                    aria-label={`${month}, ${monthCounts[index]} registro(s)`}
-                                    onClick={() => {
-                                        setSelectedMonth(index);
-                                        setMostrarFiltros(false);
-                                    }}
-                                >
-                                    {month}
-                                </button>
-                            ))}
+                            {monthsWithRecords.length === 0 ? (
+                                <p className="history-empty">Nenhum mês com registos neste ano.</p>
+                            ) : (
+                                monthsWithRecords.map(({ month, index, count }) => (
+                                    <button
+                                        key={month}
+                                        type="button"
+                                        className="history-month-button"
+                                        aria-label={`${month}, ${count} registro(s)`}
+                                        onClick={() => {
+                                            setSelectedMonth(index);
+                                            setMostrarFiltros(false);
+                                        }}
+                                    >
+                                        {month}
+                                    </button>
+                                ))
+                            )}
                         </div>
                     )}
                 </div>
