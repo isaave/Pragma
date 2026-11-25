@@ -15,7 +15,7 @@ import React from 'react';
 // TODO: confirmar no Dev Mode do Figma (valores aproximados)
 const COLORS = {
     border: 'var(--control-border, #03071e)', // branco no escuro, marinho no claro
-    selectedBackground: '#03071e', // azul-marinho quase preto
+    selectedBackground: 'var(--segmented-selected-bg, #03071e)', // marinho no claro, azul claro no escuro
     selectedText: '#ffffff',
     idleText: 'var(--segmented-idle-text, #312e81)', // roxo no claro, azul do subtítulo no escuro
     focusRing: '#6366f1',
