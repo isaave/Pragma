@@ -301,7 +301,15 @@ export default function Login({ onLoginSuccess }) {
             go('reset');
             setInfo(res.data.message);
         } catch (err) {
-            setError(err.response?.data?.message || 'Código inválido.');
+            // Show Portuguese error message regardless of backend language
+            const backendMessage = err.response?.data?.message;
+            if (backendMessage && backendMessage.includes('must be')) {
+                setError('Código deve ter exatamente 6 dígitos.');
+            } else if (backendMessage && backendMessage.includes('inválido') || backendMessage.includes('expirado')) {
+                setError(backendMessage);
+            } else {
+                setError(backendMessage || 'Erro ao processar código.');
+            }
         } finally {
             setLoading(false);
         }
@@ -332,7 +340,15 @@ export default function Login({ onLoginSuccess }) {
             setConfirmPassword('');
             setCode('');
         } catch (err) {
-            setError(err.response?.data?.message || 'Erro ao redefinir senha.');
+            // Show Portuguese error message regardless of backend language
+            const backendMessage = err.response?.data?.message;
+            if (backendMessage && backendMessage.includes('must be')) {
+                setError('Digite uma senha com no mínimo 6 caracteres.');
+            } else if (backendMessage && backendMessage.includes('inválido') || backendMessage.includes('expirado')) {
+                setError(backendMessage);
+            } else {
+                setError(backendMessage || 'Erro ao redefinir senha.');
+            }
         } finally {
             setLoading(false);
         }
@@ -476,8 +492,6 @@ export default function Login({ onLoginSuccess }) {
                                     placeholder="000000"
                                     value={code}
                                     onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-                                    maxLength={6}
-                                    required
                                 />
                             </label>
                             <button type="submit" style={styles.submit} disabled={loading}>
