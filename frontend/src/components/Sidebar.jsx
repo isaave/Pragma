@@ -9,6 +9,7 @@ export default function Sidebar({ currentView, onNavigate, onLogout, currentUser
     const [hoverExpanded, setHoverExpanded] = useState(false);
     const [legalDoc, setLegalDoc] = useState(null); // null | 'terms' | 'privacy'
     const { isDark, toggleTheme } = useTheme();
+    const userRole = currentUser?.role || '';
 
     const handleLogout = async () => {
         try {
@@ -36,10 +37,12 @@ export default function Sidebar({ currentView, onNavigate, onLogout, currentUser
     const items = [
         { view: 'orders', icon: Bell, label: 'Gestão de Pedidos' },
         { view: 'history', icon: History, label: 'Históricos de pedidos' },
-        { view: 'menu', icon: Utensils, label: 'Produtos' },
-        { view: 'stock', icon: Package, label: 'Estoque' },
-        { view: 'reports', icon: BarChart3, label: 'Relatórios' },
-        { view: 'admin', icon: Users, label: 'Usuários' },
+        // Nível 1: Acesso total - pode ver produtos e fazer CRUD
+        { view: 'menu', icon: Utensils, label: 'Produtos', condition: userRole === 'nivel1' || userRole === 'admin' },
+        // Nível 2: Acesso de leitura - pode ver estoque
+        { view: 'stock', icon: Package, label: 'Estoque', condition: userRole === 'nivel2' || userRole === 'nivel1' || userRole === 'admin' },
+        { view: 'reports', icon: BarChart3, label: 'Relatórios', condition: userRole === 'admin' },
+        { view: 'admin', icon: Users, label: 'Usuários', condition: userRole === 'admin' },
     ];
 
     // ===== Modo mobile: drawer lateral (desliza por cima do conteúdo) =====
@@ -144,8 +147,12 @@ export default function Sidebar({ currentView, onNavigate, onLogout, currentUser
 
                     {/* Menu de Navegação */}
                     <nav style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
-                        {items.map(({ view, icon: Icon, label }) => {
+                        {items.map(({ view, icon: Icon, label, condition }) => {
                             const isActive = currentView === view;
+                            // Verificar se o item deve ser exibido baseado na condição de role
+                            if (condition && userRole && !condition.includes(userRole)) {
+                                return null; // Ocultar item se o role não atender à condição
+                            }
                             return (
                                 <button
                                     key={view}
@@ -313,7 +320,7 @@ export default function Sidebar({ currentView, onNavigate, onLogout, currentUser
 
             {/* Menu de Navegação (centralizado verticalmente) */}
             <nav style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%', flex: 1, justifyContent: 'center' }}>
-                {items.map(({ view, icon: Icon, label }) => {
+                {items.map(({ view, icon: Icon, label, condition }) => {
                     const isActive = currentView === view;
                     return (
                         <button
