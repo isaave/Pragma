@@ -22,11 +22,11 @@ export default function ProductCard({ product, onOpen, onEdit, categoryLabel, se
 
     const statusLabel =
         product.status === 'ativo'
-            ? product.is_available !== undefined
+            ? product.is_available !== undefined && product.is_available !== null
                 ? product.is_available
                     ? 'Disponível'
                     : 'Indisponível'
-                : 'Disponível' // Produtos antigos via API sem toggle: padrão disponível
+                : 'Disponível' // Produtos antigos via API ou DB sem toggle: padrão disponível
             : product.status === 'inativo'
                 ? 'Inativo'
                 : product.status === 'desenvolvimento'
