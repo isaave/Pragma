@@ -22,9 +22,13 @@ export default function ProductCard({ product, onOpen, onEdit, categoryLabel, se
 
     const statusLabel =
         product.status === 'ativo'
-            ? product.available
-                ? 'Disponível'
-                : 'Indisponível'
+            ? product.is_available !== undefined
+                ? product.is_available
+                    ? 'Disponível'
+                    : 'Indisponível'
+                : product.available
+                    ? 'Disponível'
+                    : 'Indisponível'
             : product.status === 'inativo'
                 ? 'Inativo'
                 : product.status === 'desenvolvimento'
