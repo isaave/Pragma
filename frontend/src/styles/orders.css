@@ -52,6 +52,7 @@
     --orders-card-padding: 8px;
     --orders-card-gap: 8px;
     --orders-card-name-size: 18px;
+    --orders-top-gap: 12px;
     --orders-card-order-size: 11px;
     --orders-card-time-size: 11px;
     --orders-badge-size: 11px;
@@ -354,7 +355,7 @@ body:has(.orders-page) main {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: var(--orders-top-gap);
+    gap: var(--orders-top-gap, 8px);
 }
 
 .orders-card-heading {
