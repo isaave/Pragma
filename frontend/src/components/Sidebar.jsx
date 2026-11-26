@@ -37,12 +37,13 @@ export default function Sidebar({ currentView, onNavigate, onLogout, currentUser
     const items = [
         { view: 'orders', icon: Bell, label: 'Gestão de Pedidos' },
         { view: 'history', icon: History, label: 'Históricos de pedidos' },
-        // Nível 1: Acesso total - pode ver produtos e fazer CRUD
-        { view: 'menu', icon: Utensils, label: 'Produtos', condition: userRole === 'nivel1' || userRole === 'admin' },
-        // Nível 2: Acesso de leitura - pode ver estoque
-        { view: 'stock', icon: Package, label: 'Estoque', condition: userRole === 'nivel2' || userRole === 'nivel1' || userRole === 'admin' },
-        { view: 'reports', icon: BarChart3, label: 'Relatórios', condition: userRole === 'admin' },
-        { view: 'admin', icon: Users, label: 'Usuários', condition: userRole === 'admin' },
+        // Nível 1 (Atendente): Acesso a gestão de pedidos, produtos (ler apenas) e estoque (ler apenas)
+        { view: 'menu', icon: Utensils, label: 'Produtos', condition: userRole === 'Atendente' || userRole === 'Chefe' },
+        // Nível 2: Acesso de leitura - pode ver estoque (apenas nivel2 e acima)
+        { view: 'stock', icon: Package, label: 'Estoque', condition: userRole === 'Chefe' },
+        // Relatórios e Usuários apenas para admin (Chefe)
+        { view: 'reports', icon: BarChart3, label: 'Relatórios', condition: userRole === 'Chefe' },
+        { view: 'admin', icon: Users, label: 'Usuários', condition: userRole === 'Chefe' },
     ];
 
     // ===== Modo mobile: drawer lateral (desliza por cima do conteúdo) =====
