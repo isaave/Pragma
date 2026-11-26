@@ -271,17 +271,30 @@ export default function Stock() {
                     value={filter}
                     onChange={setFilter}
                 />
-                <TableToolbar
-                    onAdd={openCreate}
-                    onFilter={() => setMostrarOrdenacao(v => !v)}
-                    onSearch={() => setMostrarBusca(v => !v)}
-                    exportOptions={[
-                        { label: 'PDF', onClick: () => exportAll('pdf'), disabled: exporting },
-                        { label: 'CSV', onClick: () => exportAll('csv'), disabled: exporting },
-                        { label: 'TXT', onClick: () => exportAll('txt'), disabled: exporting },
-                    ]}
-                    ariaLabel="Ações do estoque"
-                />
+                {userRole === 'Chefe' ? (
+                    <TableToolbar
+                        onAdd={openCreate}
+                        onFilter={() => setMostrarOrdenacao(v => !v)}
+                        onSearch={() => setMostrarBusca(v => !v)}
+                        exportOptions={[
+                            { label: 'PDF', onClick: () => exportAll('pdf'), disabled: exporting },
+                            { label: 'CSV', onClick: () => exportAll('csv'), disabled: exporting },
+                            { label: 'TXT', onClick: () => exportAll('txt'), disabled: exporting },
+                        ]}
+                        ariaLabel="Ações do estoque"
+                    />
+                ) : (
+                    <TableToolbar
+                        onFilter={() => setMostrarOrdenacao(v => !v)}
+                        onSearch={() => setMostrarBusca(v => !v)}
+                        exportOptions={[
+                            { label: 'PDF', onClick: () => exportAll('pdf'), disabled: exporting },
+                            { label: 'CSV', onClick: () => exportAll('csv'), disabled: exporting },
+                            { label: 'TXT', onClick: () => exportAll('txt'), disabled: exporting },
+                        ]}
+                        ariaLabel="Ações do estoque"
+                    />
+                )}
             </div>
 
             {mostrarOrdenacao && (
@@ -432,7 +445,7 @@ export default function Stock() {
                             key={item.id}
                             item={item}
                             onOpen={openRestock}
-                            onEdit={openEdit}
+                            onEdit={userRole === 'Chefe' ? openEdit : undefined}
                             formatDate={formatDate}
                         />
                     ))}

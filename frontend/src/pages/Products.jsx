@@ -81,6 +81,7 @@ export default function Products() {
     const [detailExpanded, setDetailExpanded] = useState(false);
     useAutoDismiss(info, setInfo, 4000);
     const isMobile = useIsMobile();
+    const userRole = currentUser?.role || '';
 
     const loadProducts = useCallback(async () => {
         setLoading(true);
@@ -290,17 +291,30 @@ export default function Products() {
                         width: 'max-content',
                     }}
                 />
-                <TableToolbar
-                    onAdd={openCreate}
-                    onSearch={() => setMostrarBusca(v => !v)}
-                    onFilter={() => setMostrarOrdenacao(v => !v)}
-                    exportOptions={[
-                        { label: 'PDF', onClick: () => exportAll('pdf'), disabled: exporting },
-                        { label: 'CSV', onClick: () => exportAll('csv'), disabled: exporting },
-                        { label: 'TXT', onClick: () => exportAll('txt'), disabled: exporting },
-                    ]}
-                    ariaLabel="Ações dos produtos"
-                />
+                {userRole === 'Chefe' ? (
+                    <TableToolbar
+                        onAdd={openCreate}
+                        onSearch={() => setMostrarBusca(v => !v)}
+                        onFilter={() => setMostrarOrdenacao(v => !v)}
+                        exportOptions={[
+                            { label: 'PDF', onClick: () => exportAll('pdf'), disabled: exporting },
+                            { label: 'CSV', onClick: () => exportAll('csv'), disabled: exporting },
+                            { label: 'TXT', onClick: () => exportAll('txt'), disabled: exporting },
+                        ]}
+                        ariaLabel="Ações dos produtos"
+                    />
+                ) : (
+                    <TableToolbar
+                        onSearch={() => setMostrarBusca(v => !v)}
+                        onFilter={() => setMostrarOrdenacao(v => !v)}
+                        exportOptions={[
+                            { label: 'PDF', onClick: () => exportAll('pdf'), disabled: exporting },
+                            { label: 'CSV', onClick: () => exportAll('csv'), disabled: exporting },
+                            { label: 'TXT', onClick: () => exportAll('txt'), disabled: exporting },
+                        ]}
+                        ariaLabel="Ações dos produtos"
+                    />
+                )}
             </div>
 
             {mostrarOrdenacao && (
@@ -531,7 +545,7 @@ export default function Products() {
                                     setDetailId(p.id);
                                     setDetailExpanded(false);
                                 }}
-                                onEdit={openEdit}
+                                onEdit={userRole === 'Chefe' ? openEdit : undefined}
                                 categoryLabel={categoryLabel}
                                 selected={p.id === detailId}
                             />
