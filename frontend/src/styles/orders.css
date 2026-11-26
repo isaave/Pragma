@@ -594,6 +594,7 @@ body:has(.orders-page) main {
     font-weight: 700;
     line-height: 1.15;
     overflow-wrap: anywhere;
+    margin-right: 16px; /* Espaço entre título e botões */
 }
 
 .orders-detail-inline__back {
