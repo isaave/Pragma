@@ -66,6 +66,7 @@
     --orders-finalize-height: 24px;
     --orders-finalize-size: 11px;
     --orders-selected-border-width: 2px;
+    --orders-radius: 22px; /* Mais arredondado */
 
     /* TODO: confirmar no Dev Mode do Figma (painel/pop-up de detalhe do pedido) */
     --orders-detail-width: 340px;
@@ -937,10 +938,9 @@ body:has(.orders-page) main {
     align-items: center;
     justify-content: center;
     flex: 0 0 auto;
-    width: var(--orders-secondary-height);
     height: var(--orders-secondary-height);
     margin: 0;
-    padding: 0;
+    padding: 0 var(--orders-button-padding-x);
     border: var(--orders-border-width) solid var(--danger);
     border-radius: var(--orders-field-radius);
     background: transparent;
