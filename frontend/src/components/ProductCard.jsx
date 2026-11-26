@@ -26,9 +26,7 @@ export default function ProductCard({ product, onOpen, onEdit, categoryLabel, se
                 ? product.is_available
                     ? 'Disponível'
                     : 'Indisponível'
-                : product.available
-                    ? 'Disponível'
-                    : 'Indisponível'
+                : 'Disponível' // Produtos antigos via API sem toggle: padrão disponível
             : product.status === 'inativo'
                 ? 'Inativo'
                 : product.status === 'desenvolvimento'
