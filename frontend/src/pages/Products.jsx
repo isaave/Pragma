@@ -181,6 +181,7 @@ export default function Products() {
         const payload = {
             ...form.values,
             is_active: form.values.is_active === 'true',
+            is_available: form.values.is_available !== undefined ? form.values.is_available : true,
             ingredients: form.recipe.map((r) => ({ id: r.ingredient_id, quantity: r.quantity })),
         };
         try {
@@ -381,6 +382,15 @@ export default function Products() {
                                     <option value="ativo">Ativo</option>
                                     <option value="inativo">Inativo</option>
                                     <option value="desenvolvimento">Em desenvolvimento</option>
+                                </select>
+                                <select
+                                    className="products-pill-select"
+                                    aria-label="Disponibilidade"
+                                    value={form.values.is_available !== undefined ? form.values.is_available : true}
+                                    onChange={(e) => changeForm('is_available', e.target.value)}
+                                >
+                                    <option value="true">Disponível</option>
+                                    <option value="false">Indisponível</option>
                                 </select>
                                 <select
                                     className="products-pill-select"
