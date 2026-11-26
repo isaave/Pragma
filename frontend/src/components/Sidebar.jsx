@@ -151,7 +151,9 @@ export default function Sidebar({ currentView, onNavigate, onLogout, currentUser
                         {items.map(({ view, icon: Icon, label, condition }) => {
                             const isActive = currentView === view;
                             // Verificar se o item deve ser exibido baseado na condição de role
-                            if (condition && userRole && !condition.includes(userRole)) {
+                            // condition é um booleano expressado como string de comparação
+                            const meetsCondition = typeof condition === 'boolean' ? condition : userRole && condition.includes(userRole);
+                            if (!meetsCondition) {
                                 return null; // Ocultar item se o role não atender à condição
                             }
                             return (
