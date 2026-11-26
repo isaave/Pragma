@@ -308,21 +308,7 @@ export default function Login({ onLoginSuccess }) {
     };
 
     // Ao clicar no campo, tenta colar automaticamente o código da área de transferência
-    const handleCodeFieldClick = async () => {
-        if (!navigator.clipboard?.readText) return;
-
-        try {
-            const text = await navigator.clipboard.readText();
-            const digits = (text || '').replace(/\D/g, '').slice(0, 6);
-            if (digits.length === 6) {
-                setCode(digits);
-                setError('');
-                setInfo('Código colado automaticamente.');
-            }
-        } catch {
-            // Sem permissão para ler a área de transferência: o utilizador digita normalmente.
-        }
-    };
+    
 
     const handleReset = async (e) => {
         e.preventDefault();
@@ -490,12 +476,10 @@ export default function Login({ onLoginSuccess }) {
                                     placeholder="000000"
                                     value={code}
                                     onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-                                    onClick={handleCodeFieldClick}
                                     maxLength={6}
                                     required
                                 />
                             </label>
-                            <p style={{ ...styles.firstAccess, marginTop: '-6px' }}>Clique no campo para colar o código copiado automaticamente.</p>
                             <button type="submit" style={styles.submit} disabled={loading}>
                                 {loading ? 'A verificar...' : 'Verificar'}
                             </button>
