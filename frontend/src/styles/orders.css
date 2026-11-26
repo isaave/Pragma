@@ -27,7 +27,7 @@
     --orders-field-radius: 6px;
     --orders-gap: 10px;
     --orders-section-gap: 6px;
-    --orders-top-gap: 4px;
+    --orders-top-gap: 8px;
     --orders-item-gap: 3px;
     /* TODO: confirmar no Dev Mode do Figma (espaço entre as ações do detalhe) */
     --orders-actions-gap: 6px;
@@ -49,10 +49,9 @@
     --orders-card-min: 200px;
     --orders-card-max: 230px;
     --orders-card-min-height: 178px;
-    --orders-card-padding: 20px;
-    --orders-card-gap: 8px;
+    --orders-card-padding: 8px;
+    --orders-card-gap: 6px;
     --orders-card-name-size: 18px;
-    --orders-top-gap: 90px;
     --orders-card-order-size: 11px;
     --orders-card-time-size: 11px;
     --orders-badge-size: 11px;
@@ -66,7 +65,7 @@
     --orders-card-total-size: 16px;
     --orders-finalize-height: 24px;
     --orders-finalize-size: 11px;
-    --orders-selected-border-width: 8px;
+    --orders-selected-border-width: 2px;
 
     /* TODO: confirmar no Dev Mode do Figma (painel/pop-up de detalhe do pedido) */
     --orders-detail-width: 340px;
