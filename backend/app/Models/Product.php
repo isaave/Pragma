@@ -20,7 +20,6 @@ class Product extends Model
         'is_active',
         'status',
         'notes',
-        'is_available',
     ];
 
     // Sempre carrega os ingredientes (necessário para calcular "available" e "recipe")
