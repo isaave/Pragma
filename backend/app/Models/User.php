@@ -47,6 +47,23 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'access_level' => 'string',
         ];
+    }
+
+    /**
+     * Verifica se o usuário tem acesso completo.
+     */
+    public function isCompleto(): bool
+    {
+        return $this->access_level === 'completo';
+    }
+
+    /**
+     * Verifica se o usuário tem acesso basico.
+     */
+    public function isBasico(): bool
+    {
+        return $this->access_level === 'basico';
     }
 }

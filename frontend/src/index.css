@@ -10,8 +10,8 @@ html, body, #root {
     height: 100%;
 }
 
-/* Fonte padrão do projeto */
-html, body, #root, button, input, select, textarea, h1, h2, h3, h4, p, span, label {
+/* Fonte padrão do projeto em todos os elementos */
+*, *::before, *::after {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 

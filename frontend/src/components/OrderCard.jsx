@@ -16,6 +16,7 @@ export default function OrderCard({
     canFinalize,
     statusLabel,
     tone = 'info',
+    highlighted = false,
 }) {
     const handleKeyDown = (event) => {
         if (event.key === 'Enter' || event.key === ' ') {
@@ -29,7 +30,9 @@ export default function OrderCard({
 
     return (
         <div
-            className={`orders-card${selected ? ' orders-card--selected' : ''}`}
+            className={`orders-card${selected ? ' orders-card--selected' : ''}${highlighted ? ' orders-card--highlighted' : ''}`}
+            id={`order-${order.id}`}
+            data-resource-id={`order-${order.id}`}
             role="button"
             tabIndex={0}
             onClick={() => onOpen(order)}

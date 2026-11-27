@@ -10,6 +10,7 @@ use App\Models\OrderStatusHistory;
 use App\Models\Product;
 use App\Models\ProductAddon;
 use App\Models\StoreSession;
+use App\Services\AlertService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -19,9 +20,18 @@ class OrderController extends Controller
     // Status que exigem um motivo quando são aplicados
     private const STATUS_WITH_REASON = ['cancelled', 'not_delivered', 'late'];
 
+    /** Ingredientes afetados pela última operação, usados para alertas de estoque. */
+    private array $touchedIngredientIds = [];
+
     // Listar apenas os pedidos da sessão atual (enquanto o negócio está aberto)
     public function index(Request $request)
     {
+        // Verificar acesso: usuários 'basico' têm CRUD completo em pedidos
+        $user = $request->user();
+        if (! $user->isCompleto() && ! $user->isBasico()) {
+            return response()->json(['message' => 'Não autorizado'], 401);
+        }
+        // Both basico and completo have full CRUD on orders, so no additional restriction needed
         $session = $this->openSession();
         if (! $session) {
             return response()->json([]);
@@ -37,8 +47,13 @@ class OrderController extends Controller
     }
 
     // Pedidos das sessões já encerradas (usado pelo histórico)
+    // Usuários 'basico' e 'completo' podem visualizar o histórico
     public function history(Request $request)
     {
+        $user = $request->user();
+        if (! $user->isCompleto() && ! $user->isBasico()) {
+            return response()->json(['message' => 'Não autorizado'], 401);
+        }
         $query = $this->ordersQuery()->where(function ($query) {
             $query->whereHas('storeSession', function ($query) {
                 $query->whereNotNull('closed_at');
@@ -109,7 +124,7 @@ class OrderController extends Controller
             foreach ($data['items'] as $item) {
                 $product = Product::with('ingredients')->findOrFail($item['product_id']);
                 foreach ($product->ingredients as $ingredient) {
-                    $needed = (float) $ingredient->pivot->quantity * (int) $item['quantity'];
+                    $needed = $this->recipeQuantityInStockUnit($ingredient, (int) $item['quantity']);
                     if ((float) $ingredient->quantity < $needed) {
                         throw new \Exception(
                             "Estoque insuficiente de {$ingredient->name} ({$ingredient->unit}) para o produto {$product->name}. " .
@@ -143,7 +158,13 @@ class OrderController extends Controller
             // 4) Salvar total
             $order->update(['total' => $total]);
 
+            $ingredientIds = $this->touchedIngredientIds;
+            $createdOrder = $order->fresh();
+
             DB::commit();
+
+            app(AlertService::class)->newOrder($createdOrder);
+            app(AlertService::class)->checkIngredients($ingredientIds);
 
             return response()->json([
                 'message' => 'Pedido realizado com sucesso!',
@@ -205,6 +226,8 @@ class OrderController extends Controller
             'reason'   => $data['reason'] ?? null,
         ]);
 
+        app(AlertService::class)->orderStatus($order, $data['status'], $data['reason'] ?? null);
+
         return response()->json([
             'message' => 'Status do pedido atualizado!',
             'order'   => $order->fresh()->load('items.product', 'items.addons.addon', 'user', 'statusHistory.user'),
@@ -232,6 +255,7 @@ class OrderController extends Controller
             'notes'              => 'nullable|string|max:1000',
         ]);
 
+        $this->touchedIngredientIds = [];
         DB::beginTransaction();
 
         try {
@@ -243,7 +267,7 @@ class OrderController extends Controller
                 $product = Product::with('ingredients')->findOrFail($item['product_id']);
                 foreach ($product->ingredients as $ingredient) {
                     $usage[$ingredient->id] = ($usage[$ingredient->id] ?? 0)
-                        + (float) $ingredient->pivot->quantity * (int) $item['quantity'];
+                        + $this->recipeQuantityInStockUnit($ingredient, (int) $item['quantity']);
                 }
             }
 
@@ -255,7 +279,7 @@ class OrderController extends Controller
                 }
                 foreach ($product->ingredients as $ingredient) {
                     $restore[$ingredient->id] = ($restore[$ingredient->id] ?? 0)
-                        + (float) $ingredient->pivot->quantity * (int) $item->quantity;
+                        + $this->recipeQuantityInStockUnit($ingredient, (int) $item->quantity);
                 }
             }
 
@@ -277,7 +301,7 @@ class OrderController extends Controller
                     foreach ($product->ingredients as $ingredient) {
                         $ingredient->increment(
                             'quantity',
-                            (float) $ingredient->pivot->quantity * (int) $item->quantity
+                            $this->recipeQuantityInStockUnit($ingredient, (int) $item->quantity)
                         );
                     }
                 }
@@ -296,7 +320,10 @@ class OrderController extends Controller
                 'total'         => $total,
             ]);
 
+            $ingredientIds = $this->touchedIngredientIds;
             DB::commit();
+
+            app(AlertService::class)->checkIngredients($ingredientIds);
 
             return response()->json([
                 'message' => 'Pedido atualizado com sucesso!',
@@ -309,6 +336,16 @@ class OrderController extends Controller
                 'message' => $e->getMessage(),
             ], 422);
         }
+    }
+
+    // Quantidade da receita já convertida para a unidade usada no estoque
+    private function recipeQuantityInStockUnit($ingredient, int $productQuantity = 1): float
+    {
+        return Product::convertQuantity(
+            (float) $ingredient->pivot->quantity,
+            $ingredient->pivot->unit,
+            $ingredient->unit
+        ) * $productQuantity;
     }
 
     // Criar itens do pedido, adicionais e dar baixa no estoque; devolve o total
@@ -345,7 +382,8 @@ class OrderController extends Controller
 
             // Baixar estoque dos ingredientes da receita deste produto
             foreach ($product->ingredients as $ingredient) {
-                $used = (float) $ingredient->pivot->quantity * (int) $item['quantity'];
+                $this->touchedIngredientIds[] = $ingredient->id;
+                $used = $this->recipeQuantityInStockUnit($ingredient, (int) $item['quantity']);
 
                 $ingredient->decrement('quantity', $used);
 
@@ -354,6 +392,7 @@ class OrderController extends Controller
                     'order_item_id' => $orderItem->id,
                     'type'          => 'sale',
                     'quantity'      => $used,
+                    'unit_cost'     => (float) ($ingredient->unit_cost ?? 0),
                     'notes'         => "Venda de {$product->name} — pedido #{$order->id}",
                 ]);
             }

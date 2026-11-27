@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Check, Pencil, Send, Utensils, X } from 'lucide-react';
+import { Bot, Check, Pencil, Send, Sparkles, Utensils, X } from 'lucide-react';
 import api from '../Services/api';
 import { formatPrice } from '../lib/orderStatus';
 import PageHeader from '../components/ui/PageHeader';
@@ -19,15 +19,11 @@ const CATEGORY_LABELS = {
 
 const suggestions = [
     'Qual o faturamento de hoje?',
-    'Quais produtos mais vendem?',
-    'Qual o lucro operacional da semana?',
+    'Como faço para criar um pedido?',
+    'Quais ingredientes estão com estoque baixo?',
+    'Como cadastro um produto?',
+    'Quanto gastamos em saídas este mês?',
 ];
-
-const dayMs = 86400000;
-const startOfToday = new Date();
-startOfToday.setHours(0, 0, 0, 0);
-const startOfYesterday = new Date(startOfToday.getTime() - dayMs);
-const now = Date.now();
 
 /* ------------------------------------------------------------------ */
 /*  Gráfico de linhas — Fluxo de Caixa Operacional                    */
@@ -39,19 +35,21 @@ const LineChart = ({ hours, sales, costs, profit }) => {
     const pad = { top: 20, right: 20, bottom: 30, left: 40 };
     const innerW = width - pad.left - pad.right;
     const innerH = height - pad.top - pad.bottom;
-    const maxVal = Math.max(...sales, ...costs) * 1.2;
+    const maxVal = Math.max(1, ...sales, ...costs) * 1.2;
 
     const x = (i) => pad.left + (i / Math.max(1, hours.length - 1)) * innerW;
     const y = (v) => pad.top + innerH - (v / maxVal) * innerH;
 
     const pathFor = (arr) =>
-        arr.map((v, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+        arr.length ? arr.map((v, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ') : '';
 
     const lineFor = (arr) =>
-        arr.map((v, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+        arr.length ? arr.map((v, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ') : '';
 
     const areaFor = (arr) =>
-        `${pathFor(arr)} L${x(arr.length - 1).toFixed(1)},${y(0).toFixed(1)} L${x(0).toFixed(1)},${y(0).toFixed(1)} Z`;
+        arr.length
+            ? `${pathFor(arr)} L${x(arr.length - 1).toFixed(1)},${y(0).toFixed(1)} L${x(0).toFixed(1)},${y(0).toFixed(1)} Z`
+            : '';
 
     return (
         <svg className="dash-line-chart" viewBox={`0 0 ${width} ${height}`} width="100%" height={220} role="img" aria-label="Fluxo de caixa operacional">
@@ -92,7 +90,7 @@ const DonutChart = ({ data }) => {
     const first = data[0] || { label: '—', percent: 0, value: 1, color: '#94a3b8' };
     const radius = 70;
     const circumference = 2 * Math.PI * radius;
-    const total = data.reduce((sum, item) => sum + item.value, 0);
+    const total = data.reduce((sum, item) => sum + item.value, 0) || 1;
     const segments = data.map((item, index) => ({
         ...item,
         frac: item.value / total,
@@ -145,14 +143,16 @@ const Card = ({ title, subtitle, aside, children }) => (
 );
 
 const KpiCard = ({ label, value, change, hint, onEdit }) => {
-    const isDown = String(change).startsWith('-');
-    const isNeutral = change === '0,0%';
+    const pct = Number(change || 0);
+    const isDown = pct < 0;
+    const isNeutral = pct === 0;
     const changeClass = isNeutral
         ? 'dash-kpi__change--neutral'
         : isDown
             ? 'dash-kpi__change--down'
             : 'dash-kpi__change--up';
-    const changeText = isNeutral || isDown ? change : `+${change}`;
+    const formatted = `${Math.abs(pct).toFixed(1).replace('.', ',')}%`;
+    const changeText = isNeutral ? formatted : `${isDown ? '-' : '+'}${formatted}`;
 
     return (
         <div className="dash-kpi">
@@ -184,8 +184,7 @@ const KpiCard = ({ label, value, change, hint, onEdit }) => {
 /* ------------------------------------------------------------------ */
 
 export default function DashboardHome() {
-    const [orders, setOrders] = useState([]);
-    const [ingredients, setIngredients] = useState([]);
+    const [dashboard, setDashboard] = useState(null);
     const [error, setError] = useState('');
     const [question, setQuestion] = useState('');
     const [answer, setAnswer] = useState('');
@@ -195,23 +194,18 @@ export default function DashboardHome() {
     const [expenseItems, setExpenseItems] = useState([]);
     const [expenseError, setExpenseError] = useState('');
 
+    const loadDashboard = async () => {
+        try {
+            const res = await api.get('/reports/dashboard');
+            setDashboard(res.data || null);
+            setError('');
+        } catch {
+            setError('Não foi possível carregar os dados do dashboard.');
+        }
+    };
+
     useEffect(() => {
-        let active = true;
-        const load = async () => {
-            try {
-                const [ordersRes, ingredientsRes] = await Promise.all([
-                    api.get('/orders'),
-                    api.get('/ingredients'),
-                ]);
-                if (!active) return;
-                setOrders(ordersRes.data || []);
-                setIngredients(ingredientsRes.data || []);
-            } catch {
-                if (active) setError('Não foi possível carregar os dados do dashboard.');
-            }
-        };
-        load();
-        return () => { active = false; };
+        loadDashboard();
     }, []);
 
     const ask = async (q) => {
@@ -245,6 +239,15 @@ export default function DashboardHome() {
         setExpenseItems((items) => items.filter((item) => item.id !== id));
     };
 
+    const removeSavedExpense = async (id) => {
+        try {
+            await api.delete(`/expenses/${id}`);
+            await loadDashboard();
+        } catch (err) {
+            setExpenseError(err.response?.data?.message || 'Não foi possível remover a saída.');
+        }
+    };
+
     const closeExpense = () => {
         setExpenseOpen(false);
         setExpenseDraft({ description: '', value: '' });
@@ -252,15 +255,34 @@ export default function DashboardHome() {
         setExpenseError('');
     };
 
-    const submitExpenses = () => {
-        // TODO: enviar expenseItems ao backend quando existir a rota de saídas e atualizar o valor do cartão Saída
-        closeExpense();
+    const submitExpenses = async () => {
+        if (!expenseItems.length) {
+            closeExpense();
+            return;
+        }
+        try {
+            await Promise.all(expenseItems.map((item) => api.post('/expenses', {
+                description: item.description,
+                value: item.value,
+            })));
+            closeExpense();
+            await loadDashboard();
+        } catch (err) {
+            setExpenseError(err.response?.data?.message || 'Não foi possível registar as saídas.');
+        }
     };
 
     const { kpis, topProducts, categoryData, lowStock, activities, cashFlow } = useMemo(() => {
+        const data = dashboard || {};
+
+        const kpis = (data.kpis || []).map((kpi) => ({
+            ...kpi,
+            value: kpi.id === 'orders' ? String(kpi.value) : formatPrice(kpi.value),
+        }));
+
         const timeAgo = (value) => {
             if (!value) return 'agora mesmo';
-            const diff = now - new Date(value).getTime();
+            const diff = Date.now() - new Date(value).getTime();
             const mins = Math.floor(diff / 60000);
             if (mins < 1) return 'agora mesmo';
             if (mins < 60) return `${mins}m atrás`;
@@ -269,106 +291,35 @@ export default function DashboardHome() {
             return `${Math.floor(hoursAgo / 24)}d atrás`;
         };
 
-        const sumValidDay = (from, to) =>
-            orders
-                .filter(
-                    (o) => o.status !== 'cancelled' && o.created_at && new Date(o.created_at) >= from && new Date(o.created_at) < to
-                )
-                .reduce((sum, o) => sum + Number(o.total || 0), 0);
+        const topProducts = (data.top_products || []).slice(0, 3);
 
-        const sumCancelledDay = (from, to) =>
-            orders
-                .filter((o) => o.status === 'cancelled' && o.created_at && new Date(o.created_at) >= from && new Date(o.created_at) < to)
-                .reduce((sum, o) => sum + Number(o.total || 0), 0);
-
-        const validOrders = orders.filter((o) => o.status !== 'cancelled');
-        const revenue = validOrders.reduce((sum, o) => sum + Number(o.total || 0), 0);
-        const deliveredCount = orders.filter((o) => o.status === 'delivered').length;
-        const saida = orders.filter((o) => o.status === 'cancelled').reduce((sum, o) => sum + Number(o.total || 0), 0);
-        const profit = revenue - saida;
-
-        const revenueYesterday = sumValidDay(startOfYesterday, startOfToday);
-        const cancelledYesterday = sumCancelledDay(startOfYesterday, startOfToday);
-        const deliveredYesterday = orders.filter(
-            (o) => o.status === 'delivered' && o.created_at && new Date(o.created_at) >= startOfYesterday && new Date(o.created_at) < startOfToday
-        ).length;
-
-        const pctChange = (current, previous) =>
-            previous > 0 ? `${(((current - previous) / previous) * 100).toFixed(1).replace('.', ',')}%` : '0,0%';
-
-        const revenueChange = pctChange(revenue, revenueYesterday);
-        const deliveredChange = pctChange(deliveredCount, deliveredYesterday);
-        const saidaChange = pctChange(saida, cancelledYesterday);
-        const profitChange = pctChange(profit, revenueYesterday - cancelledYesterday);
-
-        const kpis = [
-            { id: 'revenue', label: 'Faturamento Total', value: formatPrice(revenue), change: revenueChange, hint: 'vs. período anterior' },
-            { id: 'orders', label: 'Pedidos Concluídos', value: String(deliveredCount), change: deliveredChange, hint: 'vs. período anterior' },
-            { id: 'out', label: 'Saída', value: formatPrice(saida), change: saidaChange, hint: 'custos operacionais' },
-            { id: 'profit', label: 'Lucro Estimado', value: formatPrice(profit), change: profitChange, hint: 'faturamento - saída' },
-        ];
-
-        const productAgg = {};
-        orders.forEach((o) => (o.items || []).forEach((it) => {
-            const name = it.product?.name || 'Produto';
-            const entry = (productAgg[name] = productAgg[name] || { name, units: 0, value: 0 });
-            entry.units += Number(it.quantity || 0);
-            entry.value += Number(it.subtotal || 0);
+        const categoryRows = data.categories || [];
+        const categoryTotal = categoryRows.reduce((sum, c) => sum + Number(c.value || 0), 0) || 1;
+        const categoryData = categoryRows.slice(0, 3).map((c, i) => ({
+            label: CATEGORY_LABELS[c.category] || 'Outros',
+            value: Number(c.value || 0),
+            percent: (Number(c.value || 0) / categoryTotal) * 100,
+            color: ['#1d4ed8', '#3b82f6', '#60a5fa'][i % 3],
         }));
-        const topProducts = Object.values(productAgg).sort((a, b) => b.units - a.units).slice(0, 3);
 
-        const categoryAgg = {};
-        orders.forEach((o) => (o.items || []).forEach((it) => {
-            const category = it.product?.category;
-            const label = CATEGORY_LABELS[category] || 'Outros';
-            const entry = (categoryAgg[label] = categoryAgg[label] || { label, value: 0 });
-            entry.value += Number(it.subtotal || 0);
+        const lowStock = data.low_stock || [];
+        const activities = (data.activities || []).map((a, index) => ({
+            id: a.at || index,
+            time: timeAgo(a.at),
+            text: a.text,
         }));
-        const categorySales = Object.values(categoryAgg)
-            .sort((a, b) => b.value - a.value)
-            .slice(0, 3)
-            .map((c, i) => ({ ...c, percent: 0, color: ['#1d4ed8', '#3b82f6', '#60a5fa'][i % 3] }));
-        const categoryTotal = categorySales.reduce((sum, c) => sum + c.value, 0) || 1;
-        const categoryData = categorySales.map((c) => ({ ...c, percent: (c.value / categoryTotal) * 100 }));
 
-        const lowStock = ingredients
-            .filter((i) => i.stock_status === 'Em falta' || i.stock_status === 'Estoque baixo')
-            .map((i) => ({
-                name: i.name,
-                current: i.quantity,
-                min: Number(i.capacity) * 0.25,
-                badge: i.stock_status === 'Em falta' ? 'Crítico' : 'Atenção',
-            }));
-
-        const activities = orders.slice(0, 5).map((o) => {
-            const history = o.statusHistory || [];
-            const last = history.length ? history[history.length - 1] : { status: o.status, created_at: o.created_at };
-            return {
-                id: o.id,
-                time: timeAgo(last.created_at),
-                text: `Pedido #${String(o.id).padStart(4, '0')} — status ${last.status}`,
-            };
-        });
-
-        const todaysSales = {};
-        orders
-            .filter((o) => o.status !== 'cancelled' && o.created_at && new Date(o.created_at) >= startOfToday)
-            .forEach((o) => {
-                const d = new Date(o.created_at);
-                const label = `${String(d.getHours()).padStart(2, '0')}:00`;
-                if (!hours.includes(label)) return;
-                todaysSales[label] = (todaysSales[label] || 0) + Number(o.total || 0);
-            });
-
+        const realFlow = data.cash_flow || {};
+        const hours = realFlow.hours || [];
         const cashFlow = {
             hours,
-            sales: hours.map((h) => todaysSales[h] || 0),
-            costs: [180, 240, 160, 300, 340, 390, 330, 260, 210, 240, 280, 330, 290],
-            profit: [240, 320, 220, 360, 420, 470, 400, 300, 250, 290, 330, 390, 350],
+            sales: realFlow.sales || hours.map(() => 0),
+            costs: realFlow.costs || hours.map(() => 0),
+            profit: realFlow.profit || hours.map(() => 0),
         };
 
         return { kpis, topProducts, categoryData, lowStock, activities, cashFlow };
-    }, [orders, ingredients]);
+    }, [dashboard]);
 
     if (error) {
         return (
@@ -476,32 +427,62 @@ export default function DashboardHome() {
 
             {/* ===== ASSISTENTE DE IA ===== */}
             <section className="dash-assistant">
-                <h3 className="dash-assistant__title">Assistente de IA</h3>
-                <p className="dash-assistant__help">
-                    Faça perguntas sobre vendas, movimentação de dinheiro, estoque e produtos.
-                </p>
+                <header className="dash-assistant__header">
+                    <div className="dash-assistant__avatar"><Sparkles size={18} aria-hidden="true" /></div>
+                    <div className="dash-assistant__intro">
+                        <h3 className="dash-assistant__title">Assistente de IA</h3>
+                        <p className="dash-assistant__help">
+                            Pergunte sobre vendas, estoque, saídas ou como usar qualquer tela — ele também pode agir no sistema.
+                        </p>
+                    </div>
+                    <span className={`dash-assistant__presence ${thinking ? 'dash-assistant__presence--busy' : ''}`}>
+                        <span className="dash-assistant__presence-dot" />
+                        {thinking ? 'A pensar' : 'Online'}
+                    </span>
+                </header>
 
                 <div className="dash-assistant__suggestions">
                     {suggestions.map((s) => (
-                        <button className="dash-assistant__suggestion" key={s} type="button" onClick={() => ask(s)}>{s}</button>
+                        <button className="dash-assistant__suggestion" key={s} type="button" onClick={() => ask(s)}>
+                            <Sparkles size={11} aria-hidden="true" />
+                            {s}
+                        </button>
                     ))}
                 </div>
 
-                <div className="dash-assistant__form">
+                {(answer || thinking) && (
+                    <div className="dash-assistant__thread">
+                        {answer && (
+                            <div className="dash-assistant__message">
+                                <div className="dash-assistant__message-avatar"><Bot size={14} aria-hidden="true" /></div>
+                                <div className="dash-assistant__bubble">{answer}</div>
+                            </div>
+                        )}
+                        {thinking && (
+                            <p className="dash-assistant__status">
+                                <span className="dash-assistant__typing"><i /><i /><i /></span>
+                                A consultar os dados e a IA...
+                            </p>
+                        )}
+                    </div>
+                )}
+
+                <form
+                    className="dash-assistant__form"
+                    onSubmit={(e) => { e.preventDefault(); ask(); }}
+                >
                     <textarea
                         className="dash-assistant__textarea"
                         placeholder="Ex.: Qual foi a receita total de hoje? Quais produtos mais vendem?"
                         value={question}
                         onChange={(e) => setQuestion(e.target.value)}
                         onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ask(); } }}
+                        aria-label="Pergunta para o assistente de IA"
                     />
-                    <button className="dash-assistant__submit" type="button" onClick={() => ask()} disabled={thinking}>
+                    <button className="dash-assistant__submit" type="submit" disabled={thinking || !question.trim()}>
                         <Send size={16} /> {thinking ? 'A pensar...' : 'Enviar'}
                     </button>
-                </div>
-
-                {thinking && <p className="dash-assistant__status">A consultar os dados e a IA...</p>}
-                {answer && <p className="dash-assistant__answer">{answer}</p>}
+                </form>
             </section>
 
             <Modal
@@ -511,6 +492,7 @@ export default function DashboardHome() {
                 maxWidth="520px"
                 showDivider={false}
                 title="Saída"
+                titleSize="28px"
             >
                 <div className="dash-expense">
                     <div className="dash-expense__row">
@@ -520,7 +502,7 @@ export default function DashboardHome() {
                                 id="dash-expense-description"
                                 className="dash-expense__input dash-expense__input--description"
                                 type="text"
-                                placeholder="Ex.: Alface"
+                                placeholder="Ex.: mercado"
                                 value={expenseDraft.description}
                                 onChange={(e) => setExpenseDraft((draft) => ({ ...draft, description: e.target.value }))}
                                 onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addExpenseItem(); } }}
@@ -574,6 +556,30 @@ export default function DashboardHome() {
                             </ul>
                         )}
                     </div>
+
+                    {(dashboard?.expenses || []).length > 0 && (
+                        <div className="dash-expense__items">
+                            <p className="dash-expense__label">Saídas registadas</p>
+                            <ul className="dash-expense__chips">
+                                {dashboard.expenses.map((expense) => (
+                                    <li className="dash-expense__chip" key={expense.id}>
+                                        <span className="dash-expense__chip-text">
+                                            {`${expense.description} · ${formatPrice(expense.value)} · ${expense.expense_date}`}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            className="dash-expense__chip-remove"
+                                            aria-label={`Remover saída ${expense.description}`}
+                                            title={`Remover saída ${expense.description}`}
+                                            onClick={() => removeSavedExpense(expense.id)}
+                                        >
+                                            <X size={12} aria-hidden="true" />
+                                        </button>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
 
                     <div className="dash-expense__footer">
                         <button

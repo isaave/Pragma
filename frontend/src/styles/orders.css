@@ -345,6 +345,16 @@ body:has(.orders-page) main {
     outline-offset: var(--orders-item-gap);
 }
 
+.orders-card--highlighted {
+    border-color: var(--orders-blue);
+    animation: orders-highlight 3.2s ease-out;
+}
+
+@keyframes orders-highlight {
+    0%, 70% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--orders-blue) 35%, transparent); }
+    100% { box-shadow: 0 0 0 0 transparent; }
+}
+
 .orders-card--selected {
     border-width: var(--orders-selected-border-width);
     border-color: var(--orders-border);
@@ -1408,4 +1418,64 @@ body:has(.orders-page) main {
     .orders-grid {
         grid-template-columns: 100%;
     }
+}
+
+/* ===== Painel lateral de pedidos ===== */
+
+.side-drawer .orders-form__customer-input {
+    width: 100%;
+}
+
+.side-drawer .orders-form__field {
+    width: 100%;
+    border-color: var(--border-color);
+    background: var(--input-bg);
+}
+
+.side-drawer .orders-form__add-row {
+    align-items: flex-end;
+}
+
+.side-drawer .orders-form__select {
+    flex: 1 1 auto;
+}
+
+.side-drawer .orders-form__chip {
+    background: color-mix(in srgb, var(--accent) 12%, var(--card-bg));
+    color: var(--accent);
+}
+
+.side-drawer .orders-form__chip-button {
+    color: inherit;
+}
+
+.side-drawer .orders-form__divider {
+    background: var(--border-color);
+}
+
+.side-drawer .orders-status-pill {
+    border-color: var(--border-color);
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.side-drawer .orders-status-pill[aria-pressed='true'] {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--card-bg);
+}
+
+.side-drawer .orders-detail-content--modal {
+    padding: 0;
+    color: var(--text-primary);
+}
+
+.side-drawer .orders-detail-table-head,
+.side-drawer .orders-detail-table-row {
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+.side-drawer .orders-detail-item-extras {
+    border-color: var(--border-color);
 }

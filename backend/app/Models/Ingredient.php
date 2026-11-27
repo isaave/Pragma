@@ -20,6 +20,7 @@ class Ingredient extends Model
         'unit',
         'quantity',
         'capacity',
+        'unit_cost',
         'expiry_date',
         'last_purchase_date',
         'notes',
@@ -33,6 +34,7 @@ class Ingredient extends Model
         return [
             'quantity' => 'float',
             'capacity' => 'float',
+            'unit_cost' => 'float',
             'expiry_date' => 'date:Y-m-d',
             'last_purchase_date' => 'date:Y-m-d',
         ];

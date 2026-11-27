@@ -16,6 +16,8 @@ export default function ProductDetail({
     onDelete,
     formatPrice,
     categoryLabel,
+    canEdit = true,
+    canDelete = true,
 }) {
     const isModal = variant === 'modal';
 
@@ -35,7 +37,9 @@ export default function ProductDetail({
             ? 'danger'
             : product.status === 'desenvolvimento' || (product.status === 'ativo' && !product.available)
                 ? 'warning'
-                : '';
+                : product.status === 'ativo' && product.available
+                    ? 'success'
+                    : '';
 
     const recipe = product.recipe || [];
 
@@ -103,15 +107,21 @@ export default function ProductDetail({
                 <span className="products-detail-value-amount">{formatPrice(product.price)}</span>
             </div>
 
-            <div className="products-detail-actions">
-                <button type="button" className="products-detail-edit" onClick={onEdit}>
-                    Editar
-                </button>
-                <button type="button" className="products-detail-delete" onClick={onDelete}>
-                    <Trash2 size={14} aria-hidden="true" />
-                    Excluir
-                </button>
-            </div>
+            {(canEdit || canDelete) && (
+                <div className="products-detail-actions">
+                    {canEdit && (
+                        <button type="button" className="products-detail-edit" onClick={onEdit}>
+                            Editar
+                        </button>
+                    )}
+                    {canDelete && (
+                        <button type="button" className="products-detail-delete" onClick={onDelete}>
+                            <Trash2 size={14} aria-hidden="true" />
+                            Excluir
+                        </button>
+                    )}
+                </div>
+            )}
         </div>
     );
 }

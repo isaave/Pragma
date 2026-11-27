@@ -3,6 +3,20 @@ import React from 'react';
 const BACKEND_URL = 'http://127.0.0.1:8000';
 const FONT = "'Helvetica Neue', Helvetica, Arial, sans-serif";
 
+// Mostra sempre o cargo (chefe/atendente), nunca o nível de acesso.
+// Também trata sessões antigas em que "completo"/"básico" vinham em `role`.
+const cargoLabel = (user) => {
+    const role = String(user?.role || '').toLowerCase();
+    if (role === 'chefe') return 'Chefe';
+    if (role === 'atendente') return 'Atendente';
+
+    const access = String(user?.access_level || '').toLowerCase();
+    if (access === 'completo' || role === 'completo') return 'Chefe';
+    if (access === 'basico' || role === 'basico') return 'Atendente';
+
+    return 'Sem cargo';
+};
+
 // ---- Estilos organizados ----
 const styles = {
     pill: {
@@ -124,7 +138,7 @@ export default function ProfileButton({ onNavigate, currentUser, compact = false
             )}
             <span style={styles.textBlock}>
                 <span style={compact ? styles.nameCompact : styles.name}>{currentUser?.name || 'Utilizador'}</span>
-                <span style={compact ? styles.roleCompact : styles.role}>{currentUser?.role || 'Sem cargo'}</span>
+                <span style={compact ? styles.roleCompact : styles.role}>{cargoLabel(currentUser)}</span>
             </span>
         </button>
     );

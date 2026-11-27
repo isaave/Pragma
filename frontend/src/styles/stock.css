@@ -86,8 +86,10 @@
     max-width: 100%;
 }
 
-/* Ordenação */
-.stock-ordenacao {
+/* Ordenação e busca */
+.stock-ordenacao,
+.stock-search {
+    box-sizing: border-box;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -97,6 +99,7 @@
 .stock-ordenacao-label {
     color: var(--stock-text);
     font-size: var(--stock-field-size);
+    font-weight: 600;
     white-space: nowrap;
 }
 
@@ -117,11 +120,6 @@
 .stock-ordenacao-select:focus {
     outline: 2px solid var(--stock-accent);
     outline-offset: 1px;
-}
-
-.stock-search {
-    display: flex;
-    min-width: 0;
 }
 
 .stock-search input {
@@ -171,6 +169,17 @@
     outline-offset: 2px;
 }
 
+.stock-card--highlighted {
+    border-color: var(--stock-accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--stock-accent) 25%, transparent);
+    animation: stock-highlight 3.2s ease-out;
+}
+
+@keyframes stock-highlight {
+    0%, 70% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--stock-accent) 35%, transparent); }
+    100% { box-shadow: 0 0 0 0 transparent; }
+}
+
 .stock-card-top {
     display: flex;
     align-items: flex-start;
@@ -201,6 +210,11 @@
     background: transparent;
     color: var(--stock-text);
     cursor: pointer;
+}
+
+.stock-card-status {
+    display: flex;
+    margin-top: 6px;
 }
 
 .stock-card-dates {
@@ -280,7 +294,8 @@
     line-height: 1.3;
 }
 
-.stock-field input {
+.stock-field input,
+.stock-field select {
     box-sizing: border-box;
     width: 100%;
     height: var(--stock-field-height);
@@ -293,7 +308,8 @@
     font-size: var(--stock-field-size);
 }
 
-.stock-field input:focus {
+.stock-field input:focus,
+.stock-field select:focus {
     outline: 2px solid var(--stock-accent);
     outline-offset: 1px;
 }
@@ -320,6 +336,7 @@
 .stock-form-actions {
     display: flex;
     align-items: center;
+    justify-content: center;
     flex-wrap: nowrap;
     gap: 8px;
     grid-column: 1 / -1;
@@ -339,6 +356,33 @@
 .stock-form-actions .stock-form-danger {
     border-color: var(--stock-danger);
     color: var(--stock-danger);
+}
+
+/* Linha com Excluir ao lado de Salvar */
+.stock-form-submit-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.stock-form-submit-row > button {
+    flex: 0 1 180px;
+    min-width: 120px;
+    box-sizing: border-box;
+    height: 32px;
+}
+
+.stock-form-submit-row .stock-form-danger {
+    padding: 0 10px;
+    border: 1px solid var(--stock-danger);
+    border-radius: var(--stock-field-radius);
+    background: var(--stock-danger);
+    color: #ffffff;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
 }
 
 /* ===== Responsivo ===== */

@@ -14,8 +14,8 @@ export default function AdminPanel() {
         name: '',
         email: '',
         password: '',
-        role: 'Atendente',
-        access_level: 'Nível 1',
+        role: 'atendente',
+        access_level: 'basico',
         status: 'Ativo'
     });
     const [isEditing, setIsEditing] = useState(false);
@@ -46,17 +46,21 @@ export default function AdminPanel() {
                 alert(res.data.message || 'Utilizador atualizado com sucesso!');
             } else {
                 const res = await api.post('/users', formData);
-                alert(res.data.message || 'Utilizador criado com sucesso!');
+                const senha = res.data.temporary_password
+                    ? `\n\nSenha temporária: ${res.data.temporary_password}`
+                    : '';
+                alert((res.data.message || 'Utilizador criado com sucesso!') + senha);
             }
             resetForm();
             fetchUsers();
         } catch (error) {
-            alert('Erro ao guardar utilizador. Verifica os dados.');
+            const msg = error.response?.data?.message || 'Erro ao guardar utilizador. Verifica os dados.';
+            alert(msg);
         }
     };
 
     const resetForm = () => {
-        setFormData({ name: '', email: '', password: '', role: 'Atendente', access_level: 'Nível 1', status: 'Ativo' });
+        setFormData({ name: '', email: '', password: '', role: 'atendente', access_level: 'basico', status: 'Ativo' });
         setIsEditing(false);
         setEditId(null);
         setModal(null);
@@ -67,8 +71,8 @@ export default function AdminPanel() {
             name: user.name,
             email: user.email,
             password: '',
-            role: user.role || 'Atendente',
-            access_level: user.access_level || 'Nível 1',
+            role: user.role || 'atendente',
+            access_level: user.access_level || 'basico',
             status: user.status || 'Ativo'
         });
         setIsEditing(true);
@@ -87,7 +91,10 @@ export default function AdminPanel() {
         }
     };
 
-    const isChefe = (currentUser?.role || '').toLowerCase() === 'chefe';
+    // Permissão vem do nível de acesso; cargo (chefe/atendente) é apenas descritivo
+    const isCompleto = String(currentUser?.access_level || '').toLowerCase() === 'completo';
+    const labelCargo = valor => String(valor || '').toLowerCase() === 'chefe' ? 'Chefe' : 'Atendente';
+    const labelAcesso = valor => String(valor || '').toLowerCase() === 'completo' ? 'Completo' : 'Básico';
 
     // ----- Novo: filtro / busca / ações -----
     const [filtro, setFiltro] = useState('todos');
@@ -108,16 +115,10 @@ export default function AdminPanel() {
     const visibleUsers = (() => {
         let lista = users;
 
-        if (filtro === 'atendentes') {
-            lista = lista.filter(u => (u.role || '').toLowerCase() === 'atendente');
-        } else if (filtro === 'chefe') {
-            lista = lista.filter(u => (u.role || '').toLowerCase() === 'chefe');
-        } else if (filtro === 'nivel') {
-            lista = [...lista].sort((a, b) => {
-                const na = parseInt(String(a.access_level || '').replace(/\D/g, ''), 10) || 0;
-                const nb = parseInt(String(b.access_level || '').replace(/\D/g, ''), 10) || 0;
-                return nb - na;
-            });
+        if (filtro === 'basico') {
+            lista = lista.filter(u => String(u.access_level || '').toLowerCase() === 'basico');
+        } else if (filtro === 'completo') {
+            lista = lista.filter(u => String(u.access_level || '').toLowerCase() === 'completo');
         }
 
         if (statusFiltro === 'ativo') {
@@ -151,9 +152,8 @@ export default function AdminPanel() {
                             ariaLabel="Filtrar usuários"
                             options={[
                                 { value: 'todos', label: 'Todos' },
-                                { value: 'atendentes', label: 'Atendentes' },
-                                { value: 'chefe', label: 'Chefe' },
-                                { value: 'nivel', label: 'Nível de acesso' },
+                                { value: 'basico', label: 'Básico' },
+                                { value: 'completo', label: 'Completo' },
                             ]}
                             value={filtro}
                             onChange={setFiltro}
@@ -161,7 +161,7 @@ export default function AdminPanel() {
                         />
                     </div>
                     <TableToolbar
-                        onAdd={isChefe ? () => {
+                        onAdd={isCompleto ? () => {
                             resetForm();
                             setModal('create');
                         } : undefined}
@@ -193,7 +193,7 @@ export default function AdminPanel() {
                 )}
 
                 <Modal
-                    open={(modal === 'create' || modal === 'edit') && isChefe}
+                    open={(modal === 'create' || modal === 'edit') && isCompleto}
                     onClose={closeModal}
                     title={modal === 'create' ? 'Novo Usuário' : 'Editar Usuário'}
                     subtitle={modal === 'create'
@@ -225,18 +225,15 @@ export default function AdminPanel() {
                         <label>
                             CARGO
                             <select value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}>
-                                <option value="Atendente">Atendente</option>
-                                <option value="Auxiliar de cozinha">Auxiliar de cozinha</option>
-                                <option value="Gerente">Gerente</option>
-                                <option value="Chefe">Chefe</option>
+                                <option value="atendente">Atendente</option>
+                                <option value="chefe">Chefe</option>
                             </select>
                         </label>
                         <label>
                             NÍVEL DE ACESSO
                             <select value={formData.access_level} onChange={e => setFormData({...formData, access_level: e.target.value})}>
-                                <option value="Nível 1">Nível 1 - Básico (Pedidos e cardápio)</option>
-                                <option value="Nível 2">Nível 2 - Intermediário (Relatórios)</option>
-                                <option value="Nível 3">Nível 3 - Avançado (Acesso total)</option>
+                                <option value="basico">Básico — pedidos, histórico e leitura de produtos/estoque</option>
+                                <option value="completo">Completo — acesso total a todos os módulos</option>
                             </select>
                         </label>
                         <div className="users-field">
@@ -296,18 +293,15 @@ export default function AdminPanel() {
                         <label>
                             CARGO
                             <select value={selectedUser?.role || ''} disabled aria-label="Cargo">
-                                <option value="Atendente">Atendente</option>
-                                <option value="Auxiliar de cozinha">Auxiliar de cozinha</option>
-                                <option value="Gerente">Gerente</option>
-                                <option value="Chefe">Chefe</option>
+                                <option value="atendente">Atendente</option>
+                                <option value="chefe">Chefe</option>
                             </select>
                         </label>
                         <label>
                             NÍVEL DE ACESSO
                             <select value={selectedUser?.access_level || ''} disabled aria-label="Nível de acesso">
-                                <option value="Nível 1">Nível 1 - Básico (Pedidos e cardápio)</option>
-                                <option value="Nível 2">Nível 2 - Intermediário (Relatórios)</option>
-                                <option value="Nível 3">Nível 3 - Avançado (Acesso total)</option>
+                                <option value="basico">Básico — pedidos, histórico e leitura de produtos/estoque</option>
+                                <option value="completo">Completo — acesso total a todos os módulos</option>
                             </select>
                         </label>
                         <div className="users-field">
@@ -332,7 +326,7 @@ export default function AdminPanel() {
                             </div>
                         </div>
                         <div className="users-form-divider" />
-                        {isChefe && (
+                        {isCompleto && (
                             <button
                                 type="button"
                                 className="users-modal-primary"
@@ -353,8 +347,7 @@ export default function AdminPanel() {
                             <th>Cargo</th>
                             <th>Nível de Acesso</th>
                             <th>Status</th>
-                            <th>OBS</th>
-                            {isChefe && <th>Ações</th>}
+                            {isCompleto && <th>Ações</th>}
                         </tr>
                     </thead>
                     <tbody>
@@ -371,11 +364,10 @@ export default function AdminPanel() {
                                     </button>
                                 </td>
                                 <td>{user.email}</td>
-                                <td>{user.role}</td>
-                                <td>{user.access_level}</td>
+                                <td>{labelCargo(user.role)}</td>
+                                <td>{labelAcesso(user.access_level)}</td>
                                 <td>{user.status}</td>
-                                <td>{/* TODO: campo OBS ainda não existe nos dados */}</td>
-                                {isChefe && (
+                                {isCompleto && (
                                     <td className="users-actions">
                                         <button className="users-action-icon" onClick={() => handleEdit(user)} aria-label="Editar">
                                             <Pencil size={16} />
@@ -390,7 +382,7 @@ export default function AdminPanel() {
 
                         {visibleUsers.length === 0 && (
                             <tr>
-                                <td className="users-empty" colSpan={isChefe ? 7 : 6}>Nenhum usuário encontrado</td>
+                                <td className="users-empty" colSpan={isCompleto ? 6 : 5}>Nenhum usuário encontrado</td>
                             </tr>
                         )}
                     </tbody>

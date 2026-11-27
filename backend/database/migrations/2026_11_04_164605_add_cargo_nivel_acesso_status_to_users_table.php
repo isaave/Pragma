@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('access_level')->default('Nível 1')->after('role');
+            $table->string('access_level')->default('basico')->after('role');
             $table->string('status')->default('Ativo')->after('access_level');
         });
     }

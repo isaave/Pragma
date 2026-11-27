@@ -260,6 +260,14 @@ export default function UserProfile() {
     }, []);
 
     const nomeCompleto = user?.name || name || 'Utilizador';
+    const rawRole = String(user?.role || '').toLowerCase();
+    const rawAccess = String(user?.access_level || '').toLowerCase();
+    const cargoLabel =
+        rawRole === 'chefe' ? 'Chefe'
+        : rawRole === 'atendente' ? 'Atendente'
+        : rawAccess === 'completo' || rawRole === 'completo' ? 'Chefe'
+        : rawAccess === 'basico' || rawRole === 'basico' ? 'Atendente'
+        : 'Sem cargo';
     const avatarUrl = user?.avatar_url
         ? `${BACKEND_URL}${user.avatar_url.startsWith('/') ? '' : '/'}${user.avatar_url}?t=${Date.now()}`
         : null;
@@ -375,11 +383,7 @@ export default function UserProfile() {
                         <div style={styles.badgeRow}>
                             <span style={styles.badge}>
                                 <ChefHat size={14} />
-                                {user?.role || 'Sem cargo'}
-                            </span>
-                            <span style={styles.badgeDark}>
-                                <ShieldCheck size={14} />
-                                {user?.access_level ? `Acesso ${user.access_level}` : 'Acesso definido pelo responsável'}
+                                {cargoLabel}
                             </span>
                         </div>
                     </div>

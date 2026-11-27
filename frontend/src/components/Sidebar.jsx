@@ -9,7 +9,8 @@ export default function Sidebar({ currentView, onNavigate, onLogout, currentUser
     const [hoverExpanded, setHoverExpanded] = useState(false);
     const [legalDoc, setLegalDoc] = useState(null); // null | 'terms' | 'privacy'
     const { isDark, toggleTheme } = useTheme();
-    const userRole = currentUser?.role || '';
+    // Permissões são definidas pelo nível de acesso, não pelo cargo
+    const accessLevel = String(currentUser?.access_level || '').toLowerCase();
 
     const handleLogout = async () => {
         try {
@@ -37,13 +38,13 @@ export default function Sidebar({ currentView, onNavigate, onLogout, currentUser
     const items = [
         { view: 'orders', icon: Bell, label: 'Gestão de Pedidos' },
         { view: 'history', icon: History, label: 'Históricos de pedidos' },
-        // Nível 1 (Atendente): Acesso a gestão de pedidos, produtos (ler apenas) e estoque (ler apenas)
-        { view: 'menu', icon: Utensils, label: 'Produtos', condition: userRole === 'Atendente' || userRole === 'Chefe' },
-        // Nível 2: Acesso de leitura - pode ver estoque (apenas nivel2 e acima)
-        { view: 'stock', icon: Package, label: 'Estoque', condition: userRole === 'Chefe' },
-        // Relatórios e Usuários apenas para admin (Chefe)
-        { view: 'reports', icon: BarChart3, label: 'Relatórios', condition: userRole === 'Chefe' },
-        { view: 'admin', icon: Users, label: 'Usuários', condition: userRole === 'Chefe' },
+        // Nível 1 (basico): Acesso a gestão de pedidos, produtos (ler apenas) e estoque (ler apenas)
+        { view: 'menu', icon: Utensils, label: 'Produtos', condition: accessLevel === 'basico' || accessLevel === 'completo' },
+        // Estoque: 'basico' visualiza (somente leitura); 'completo' gerencia
+        { view: 'stock', icon: Package, label: 'Estoque', condition: accessLevel === 'basico' || accessLevel === 'completo' },
+        // Relatórios e Usuários apenas para completo
+        { view: 'reports', icon: BarChart3, label: 'Relatórios', condition: accessLevel === 'completo' },
+        { view: 'admin', icon: Users, label: 'Usuários', condition: accessLevel === 'completo' },
     ];
 
     // ===== Modo mobile: drawer lateral (desliza por cima do conteúdo) =====
@@ -159,8 +160,8 @@ export default function Sidebar({ currentView, onNavigate, onLogout, currentUser
                             } else if (typeof condition === 'boolean') {
                                 meetsCondition = condition;
                             } else {
-                                // condition é uma string de comparação (ex: "userRole === 'Atendente'")
-                                meetsCondition = userRole && condition.includes(userRole);
+                                // condition é uma string de comparação (ex: "accessLevel === 'completo'")
+                                meetsCondition = accessLevel && condition.includes(accessLevel);
                             }
                             if (!meetsCondition) {
                                 return null; // Ocultar item se o role não atender à condição

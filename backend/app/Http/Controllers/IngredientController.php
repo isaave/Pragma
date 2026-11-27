@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Ingredient;
+use App\Models\IngredientMovement;
+use App\Services\AlertService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -44,6 +46,7 @@ class IngredientController extends Controller
         $data = $request->validate($this->rules());
 
         $ingredient = Ingredient::create($data);
+        app(AlertService::class)->checkIngredients([$ingredient->id]);
 
         return response()->json([
             'message' => 'Ingrediente cadastrado com sucesso!',
@@ -57,6 +60,7 @@ class IngredientController extends Controller
         $data = $request->validate($this->rules($ingredient->id));
 
         $ingredient->update($data);
+        app(AlertService::class)->checkIngredients([$ingredient->id]);
 
         return response()->json([
             'message' => 'Ingrediente atualizado com sucesso!',
@@ -73,12 +77,21 @@ class IngredientController extends Controller
         }
         $ingredient->delete();
 
+        // Remove alertas que não têm mais um ingrediente associado.
+        app(AlertService::class)->forgetIngredient($ingredient->id);
+
         return response()->json(['message' => 'Ingrediente excluído com sucesso!']);
     }
 
     // Adicionar estoque (modal "Adicionar" do Figma): soma a quantidade e registra o lote
+    // Usuários 'basico' não podem movimentar estoque
     public function restock(Request $request, Ingredient $ingredient)
     {
+        // Usuários 'basico' não podem movimentar estoque
+        $user = $request->user();
+        if ($user->isBasico() && ! $user->isCompleto()) {
+            return response()->json(['message' => 'Acesso restrito: usuários basico não podem movimentar estoque'], 403);
+        }
         $data = $request->validate([
             'quantity' => 'required|numeric|gt:0|max:99999999',
             'expiry_date' => 'nullable|date',
@@ -98,6 +111,17 @@ class IngredientController extends Controller
 
         $ingredient->save();
 
+        IngredientMovement::create([
+            'ingredient_id' => $ingredient->id,
+            'type' => 'restock',
+            'quantity' => $data['quantity'],
+            'unit_cost' => (float) ($ingredient->unit_cost ?? 0),
+            'notes' => $data['notes'] ?? ('Reposição de estoque — ' . ($data['last_purchase_date'] ?? now()->toDateString())),
+        ]);
+
+        // A reposição pode resolver um alerta de estoque baixo/crítico.
+        app(AlertService::class)->checkIngredients([$ingredient->id]);
+
         return response()->json([
             'message' => 'Estoque adicionado com sucesso!',
             'ingredient' => $ingredient->fresh(),
@@ -112,6 +136,7 @@ class IngredientController extends Controller
             'unit' => 'required|string|max:50',
             'quantity' => 'required|numeric|min:0|max:99999999',
             'capacity' => 'required|numeric|gt:0|max:99999999',
+            'unit_cost' => 'sometimes|numeric|min:0|max:99999999',
             'expiry_date' => 'nullable|date',
             'last_purchase_date' => 'nullable|date',
             'notes' => 'nullable|string|max:1000',

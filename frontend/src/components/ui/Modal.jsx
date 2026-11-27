@@ -35,6 +35,7 @@ export default function Modal({
     open,
     onClose,
     title,
+    titleSize,
     subtitle,
     children,
     maxWidth = 640,
@@ -46,6 +47,8 @@ export default function Modal({
     headerActions,
     ariaLabel,
     headerStart,
+    centerTitle = false,
+    titleInline = false,
 }) {
     const [titleId] = useState(() => `pragma-modal-title-${++nextModalId}`);
 
@@ -104,7 +107,121 @@ export default function Modal({
                     boxShadow: SIZES.cardShadow,
                 }}
             >
-                {closePlacement === 'top' ? (
+                {closePlacement === 'top' && titleInline && !centerTitle ? (
+                    // Título e status centralizados na mesma linha do botão de fechar.
+                    <div
+                        style={{
+                            position: 'relative',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: SIZES.headerGap,
+                            padding: '18px 64px 14px',
+                        }}
+                    >
+                        <div style={{ minWidth: 0, textAlign: 'center' }}>
+                            {titleNode ? (
+                                titleNode
+                            ) : (
+                                <h2
+                                    id={titleId}
+                                    style={{
+                                        margin: 0,
+                                        fontSize: titleSize || SIZES.titleTopSize,
+                                        fontWeight: 700,
+                                        color: COLORS.title,
+                                        lineHeight: 1.3,
+                                    }}
+                                >
+                                    {title}
+                                </h2>
+                            )}
+                            {subtitle && (
+                                <p
+                                    style={{
+                                        margin: '3px 0 0',
+                                        fontSize: SIZES.subtitleSize,
+                                        color: COLORS.subtitle,
+                                        lineHeight: 1.4,
+                                    }}
+                                >
+                                    {subtitle}
+                                </p>
+                            )}
+                            {titleExtra && <div style={{ marginTop: '6px' }}>{titleExtra}</div>}
+                        </div>
+                        <div
+                            style={{
+                                position: 'absolute',
+                                top: '18px',
+                                right: '20px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                            }}
+                        >
+                            {headerActions}
+                            <CloseButton onClick={onClose} />
+                        </div>
+                    </div>
+                ) : closePlacement === 'top' && centerTitle ? (
+                    // Título centralizado na mesma linha do botão de fechar.
+                    <div
+                        style={{
+                            position: 'relative',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: SIZES.headerGap,
+                            padding: '18px 20px 14px',
+                        }}
+                    >
+                        <div style={{ minWidth: 0, textAlign: 'center' }}>
+                            {titleNode ? (
+                                titleNode
+                            ) : (
+                                <h2
+                                    id={titleId}
+                                    style={{
+                                        margin: 0,
+                                        fontSize: titleSize || SIZES.titleTopSize,
+                                        fontWeight: 700,
+                                        color: COLORS.title,
+                                        lineHeight: 1.3,
+                                    }}
+                                >
+                                    {title}
+                                </h2>
+                            )}
+                            {subtitle && (
+                                <p
+                                    style={{
+                                        margin: '3px 0 0',
+                                        fontSize: SIZES.subtitleSize,
+                                        color: COLORS.subtitle,
+                                        lineHeight: 1.4,
+                                    }}
+                                >
+                                    {subtitle}
+                                </p>
+                            )}
+                            {titleExtra && <div style={{ marginTop: '6px' }}>{titleExtra}</div>}
+                        </div>
+                        <div
+                            style={{
+                                position: 'absolute',
+                                top: '18px',
+                                right: '20px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                            }}
+                        >
+                            {headerActions}
+                            <CloseButton onClick={onClose} />
+                        </div>
+                    </div>
+                ) : closePlacement === 'top' ? (
                     <>
                         {headerStart ? (
                             <div
@@ -150,7 +267,7 @@ export default function Modal({
                                         id={titleId}
                                         style={{
                                             margin: 0,
-                                            fontSize: SIZES.titleTopSize,
+                                            fontSize: titleSize || SIZES.titleTopSize,
                                             fontWeight: 700,
                                             color: COLORS.title,
                                             lineHeight: 1.3,
@@ -178,14 +295,21 @@ export default function Modal({
                 ) : (
                     <div
                         style={{
+                            position: 'relative',
                             display: 'flex',
                             alignItems: 'flex-start',
-                            justifyContent: 'space-between',
+                            justifyContent: centerTitle ? 'center' : 'space-between',
                             gap: SIZES.headerGap,
                             padding: SIZES.padding,
                         }}
                     >
-                        <div style={{ minWidth: 0 }}>
+                        <div
+                            style={{
+                                minWidth: 0,
+                                flex: centerTitle ? 1 : undefined,
+                                textAlign: centerTitle ? 'center' : undefined,
+                            }}
+                        >
                             {titleNode ? (
                                 titleNode
                             ) : (
@@ -193,7 +317,7 @@ export default function Modal({
                                     id={titleId}
                                     style={{
                                         margin: 0,
-                                        fontSize: SIZES.titleSize,
+                                        fontSize: titleSize || SIZES.titleSize,
                                         fontWeight: 700,
                                         color: COLORS.title,
                                         lineHeight: 1.3,
@@ -213,10 +337,18 @@ export default function Modal({
                                 {subtitle}
                             </p>
                         </div>
-                        {titleExtra || headerActions ? (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: SIZES.headerGap, flexShrink: 0 }}>
-                                {titleExtra}
-                                {headerActions}
+                        {titleExtra || headerActions || centerTitle ? (
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: SIZES.headerGap,
+                                    flexShrink: 0,
+                                    ...(centerTitle ? { position: 'absolute', top: '18px', right: '20px' } : {}),
+                                }}
+                            >
+                                {!centerTitle && titleExtra}
+                                {!centerTitle && headerActions}
                                 <CloseButton onClick={onClose} />
                             </div>
                         ) : (

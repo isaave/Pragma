@@ -9,6 +9,9 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\StoreController;
 use App\Http\Controllers\AiController;
+use App\Http\Controllers\ExpenseController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\NotificationController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -50,5 +53,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/store/sessions', [StoreController::class, 'sessions']);
     Route::get('/store/status', [StoreController::class, 'show']);
     Route::put('/store/status', [StoreController::class, 'update']);
+    Route::get('/reports/dashboard', [ReportController::class, 'dashboard']);
+    Route::get('/expenses', [ExpenseController::class, 'index']);
+    Route::post('/expenses', [ExpenseController::class, 'store']);
+    Route::delete('/expenses/{expense}', [ExpenseController::class, 'destroy']);
     Route::post('/ai/ask', [AiController::class, 'ask']);
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
+    Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead']);
 });

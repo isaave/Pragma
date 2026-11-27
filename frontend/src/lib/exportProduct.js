@@ -187,7 +187,7 @@ const printDocument = (printWindow, title, body) => {
         body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     </style>
 </head>
-<body style="margin:0;padding:32px;font-family:Arial,Helvetica,sans-serif;color:#0f172a;background:#ffffff;">
+<body style="margin:0;padding:32px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#0f172a;background:#ffffff;">
     <div style="max-width:100%;margin:0 auto;">
         ${body}
     </div>

@@ -12,6 +12,21 @@ class Product extends Model
 {
     public const CATEGORIES = ['hamburguer', 'combo', 'acompanhamento', 'bebida', 'sobremesa', 'adicional'];
 
+    // Unidades de peso que podem ser convertidas entre si
+    private const WEIGHT_TO_GRAM = [
+        'grama'     => 1.0,
+        'gramas'    => 1.0,
+        'g'         => 1.0,
+        'kilo'      => 1000.0,
+        'kilos'     => 1000.0,
+        'quilo'     => 1000.0,
+        'quilos'    => 1000.0,
+        'kg'        => 1000.0,
+        'tonelada'  => 1000000.0,
+        'toneladas' => 1000000.0,
+        't'         => 1000000.0,
+    ];
+
     protected $fillable = [
         'name',
         'category',
@@ -39,10 +54,31 @@ class Product extends Model
         ];
     }
 
+    // Converte a quantidade da receita para a unidade em que o ingrediente está no estoque.
+    // Unidades de peso são convertidas; contagem/unidades legadas ficam sem conversão.
+    public static function convertQuantity(float $quantity, ?string $fromUnit, string $toUnit): float
+    {
+        $from = strtolower(trim((string) $fromUnit));
+        $to = strtolower(trim($toUnit));
+
+        if ($from === $to) {
+            return $quantity;
+        }
+
+        $fromGrams = self::WEIGHT_TO_GRAM[$from] ?? null;
+        $toGrams = self::WEIGHT_TO_GRAM[$to] ?? null;
+
+        if ($fromGrams !== null && $toGrams !== null) {
+            return $quantity * $fromGrams / $toGrams;
+        }
+
+        return $quantity;
+    }
+
     // Ingredientes do estoque usados neste produto (com a quantidade da receita)
     public function ingredients(): BelongsToMany
     {
-        return $this->belongsToMany(Ingredient::class)->withPivot('quantity');
+        return $this->belongsToMany(Ingredient::class)->withPivot('quantity', 'unit');
     }
 
     // Adicionais disponíveis para este produto (ex.: bacon extra, queijo extra)
@@ -58,7 +94,7 @@ class Product extends Model
             return $this->ingredients->map(fn ($ingredient) => [
                 'ingredient_id' => $ingredient->id,
                 'name' => $ingredient->name,
-                'unit' => $ingredient->unit,
+                'unit' => $ingredient->pivot->unit ?: $ingredient->unit,
                 'quantity' => (float) $ingredient->pivot->quantity,
             ])->values()->all();
         });
@@ -72,7 +108,12 @@ class Product extends Model
                 return false;
             }
             foreach ($this->ingredients as $ingredient) {
-                if ($ingredient->quantity < (float) $ingredient->pivot->quantity) {
+                $needed = self::convertQuantity(
+                    (float) $ingredient->pivot->quantity,
+                    $ingredient->pivot->unit,
+                    $ingredient->unit
+                );
+                if ((float) $ingredient->quantity < $needed) {
                     return false;
                 }
             }

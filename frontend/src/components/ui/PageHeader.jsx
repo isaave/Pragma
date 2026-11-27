@@ -2,6 +2,7 @@ import React, { useContext } from 'react';
 
 // Ações do topo (sino/perfil) injetadas pelo App nas telas com cabeçalho inline.
 // eslint-disable-next-line react/only-export-components
+/** @type {React.Context<React.ReactNode>} */
 export const HeaderActionsContext = React.createContext(null);
 
 // O ProfileButton tem margin-bottom/align-self próprios para a barra antiga;
