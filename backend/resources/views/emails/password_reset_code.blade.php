@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Redefinição de senha - Pragma</title>
 </head>
-<body style="margin:0;padding:0;background-color:#f3f4f6;font-family:Arial,Helvetica,sans-serif;">
+<body style="margin:0;padding:0;background-color:#f3f4f6;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f3f4f6;padding:40px 16px;">
         <tr>
             <td align="center">
@@ -25,7 +25,7 @@
                             <p style="margin:0 0 16px;color:#475569;font-size:15px;line-height:24px;">Recebemos um pedido de redefinição de senha para a sua conta no Pragma.</p>
                             <p style="margin:0 0 8px;color:#475569;font-size:15px;line-height:24px;">O seu código de acesso é:</p>
                             <div style="margin:0 0 10px;padding:16px;background-color:#f8fafc;border:1px dashed #cbd5e1;border-radius:12px;text-align:center;">
-                                <span style="font-family:Courier,monospace;font-size:32px;font-weight:800;color:#0f172a;letter-spacing:8px;user-select:all;-webkit-user-select:all;">{{ $code }}</span>
+                                <span style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:32px;font-weight:800;color:#0f172a;letter-spacing:8px;user-select:all;-webkit-user-select:all;">{{ $code }}</span>
                             </div>
                             <p style="margin:0 0 24px;color:#94a3b8;font-size:12px;line-height:18px;text-align:center;">Toque e segure no código (ou selecione e use Ctrl+C / Cmd+C) para copiar.</p>
                             <p style="margin:0 0 24px;color:#475569;font-size:15px;line-height:24px;">Este código é válido por 15 minutos.</p>

@@ -10,9 +10,12 @@ use Illuminate\Validation\Rule;
 
 class ProductController extends Controller
 {
-    // Listar produtos (filtros: ?category=hamburguer|combo|acompanhamento|bebida|sobremesa  e  ?search=texto)
+    // Listar produtos
+    // Usuários 'basico' podem apenas visualizar produtos
+    // Usuários 'completo' têm acesso total
     public function index(Request $request)
     {
+        // Tanto 'basico' quanto 'completo' podem consultar o cardápio (somente leitura para basico)
         $query = Product::query()->category($request->query('category'));
 
         if ($search = trim((string) $request->query('search', ''))) {
@@ -28,9 +31,15 @@ class ProductController extends Controller
         return response()->json($product);
     }
 
-    // Cadastrar novo produto (com a receita de ingredientes)
+    // Cadastrar novo produto
+    // Usuários 'basico' não podem criar produtos
     public function store(Request $request)
     {
+        // Usuários 'basico' não podem criar produtos
+        $user = $request->user();
+        if ($user->isBasico() && ! $user->isCompleto()) {
+            return response()->json(['message' => 'Acesso restrito: usuários basico não podem criar produtos'], 403);
+        }
         $data = $request->validate($this->rules());
 
         $product = DB::transaction(function () use ($data) {
@@ -76,20 +85,23 @@ class ProductController extends Controller
     {
         $fields = collect($data)->except('ingredients')->all();
 
-        // Se status foi enviado mas is_active não, derivamos is_active do status
-        if (!array_key_exists('is_active', $fields) && array_key_exists('status', $fields)) {
+        // O status enviado pelo formulário é a fonte da verdade para is_active
+        if (array_key_exists('status', $fields)) {
             $fields['is_active'] = $fields['status'] === 'ativo';
         }
 
         return $fields;
     }
 
-    // Substitui a receita do produto pela lista recebida: [{id, quantity}, ...]
+    // Substitui a receita do produto pela lista recebida: [{id, quantity, unit}, ...]
     private function syncRecipe(Product $product, array $items): void
     {
         $sync = [];
         foreach ($items as $item) {
-            $sync[$item['id']] = ['quantity' => $item['quantity']];
+            $sync[$item['id']] = [
+                'quantity' => $item['quantity'],
+                'unit' => $item['unit'] ?? null,
+            ];
         }
         $product->ingredients()->sync($sync);
     }
@@ -107,6 +119,7 @@ class ProductController extends Controller
             'ingredients' => 'nullable|array',
             'ingredients.*.id' => 'required|integer|distinct|exists:ingredients,id',
             'ingredients.*.quantity' => 'required|numeric|gt:0|max:99999999',
+            'ingredients.*.unit' => 'nullable|string|max:50',
         ];
     }
 

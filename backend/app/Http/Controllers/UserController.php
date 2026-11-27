@@ -6,36 +6,65 @@ use App\Models\User;
 use App\Mail\WelcomePasswordMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class UserController extends Controller
 {
-    // Listar todos os utilizadores
-    public function index()
+    /**
+     * Apenas usuários 'completo' (chefe) podem gerenciar contas.
+     */
+    private function ensureCompleto(Request $request)
     {
+        $user = $request->user();
+
+        if (! $user || ! $user->isCompleto()) {
+            return response()->json([
+                'message' => 'Acesso restrito: apenas usuários completo podem gerenciar contas',
+            ], 403);
+        }
+
+        return null;
+    }
+
+    // Listar todos os utilizadores
+    public function index(Request $request)
+    {
+        if ($response = $this->ensureCompleto($request)) {
+            return $response;
+        }
+
         return response()->json(User::all());
     }
 
     // Mostrar um utilizador
-    public function show($id)
+    public function show(Request $request, $id)
     {
+        if ($response = $this->ensureCompleto($request)) {
+            return $response;
+        }
+
         $user = User::findOrFail($id);
         return response()->json($user);
     }
 
-    // Criar novo utilizador (Apenas Chefe)
+    // Criar novo utilizador (apenas chefe / perfil completo)
     public function store(Request $request)
     {
+        if ($response = $this->ensureCompleto($request)) {
+            return $response;
+        }
+
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'role' => 'required|string|max:255',
-            'access_level' => 'nullable|string|max:255',
+            'role' => ['required', 'string', 'in:atendente,chefe'],
+            'access_level' => ['required', 'string', 'in:basico,completo'],
             'status' => 'nullable|in:Ativo,Inativo,ativo,inativo',
         ]);
 
         $role = $request->role;
-        $accessLevel = $request->input('access_level', 'Nível 1');
+        $accessLevel = $request->input('access_level', $role);
         $status = ucfirst(strtolower($request->input('status', 'Ativo')));
 
         // Gera uma senha temporária pelo sistema (não solicitada no formulário)
@@ -50,23 +79,42 @@ class UserController extends Controller
             'status' => $status,
         ]);
 
-        // Envia a senha gerada para o email do utilizador
-        Mail::to($user->email)->send(new WelcomePasswordMail($user->name, $plainPassword));
+        // Tenta enviar a senha por e-mail. Se falhar, o chefe recebe a senha na resposta.
+        $emailEnviado = true;
+        try {
+            Mail::to($user->email)->send(new WelcomePasswordMail($user->name, $plainPassword));
+        } catch (\Throwable $e) {
+            $emailEnviado = false;
+            Log::warning('Falha ao enviar senha temporária: ' . $e->getMessage());
+        }
 
-        return response()->json(['message' => 'Utilizador criado com sucesso! A senha foi enviada para o email.', 'user' => $user], 201);
+        $message = 'Utilizador criado com sucesso!';
+        $message .= $emailEnviado
+            ? ' A senha foi enviada para o e-mail.'
+            : ' Não foi possível enviar o e-mail; entregue a senha temporária ao colaborador.';
+
+        return response()->json([
+            'message' => $message,
+            'user' => $user,
+            'temporary_password' => $plainPassword,
+        ], 201);
     }
 
     // Atualizar utilizador
     public function update(Request $request, $id)
     {
+        if ($response = $this->ensureCompleto($request)) {
+            return $response;
+        }
+
         $user = User::findOrFail($id);
 
         $request->validate([
             'name' => 'sometimes|required|string|max:255',
             'email' => 'sometimes|required|string|email|max:255|unique:users,email,' . $id,
             'password' => 'nullable|string|min:6',
-            'role' => 'nullable|string|max:255',
-            'access_level' => 'nullable|string|max:255',
+            'role' => ['sometimes', 'required', 'string', 'in:atendente,chefe'],
+            'access_level' => ['sometimes', 'required', 'string', 'in:basico,completo'],
             'status' => 'nullable|in:Ativo,Inativo,ativo,inativo',
         ]);
 
@@ -92,8 +140,12 @@ class UserController extends Controller
     }
 
     // Apagar utilizador
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
+        if ($response = $this->ensureCompleto($request)) {
+            return $response;
+        }
+
         $user = User::findOrFail($id);
         $user->delete();
 

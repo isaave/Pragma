@@ -1,10 +1,11 @@
 import React from 'react';
 import { Pencil } from 'lucide-react';
+import StatusBadge from './ui/StatusBadge';
 
 // Uso:
 // <StockCard item={item} onOpen={openRestock} onEdit={openEdit} formatDate={formatDate} />
 
-export default function StockCard({ item, onOpen, onEdit, formatDate }) {
+export default function StockCard({ item, onOpen, onEdit, formatDate, highlighted = false, statusTone }) {
     const handleKeyDown = (event) => {
         if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
@@ -14,7 +15,9 @@ export default function StockCard({ item, onOpen, onEdit, formatDate }) {
 
     return (
         <div
-            className="stock-card"
+            className={`stock-card${highlighted ? ' stock-card--highlighted' : ''}`}
+            id={`ingredient-${item.id}`}
+            data-resource-id={`ingredient-${item.id}`}
             role="button"
             tabIndex={0}
             onClick={() => onOpen(item)}
@@ -35,6 +38,15 @@ export default function StockCard({ item, onOpen, onEdit, formatDate }) {
                     <Pencil size={12} aria-hidden="true" />
                 </button>
             </div>
+
+            {item.stock_status && (
+                <div className="stock-card-status">
+                    <StatusBadge
+                        label={item.stock_status}
+                        tone={statusTone ? statusTone(item.stock_status) : 'neutral'}
+                    />
+                </div>
+            )}
 
             <div className="stock-card-dates">
                 <span>Última adição: {formatDate(item.last_purchase_date)}</span>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Menu } from 'lucide-react';
 import Login from './pages/Login';
 import AdminPanel from './pages/AdminPanel';
@@ -14,11 +14,16 @@ import Reports from './pages/Reports';
 import Stock from './pages/Stock';
 import useIsMobile from './hooks/useIsMobile';
 import { HeaderActionsContext } from './components/ui/PageHeader';
+import { NotificationsProvider } from './context/NotificationsContext';
+import type { AppNotification } from './types/notifications';
 
 // Telas onde o sino e o perfil dividem a linha com o PageHeader (somente desktop)
 const HEADER_INLINE_VIEWS = ['admin', 'stock', 'history', 'menu', 'reports', 'orders'];
 
-export default function App() {
+// Botão de abrir/fechar negócio aparece apenas em Gestão de Pedidos e Histórico
+const STORE_STATUS_VIEWS = ['orders', 'history'];
+
+function AppShell() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [view, setView] = useState('orders');
   const [currentUser, setCurrentUser] = useState(null);
@@ -32,6 +37,7 @@ export default function App() {
     if (token) {
       setIsAuthenticated(true);
       if (storedUser) setCurrentUser(JSON.parse(storedUser));
+      window.setTimeout(() => window.dispatchEvent(new Event('pragma:notifications-refresh')), 0);
     }
 
     const handleLogout = () => {
@@ -58,6 +64,7 @@ export default function App() {
     const storedUser = localStorage.getItem('pragma_user');
     if (storedUser) setCurrentUser(JSON.parse(storedUser));
     setView('orders');
+    window.setTimeout(() => window.dispatchEvent(new Event('pragma:notifications-refresh')), 0);
   };
 
   const handleStoreToggled = () => {
@@ -72,14 +79,32 @@ export default function App() {
     setIsAuthenticated(false);
   };
 
+  // A notificação leva direto à origem do alerta. As telas ouvem este evento
+  // para destacar/focar o registro correspondente.
+  const handleNotificationNavigate = useCallback((notification: AppNotification) => {
+    const { view: targetView, resourceType, resourceId, highlight } = notification.target;
+    setView(targetView);
+    // A tela de destino ainda vai montar; aguardamos um tick para que o
+    // listener de foco dela já esteja ativo quando o evento for disparado.
+    window.setTimeout(() => {
+      window.dispatchEvent(
+        new CustomEvent('pragma:focus-resource', {
+          detail: { resourceType, resourceId, highlight },
+        }),
+      );
+    }, 150);
+  }, []);
+
   if (!isAuthenticated) {
     return <Login onLoginSuccess={handleLoginSuccess} />;
   }
 
+  const showStoreStatus = STORE_STATUS_VIEWS.includes(view);
+
   const headerActions = (
     <>
-      <StoreStatus header onToggled={handleStoreToggled} />
-      <NotificationButton />
+      {showStoreStatus && <StoreStatus header onToggled={handleStoreToggled} />}
+      <NotificationButton onNavigate={handleNotificationNavigate} />
       {!isMobile && view !== 'profile' && <ProfileButton onNavigate={setView} currentUser={currentUser} />}
     </>
   );
@@ -135,8 +160,8 @@ export default function App() {
           </button>
           {view !== 'profile' && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <StoreStatus header onToggled={handleStoreToggled} />
-              <NotificationButton />
+              {showStoreStatus && <StoreStatus header onToggled={handleStoreToggled} />}
+              <NotificationButton onNavigate={handleNotificationNavigate} />
               <ProfileButton compact onNavigate={setView} currentUser={currentUser} />
             </div>
           )}
@@ -160,5 +185,13 @@ export default function App() {
         </HeaderActionsContext.Provider>
       </main>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <NotificationsProvider>
+      <AppShell />
+    </NotificationsProvider>
   );
 }

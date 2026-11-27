@@ -23,7 +23,7 @@ export default function StoreStatus({ compact = false, header = false, onToggled
     const [info, setInfo] = useState('');
 
     const user = readUser();
-    const isChefe = (user?.role || '').trim().toLowerCase() === 'chefe';
+    const isCompleto = String(user?.access_level || '').trim().toLowerCase() === 'completo';
     const isOpen = Boolean(status?.is_open);
 
     useEffect(() => {
@@ -111,13 +111,13 @@ export default function StoreStatus({ compact = false, header = false, onToggled
             ? 'A guardar...'
             : loading
               ? 'A carregar...'
-              : isChefe
+              : isCompleto
                 ? buttonLabel
                 : isOpen
                   ? 'Negócio aberto'
                   : 'Negócio fechado';
 
-        const headerStyle = isChefe
+        const headerStyle = isCompleto
             ? {
                   '--store-bg': isOpen ? 'transparent' : 'var(--accent)',
                   '--store-color': isOpen ? 'var(--danger)' : '#ffffff',
@@ -130,7 +130,7 @@ export default function StoreStatus({ compact = false, header = false, onToggled
               };
 
         const openedAt = status?.opened_at ? formatDateTime(status.opened_at) : null;
-        const headerTitle = isChefe
+        const headerTitle = isCompleto
             ? `${buttonLabel}${isOpen && openedAt ? ` · Aberto em ${openedAt}` : ''}`
             : `Negócio ${isOpen ? 'aberto' : 'fechado'}. Apenas o chefe pode alterar o estado.`;
 
@@ -140,8 +140,8 @@ export default function StoreStatus({ compact = false, header = false, onToggled
                     type="button"
                     className="store-status-header"
                     style={headerStyle}
-                    onClick={isChefe ? toggle : undefined}
-                    disabled={!isChefe || saving || loading}
+                    onClick={isCompleto ? toggle : undefined}
+                    disabled={!isCompleto || saving || loading}
                     title={error || info || headerTitle}
                     aria-label={headerTitle}
                 >
@@ -180,7 +180,7 @@ export default function StoreStatus({ compact = false, header = false, onToggled
                     <Store size={15} /> Negócio
                 </span>
                 {badge}
-                {isChefe && (
+                {isCompleto && (
                     <button
                         type="button"
                         onClick={toggle}
@@ -268,7 +268,7 @@ export default function StoreStatus({ compact = false, header = false, onToggled
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
-                {isChefe ? (
+                {isCompleto ? (
                     <button
                         type="button"
                         onClick={toggle}

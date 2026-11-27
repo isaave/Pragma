@@ -334,6 +334,8 @@ export default function History() {
             maxWidth="640px"
             showDivider={false}
             closePlacement="top"
+            centerTitle
+            titleSize="24px"
             title={selectedSession ? `Loja aberta em ${formatDateTime(selectedSession.opened_at)}` : ''}
             titleExtra={selectedSession ? sessionBadge(selectedSession) : null}
         >

@@ -1,0 +1,336 @@
+/* Painel lateral fixo à direita — padrão para todos os fluxos de CRUD/status. */
+.side-drawer-root {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+}
+
+.side-drawer-backdrop {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: rgba(3, 7, 30, 0.32);
+    cursor: default;
+    animation: side-drawer-fade-in 160ms ease-out both;
+}
+
+.side-drawer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    width: min(100%, 480px);
+    max-width: 100%;
+    overflow: hidden;
+    border-left: 1px solid var(--border-color);
+    background: var(--card-bg);
+    color: var(--text-primary);
+    box-shadow: -16px 0 44px rgba(3, 7, 30, 0.22);
+    animation: side-drawer-slide-in 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.side-drawer--sm {
+    width: min(100%, 380px);
+}
+
+.side-drawer--lg {
+    width: min(100%, 640px);
+}
+
+.side-drawer:focus {
+    outline: none;
+}
+
+.side-drawer-header {
+    flex: 0 0 auto;
+    box-sizing: border-box;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 20px 64px 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--card-bg);
+}
+
+.side-drawer-heading {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.side-drawer-eyebrow {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--text-secondary);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.side-drawer-title {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+}
+
+.side-drawer-subtitle {
+    margin: 6px 0 0;
+    color: var(--text-secondary);
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.side-drawer-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background 150ms ease, color 150ms ease;
+}
+
+.side-drawer-close:hover {
+    background: color-mix(in srgb, var(--danger) 12%, var(--card-bg));
+    color: var(--danger);
+}
+
+.side-drawer-close:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.side-drawer-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 18px 20px 24px;
+    scrollbar-color: var(--border-color) transparent;
+    scrollbar-width: thin;
+}
+
+.side-drawer-footer {
+    flex: 0 0 auto;
+    box-sizing: border-box;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--border-color);
+    background: var(--card-bg);
+}
+
+/* Campos reutilizáveis dentro do painel lateral. */
+.side-drawer-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    margin-bottom: 14px;
+}
+
+.side-drawer-field > label,
+.side-drawer-label {
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.side-drawer-field input,
+.side-drawer-field select,
+.side-drawer-field textarea,
+.side-drawer-input {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    height: 34px;
+    padding: 0 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--input-bg);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 13px;
+}
+
+.side-drawer-field textarea {
+    height: auto;
+    min-height: 76px;
+    padding: 9px 10px;
+    resize: vertical;
+}
+
+.side-drawer-field input::placeholder,
+.side-drawer-field textarea::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.7;
+}
+
+.side-drawer-field input:focus-visible,
+.side-drawer-field select:focus-visible,
+.side-drawer-field textarea:focus-visible,
+.side-drawer-input:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+}
+
+.side-drawer-section {
+    margin: 0 0 18px;
+    padding: 0;
+    border: 0;
+}
+
+.side-drawer-section > legend {
+    margin-bottom: 10px;
+    padding: 0;
+    color: var(--text-primary);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.side-drawer-help {
+    margin: -4px 0 12px;
+    color: var(--text-secondary);
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.side-drawer-message {
+    box-sizing: border-box;
+    margin: 0 0 12px;
+    padding: 10px 12px;
+    border: 1px solid currentColor;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--danger) 8%, var(--card-bg));
+    color: var(--danger);
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.side-drawer-total {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 4px;
+    padding: 12px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: var(--bg-tertiary);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.side-drawer-total strong {
+    color: var(--accent);
+    font-size: 18px;
+    font-variant-numeric: tabular-nums;
+}
+
+.side-drawer-footer .side-drawer-button,
+.side-drawer-button {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 36px;
+    padding: 0 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.side-drawer-footer .side-drawer-button--primary,
+.side-drawer-button--primary {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--card-bg);
+}
+
+.side-drawer-footer .side-drawer-button--danger,
+.side-drawer-button--danger {
+    border-color: var(--danger);
+    background: transparent;
+    color: var(--danger);
+}
+
+.side-drawer-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.side-drawer-button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.side-drawer-footer-spacer {
+    flex: 1 1 auto;
+}
+
+@keyframes side-drawer-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes side-drawer-slide-in {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+}
+
+@media (max-width: 600px) {
+    .side-drawer {
+        width: 100%;
+    }
+
+    .side-drawer-header {
+        padding: 18px 60px 14px 16px;
+    }
+
+    .side-drawer-body {
+        padding: 16px 16px 20px;
+    }
+
+    .side-drawer-footer {
+        padding: 12px 16px;
+    }
+
+    .side-drawer-footer .side-drawer-button {
+        flex: 1 1 auto;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .side-drawer,
+    .side-drawer-backdrop {
+        animation: none;
+    }
+}

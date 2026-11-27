@@ -1,21 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Check, Minimize2, Trash2, X } from 'lucide-react';
-import api from '../Services/api';
-import {
-    exportProductCsv,
-    exportProductPdf,
-    exportProductsCsv,
-    exportProductsPdf,
-    exportProductsTxt,
-    exportProductTxt,
-} from '../lib/exportProduct';
+import { Check, X } from 'lucide-react';
+import { productsApi, stockApi } from '../Services/api';
+import { exportProductCsv, exportProductPdf, exportProductTxt } from '../lib/exportProduct';
 import PageHeader from '../components/ui/PageHeader';
 import SegmentedControl from '../components/ui/SegmentedControl';
 import TableToolbar from '../components/ui/TableToolbar';
 import ProductCard from '../components/ProductCard';
 import ProductDetail from '../components/ProductDetail';
-import Modal from '../components/ui/Modal';
-import useIsMobile from '../hooks/useIsMobile';
+import SideDrawer from '../components/ui/SideDrawer';
 import useAutoDismiss from '../hooks/useAutoDismiss';
 import '../styles/products.css';
 
@@ -26,6 +18,12 @@ const CATEGORIES = [
     { key: 'bebida', label: 'Bebida' },
     { key: 'sobremesa', label: 'Sobremesa' },
     { key: 'adicional', label: 'Adicional' },
+];
+
+const QUANTITY_UNITS = [
+    { value: 'unidade', label: 'Unidade' },
+    { value: 'grama', label: 'Grama' },
+    { value: 'kilos', label: 'Kilos' },
 ];
 
 const FILTERS = [
@@ -40,6 +38,7 @@ const FILTERS = [
 const EMPTY_FORM = {
     name: '',
     category: 'hamburguer',
+    description: '',
     price: '',
     status: 'ativo',
     notes: '',
@@ -69,19 +68,19 @@ export default function Products() {
 
     const [filter, setFilter] = useState('all');
     const [search, setSearch] = useState('');
-    const [exporting, setExporting] = useState(false);
     const [mostrarBusca, setMostrarBusca] = useState(false);
     const [mostrarOrdenacao, setMostrarOrdenacao] = useState(false);
     const [ordenacao, setOrdenacao] = useState('padrao');
 
-    const [form, setForm] = useState(null); // null ou { id, values, recipe, addons }
-    const [pick, setPick] = useState({ ingredientId: '', quantity: '' });
+    const [form, setForm] = useState(null); // null ou { id, values, recipe }
+    const [pick, setPick] = useState({ ingredientId: '', quantity: '', unit: 'unidade' });
+    const [pendingDelete, setPendingDelete] = useState(null);
 
     const [detailId, setDetailId] = useState(null);
-    const [detailExpanded, setDetailExpanded] = useState(false);
     useAutoDismiss(info, setInfo, 4000);
-    const isMobile = useIsMobile();
-    const userRole = currentUser?.role || '';
+    let storedUser = null;
+    try { storedUser = JSON.parse(localStorage.getItem('pragma_user') || 'null'); } catch { /* ignora */ }
+    const accessLevel = String(storedUser?.access_level || '').toLowerCase();
 
     const loadProducts = useCallback(async () => {
         setLoading(true);
@@ -90,7 +89,7 @@ export default function Products() {
             const params = {};
             if (filter !== 'all') params.category = filter;
             if (search.trim()) params.search = search.trim();
-            const res = await api.get('/products', { params });
+            const res = await productsApi.list(params);
             setProducts(res.data);
         } catch (err) {
             setError(getErrorMessage(err, 'Erro ao carregar os produtos.'));
@@ -106,7 +105,7 @@ export default function Products() {
 
     const loadStockItems = async () => {
         try {
-            const res = await api.get('/ingredients');
+            const res = await stockApi.list();
             setStockItems(res.data);
         } catch (err) {
             setError(getErrorMessage(err, 'Erro ao carregar os ingredientes do estoque.'));
@@ -118,7 +117,9 @@ export default function Products() {
     const openCreate = () => {
         setError('');
         setInfo('');
-        setPick({ ingredientId: '', quantity: '' });
+        setPendingDelete(null);
+        setDetailId(null);
+        setPick({ ingredientId: '', quantity: '', unit: 'unidade' });
         loadStockItems();
         setForm({
             id: null,
@@ -130,13 +131,16 @@ export default function Products() {
     const openEdit = (product) => {
         setError('');
         setInfo('');
-        setPick({ ingredientId: '', quantity: '' });
+        setPendingDelete(null);
+        setDetailId(null);
+        setPick({ ingredientId: '', quantity: '', unit: 'unidade' });
         loadStockItems();
         setForm({
             id: product.id,
             values: {
                 name: product.name,
                 category: product.category,
+                description: product.description || '',
                 price: String(product.price),
                 status: product.status || 'ativo',
                 notes: product.notes || '',
@@ -163,10 +167,10 @@ export default function Products() {
             const others = prev.recipe.filter((r) => r.ingredient_id !== item.id);
             return {
                 ...prev,
-                recipe: [...others, { ingredient_id: item.id, name: item.name, unit: item.unit, quantity }],
+                recipe: [...others, { ingredient_id: item.id, name: item.name, unit: pick.unit || item.unit, quantity }],
             };
         });
-        setPick({ ingredientId: '', quantity: '' });
+        setPick({ ingredientId: '', quantity: '', unit: 'unidade' });
     };
 
     const removeFromRecipe = (ingredientId) => {
@@ -181,13 +185,17 @@ export default function Products() {
         setInfo('');
         const payload = {
             ...form.values,
-            is_active: form.values.is_active === 'true',
-            ingredients: form.recipe.map((r) => ({ id: r.ingredient_id, quantity: r.quantity })),
+            is_active: form.values.status === 'ativo',
+            ingredients: form.recipe.map((r) => ({
+                id: r.ingredient_id,
+                quantity: r.quantity,
+                unit: r.unit || 'unidade',
+            })),
         };
         try {
             const res = form.id
-                ? await api.put(`/products/${form.id}`, payload)
-                : await api.post('/products', payload);
+                ? await productsApi.update(form.id, payload)
+                : await productsApi.create(payload);
             setInfo(res.data.message);
             setForm(null);
             loadProducts();
@@ -198,14 +206,22 @@ export default function Products() {
 
     // ---------- Excluir produto ----------
 
-    const deleteProduct = async (product) => {
-        if (!window.confirm(`Excluir "${product.name}" do cardápio?`)) return;
+    const requestDeleteProduct = (product) => {
+        setError('');
+        setInfo('');
+        setForm(null);
+        setDetailId(null);
+        setPendingDelete(product);
+    };
+
+    const confirmDeleteProduct = async () => {
+        if (!pendingDelete) return;
         setError('');
         setInfo('');
         try {
-            const res = await api.delete(`/products/${product.id}`);
+            const res = await productsApi.remove(pendingDelete.id);
             setInfo(res.data.message);
-            setForm(null);
+            setPendingDelete(null);
             loadProducts();
         } catch (err) {
             setError(getErrorMessage(err, 'Erro ao excluir o produto.'));
@@ -228,37 +244,6 @@ export default function Products() {
         }
     };
 
-    // Exporta TODOS os produtos (ignora filtros e busca)
-    const exportAll = async (format) => {
-        setExporting(true);
-        setError('');
-        setInfo('');
-        try {
-            const res = await api.get('/products');
-            const all = res.data || [];
-
-            if (all.length === 0) {
-                setInfo('Nenhum produto cadastrado para exportar.');
-                return;
-            }
-
-            if (format === 'csv') {
-                exportProductsCsv(all);
-            } else if (format === 'txt') {
-                exportProductsTxt(all);
-            } else if (!exportProductsPdf(all)) {
-                setError('Não foi possível abrir a janela de exportação. Permita pop-ups para exportar em PDF.');
-                return;
-            }
-
-            setInfo(`${all.length} produto(s) exportado(s).`);
-        } catch (err) {
-            setError(getErrorMessage(err, 'Erro ao exportar os produtos.'));
-        } finally {
-            setExporting(false);
-        }
-    };
-
     // Ordenação visual: trabalha numa cópia, sem alterar o products da API
     const visibleProducts = [...products];
     if (ordenacao === 'nome') {
@@ -269,8 +254,22 @@ export default function Products() {
         visibleProducts.sort((a, b) => Number(b.price) - Number(a.price));
     }
 
+    const closeDrawer = () => {
+        setForm(null);
+        setDetailId(null);
+        setPendingDelete(null);
+    };
+
     const produtoAtual = form ? products.find((p) => p.id === form.id) : null;
     const selectedProduct = products.find((p) => p.id === detailId) || null;
+    const drawerOpen = Boolean(form || selectedProduct || pendingDelete);
+    const drawerTitle = pendingDelete
+        ? `Excluir ${pendingDelete.name}`
+        : form
+          ? form.id
+              ? 'Editar produto'
+              : 'Novo produto'
+          : selectedProduct?.name || 'Produto';
 
     return (
         <div className="products-page">
@@ -291,27 +290,17 @@ export default function Products() {
                         width: 'max-content',
                     }}
                 />
-                {userRole === 'Chefe' ? (
+                {accessLevel === 'completo' ? (
                     <TableToolbar
                         onAdd={openCreate}
                         onSearch={() => setMostrarBusca(v => !v)}
                         onFilter={() => setMostrarOrdenacao(v => !v)}
-                        exportOptions={[
-                            { label: 'PDF', onClick: () => exportAll('pdf'), disabled: exporting },
-                            { label: 'CSV', onClick: () => exportAll('csv'), disabled: exporting },
-                            { label: 'TXT', onClick: () => exportAll('txt'), disabled: exporting },
-                        ]}
                         ariaLabel="Ações dos produtos"
                     />
                 ) : (
                     <TableToolbar
                         onSearch={() => setMostrarBusca(v => !v)}
                         onFilter={() => setMostrarOrdenacao(v => !v)}
-                        exportOptions={[
-                            { label: 'PDF', onClick: () => exportAll('pdf'), disabled: exporting },
-                            { label: 'CSV', onClick: () => exportAll('csv'), disabled: exporting },
-                            { label: 'TXT', onClick: () => exportAll('txt'), disabled: exporting },
-                        ]}
                         ariaLabel="Ações dos produtos"
                     />
                 )}
@@ -349,56 +338,70 @@ export default function Products() {
                 </div>
             )}
 
-            {/* Formulário de cadastro / edição */}
+            {/* Formulário de cadastro / edição no painel lateral */}
             {form && (
-                <Modal
+                <SideDrawer
                     open
-                    onClose={() => setForm(null)}
-                    maxWidth="560px"
-                    showDivider={false}
-                    ariaLabel="Produto"
-                    titleNode={
-                        <input
-                            type="text"
-                            required
-                            form="product-form"
-                            className="products-modal-title"
-                            placeholder="Nome do produto"
-                            aria-label="Nome do produto"
-                            value={form.values.name}
-                            onChange={(e) => changeForm('name', e.target.value)}
-                        />
-                    }
-                    headerActions={
-                        form.id && produtoAtual ? (
-                            <button
-                                type="button"
-                                className="products-modal-delete"
-                                aria-label="Excluir produto"
-                                title="Excluir produto"
-                                onClick={() => deleteProduct(produtoAtual)}
-                            >
-                                <Trash2 size={16} aria-hidden="true" />
+                    onClose={closeDrawer}
+                    title={form.id ? 'Editar produto' : 'Novo produto'}
+                    eyebrow="Produtos"
+                    subtitle="Preencha os dados e revise a receita antes de salvar."
+                    ariaLabel={form.id ? 'Editar produto' : 'Novo produto'}
+                    footer={
+                        <>
+                            {form.id && produtoAtual && (
+                                <button
+                                    type="button"
+                                    className="side-drawer-button side-drawer-button--danger"
+                                    onClick={() => requestDeleteProduct(produtoAtual)}
+                                >
+                                    Excluir
+                                </button>
+                            )}
+                            <span className="side-drawer-footer-spacer" />
+                            <button type="button" className="side-drawer-button" onClick={closeDrawer}>
+                                Cancelar
                             </button>
-                        ) : null
+                            <button
+                                type="submit"
+                                form="product-drawer-form"
+                                className="side-drawer-button side-drawer-button--primary"
+                            >
+                                {form.id ? 'Salvar' : 'Adicionar'}
+                            </button>
+                        </>
                     }
                 >
                     {form && (
-                        <form id="product-form" className="products-form" onSubmit={saveForm}>
-                            <div className="products-modal-pills">
+                        <form id="product-drawer-form" className="products-form" onSubmit={saveForm}>
+                            <div className="products-form-field">
+                                <label className="products-field-label" htmlFor="product-name">Nome</label>
+                                <input
+                                    id="product-name"
+                                    type="text"
+                                    required
+                                    className="products-field"
+                                    placeholder="Nome do produto"
+                                    value={form.values.name}
+                                    onChange={(e) => changeForm('name', e.target.value)}
+                                />
+                            </div>
+                            <div className="products-form-field">
+                                <label className="products-field-label" htmlFor="product-description">Descrição</label>
+                                <input
+                                    id="product-description"
+                                    type="text"
+                                    className="products-field"
+                                    placeholder="Ex.: 1 patty, salada e maionese"
+                                    value={form.values.description || ''}
+                                    onChange={(e) => changeForm('description', e.target.value)}
+                                />
+                            </div>
+                            <div className="products-form-field">
+                                <label className="products-field-label" htmlFor="product-category">Categoria</label>
                                 <select
-                                    className="products-pill-select"
-                                    aria-label="Status"
-                                    value={form.values.status || 'ativo'}
-                                    onChange={(e) => changeForm('status', e.target.value)}
-                                >
-                                    <option value="ativo">Ativo</option>
-                                    <option value="inativo">Inativo</option>
-                                    <option value="desenvolvimento">Em desenvolvimento</option>
-                                </select>
-                                <select
-                                    className="products-pill-select"
-                                    aria-label="Categoria"
+                                    id="product-category"
+                                    className="products-field"
                                     value={form.values.category}
                                     onChange={(e) => changeForm('category', e.target.value)}
                                 >
@@ -406,6 +409,52 @@ export default function Products() {
                                         <option key={c.key} value={c.key}>{c.label}</option>
                                     ))}
                                 </select>
+                            </div>
+                            <div className="products-form-field">
+                                <label className="products-field-label" htmlFor="product-status">Status</label>
+                                <select
+                                    id="product-status"
+                                    className="products-field"
+                                    value={form.values.status || 'ativo'}
+                                    onChange={(e) => changeForm('status', e.target.value)}
+                                >
+                                    <option value="ativo">Ativo</option>
+                                    <option value="inativo">Inativo</option>
+                                    <option value="desenvolvimento">Em desenvolvimento</option>
+                                </select>
+                            </div>
+                            <div className="products-form-field">
+                                <label className="products-field-label" htmlFor="product-price">Valor</label>
+                                <div className="products-price-field">
+                                    <span className="products-price-prefix">R$</span>
+                                    <input
+                                        id="product-price"
+                                        type="number"
+                                        required
+                                        min="0"
+                                        step="0.01"
+                                        className="products-price-input"
+                                        value={form.values.price}
+                                        onChange={(e) => changeForm('price', e.target.value)}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="products-form-field">
+                                <span className="products-field-label">Quantidade em estoque</span>
+                                <input
+                                    className="products-field"
+                                    type="text"
+                                    readOnly
+                                    value={
+                                        !form.id
+                                            ? 'Definida pela receita'
+                                            : produtoAtual?.available
+                                              ? 'Disponível'
+                                              : 'Indisponível'
+                                    }
+                                    aria-label="Quantidade em estoque"
+                                />
                             </div>
 
                             <div className="products-recipe">
@@ -417,7 +466,14 @@ export default function Products() {
                                             id="product-ingredient"
                                             className="products-field"
                                             value={pick.ingredientId}
-                                            onChange={(e) => setPick((p) => ({ ...p, ingredientId: e.target.value }))}
+                                            onChange={(e) => {
+                                                const ingredientId = e.target.value;
+                                                const ingredient = stockItems.find((s) => String(s.id) === String(ingredientId));
+                                                const suggestedUnit = QUANTITY_UNITS.some((u) => u.value === ingredient?.unit)
+                                                    ? ingredient.unit
+                                                    : 'unidade';
+                                                setPick((p) => ({ ...p, ingredientId, unit: suggestedUnit }));
+                                            }}
                                             onKeyDown={(e) => {
                                                 if (e.key === 'Enter') {
                                                     e.preventDefault();
@@ -450,6 +506,25 @@ export default function Products() {
                                             }}
                                         />
                                     </div>
+                                    <div className="products-recipe-field products-recipe-field--unit">
+                                        <label className="products-field-label" htmlFor="product-unit">Unidade</label>
+                                        <select
+                                            id="product-unit"
+                                            className="products-field"
+                                            value={pick.unit}
+                                            onChange={(e) => setPick((p) => ({ ...p, unit: e.target.value }))}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    e.preventDefault();
+                                                    addToRecipe();
+                                                }
+                                            }}
+                                        >
+                                            {QUANTITY_UNITS.map((u) => (
+                                                <option key={u.value} value={u.value}>{u.label}</option>
+                                            ))}
+                                        </select>
+                                    </div>
                                     <button
                                         type="button"
                                         className="products-round-button products-check-button"
@@ -481,8 +556,8 @@ export default function Products() {
                                 </ul>
                             </div>
 
-                            <div className="products-form-field">
-                                <label className="products-notes-label" htmlFor="product-notes">Observações</label>
+                            <div className="products-form-field products-form-field--full">
+                                <label className="products-field-label" htmlFor="product-notes">Observações</label>
                                 <input
                                     id="product-notes"
                                     type="text"
@@ -492,126 +567,118 @@ export default function Products() {
                                 />
                             </div>
 
-                            <div className="products-form-field">
-                                <label className="products-field-label" htmlFor="product-price">Valor</label>
-                                <div className="products-price-field">
-                                    <span className="products-price-prefix">R$</span>
-                                    <input
-                                        id="product-price"
-                                        type="number"
-                                        required
-                                        min="0"
-                                        step="0.01"
-                                        className="products-price-input"
-                                        value={form.values.price}
-                                        onChange={(e) => changeForm('price', e.target.value)}
-                                    />
-                                </div>
-                            </div>
-
                             {error && <p className="products-modal-error" role="alert">{error}</p>}
 
-                            <button type="submit" className="products-submit">
-                                {form.id ? 'Salvar' : 'Adicionar'}
-                            </button>
-
                             {form.id && produtoAtual && (
-                                <div className="products-modal-export">
+                                <>
                                     <div className="products-form-divider" />
-                                    <div className="products-modal-export-actions">
+                                    <div className="products-form-actions products-form-actions--export">
                                         <button type="button" onClick={() => handleExport(produtoAtual, 'pdf')}>PDF</button>
                                         <button type="button" onClick={() => handleExport(produtoAtual, 'csv')}>CSV</button>
                                         <button type="button" onClick={() => handleExport(produtoAtual, 'txt')}>TXT</button>
                                     </div>
-                                </div>
+                                </>
                             )}
+
                         </form>
                     )}
-                </Modal>
+                </SideDrawer>
             )}
 
             {/* Listagem */}
             {loading && <p className="products-empty">Carregando...</p>}
             {!loading && products.length === 0 && <p className="products-empty">Nenhum produto encontrado.</p>}
 
-            <div className="products-layout">
-                {products.length > 0 && (
-                    <div className="products-grid">
-                        {visibleProducts.map((p) => (
-                            <ProductCard
-                                key={p.id}
-                                product={p}
-                                onOpen={(p) => {
-                                    setDetailId(p.id);
-                                    setDetailExpanded(false);
-                                }}
-                                onEdit={userRole === 'Chefe' ? openEdit : undefined}
-                                categoryLabel={categoryLabel}
-                                selected={p.id === detailId}
-                            />
-                        ))}
-                    </div>
-                )}
-
-                {selectedProduct && !detailExpanded && !isMobile && (
-                    <aside className="products-detail">
-                        <ProductDetail
-                            product={selectedProduct}
-                            variant="panel"
-                            expanded={detailExpanded}
-                            onToggleExpand={() => setDetailExpanded(v => !v)}
-                            onClose={() => setDetailId(null)}
-                            onEdit={() => {
-                                const p = selectedProduct;
-                                setDetailId(null);
-                                openEdit(p);
-                            }}
-                            onDelete={() => deleteProduct(selectedProduct)}
-                            formatPrice={formatPrice}
-                            categoryLabel={categoryLabel}
-                        />
-                    </aside>
-                )}
+            <div className="products-grid">
+                {visibleProducts.map((p) => (
+                    <ProductCard
+                        key={p.id}
+                        product={p}
+                        onOpen={(p) => {
+                            setForm(null);
+                            setPendingDelete(null);
+                            setDetailId(p.id);
+                        }}
+                        onEdit={accessLevel === 'completo' ? openEdit : undefined}
+                        categoryLabel={categoryLabel}
+                        selected={p.id === detailId}
+                    />
+                ))}
             </div>
 
-            {selectedProduct && (detailExpanded || isMobile) && (
-                <Modal
+            {selectedProduct && !form && !pendingDelete && (
+                <SideDrawer
                     open
-                    onClose={() => setDetailId(null)}
-                    maxWidth="520px"
-                    showDivider={false}
-                    closePlacement="top"
+                    onClose={closeDrawer}
                     title={selectedProduct.name}
-                    headerStart={
-                        !isMobile ? (
+                    eyebrow="Produtos"
+                    subtitle="Detalhes do produto e da receita"
+                    ariaLabel={`Detalhes de ${selectedProduct.name}`}
+                    footer={
+                        <>
+                            {accessLevel === 'completo' && (
+                                <button
+                                    type="button"
+                                    className="side-drawer-button side-drawer-button--danger"
+                                    onClick={() => requestDeleteProduct(selectedProduct)}
+                                >
+                                    Excluir
+                                </button>
+                            )}
+                            <span className="side-drawer-footer-spacer" />
                             <button
                                 type="button"
-                                className="products-detail__collapse"
-                                aria-label="Recolher"
-                                title="Recolher"
-                                onClick={() => setDetailExpanded(false)}
+                                className="side-drawer-button side-drawer-button--primary"
+                                onClick={() => openEdit(selectedProduct)}
+                                disabled={accessLevel !== 'completo'}
                             >
-                                <Minimize2 size={16} />
+                                Editar produto
                             </button>
-                        ) : undefined
+                        </>
                     }
                 >
                     <ProductDetail
                         product={selectedProduct}
                         variant="modal"
-                        expanded={detailExpanded}
-                        onToggleExpand={() => setDetailExpanded(v => !v)}
-                        onClose={() => setDetailId(null)}
-                        onEdit={() => {
-                            const p = selectedProduct;
-                            setDetailId(null);
-                            openEdit(p);
-                        }}
-                        onDelete={() => deleteProduct(selectedProduct)}
+                        expanded={false}
+                        onToggleExpand={() => {}}
+                        onClose={closeDrawer}
+                        onEdit={() => openEdit(selectedProduct)}
+                        onDelete={() => requestDeleteProduct(selectedProduct)}
                         formatPrice={formatPrice}
                         categoryLabel={categoryLabel}
+                        canEdit={accessLevel === 'completo'}
+                        canDelete={accessLevel === 'completo'}
                     />
-                </Modal>
+                </SideDrawer>
+            )}
+
+            {pendingDelete && (
+                <SideDrawer
+                    open
+                    onClose={closeDrawer}
+                    title={`Excluir ${pendingDelete.name}`}
+                    eyebrow="Produtos"
+                    ariaLabel={`Excluir ${pendingDelete.name}`}
+                    footer={
+                        <>
+                            <button type="button" className="side-drawer-button" onClick={closeDrawer}>
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                className="side-drawer-button side-drawer-button--danger"
+                                onClick={confirmDeleteProduct}
+                            >
+                                Excluir produto
+                            </button>
+                        </>
+                    }
+                >
+                    <p className="side-drawer-help">
+                        O produto será removido do cardápio. A receita e os ingredientes do estoque não são alterados.
+                    </p>
+                </SideDrawer>
             )}
         </div>
     );

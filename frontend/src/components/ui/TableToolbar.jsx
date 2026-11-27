@@ -23,8 +23,6 @@ const SIZES = {
     buttonGap: 'var(--tt-gap, 4px)',
     iconSize: 17,
     iconStrokeWidth: 1.75,
-    actionPaddingX: '10px',
-    labelSize: '11.5px',
     dividerHeight: '18px',
     focusRingWidth: '2px',
 };
@@ -43,16 +41,10 @@ const INJECTED_CSS = `
 }
 [data-table-toolbar] .tt-action,
 [data-table-toolbar] .tt-export-summary {
-    width: var(--tt-action-width, auto);
-    padding: var(--tt-action-padding, 0 ${SIZES.actionPaddingX});
-    gap: 6px;
-    border-radius: 999px;
-}
-[data-table-toolbar] .tt-label {
-    font-size: ${SIZES.labelSize};
-    font-weight: 600;
-    line-height: 1;
-    white-space: nowrap;
+    width: var(--tt-button-size, 26px);
+    padding: 0;
+    gap: 2px;
+    border-radius: 50%;
 }
 [data-table-toolbar] .tt-divider {
     flex: 0 0 auto;
@@ -70,11 +62,6 @@ const INJECTED_CSS = `
     display: none;
 }
 @media (max-width: 900px) {
-    [data-table-toolbar] {
-        --tt-action-width: var(--tt-button-size, 26px);
-        --tt-action-padding: 0;
-    }
-    [data-table-toolbar] .tt-label,
     [data-table-toolbar] details > summary svg:last-child {
         display: none;
     }
@@ -110,15 +97,6 @@ const controlStyle = {
     WebkitAppearance: 'none',
 };
 
-const actionControlStyle = {
-    ...controlStyle,
-    width: 'var(--tt-action-width, auto)',
-    height: SIZES.buttonHeight,
-    padding: 'var(--tt-action-padding, 0 10px)',
-    gap: '6px',
-    borderRadius: '999px',
-};
-
 const dividerStyle = {
     flex: '0 0 auto',
     width: '1px',
@@ -149,7 +127,8 @@ const styles = {
         flex: '0 0 auto',
     },
     exportSummary: {
-        ...actionControlStyle,
+        ...controlStyle,
+        gap: '2px',
     },
     exportMenu: {
         position: 'absolute',
@@ -243,10 +222,9 @@ export default function TableToolbar({
                     aria-label={label}
                     title={label}
                     onClick={onClick}
-                    style={actionControlStyle}
+                    style={controlStyle}
                 >
                     <Icon size={SIZES.iconSize} strokeWidth={SIZES.iconStrokeWidth} aria-hidden="true" />
-                    <span className="tt-label">{label}</span>
                 </button>
             ))}
             {exportOptions.length > 0 && (viewButtons.length > 0 || actions.length > 0) && (
@@ -261,7 +239,6 @@ export default function TableToolbar({
                         title="Exportar tudo"
                     >
                         <Download size={SIZES.iconSize} strokeWidth={SIZES.iconStrokeWidth} aria-hidden="true" />
-                        <span className="tt-label">Exportar</span>
                         <ChevronDown size={11} strokeWidth={SIZES.iconStrokeWidth} aria-hidden="true" />
                     </summary>
                     <div style={styles.exportMenu}>

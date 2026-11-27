@@ -10,23 +10,23 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        // Criar a conta do Chefe
+        // Criar a conta de Acesso Basico
         User::create([
-            'name' => 'Chefe House Burguer',
-            'email' => 'chefe@pragma.com',
+            'name' => 'Usuario Basico House Burguer',
+            'email' => 'basico@pragma.com',
             'password' => Hash::make('password123'),
-            'role' => 'Chefe',
-            'access_level' => 'Nível 3',
+            'role' => 'atendente',
+            'access_level' => 'basico',
             'status' => 'Ativo',
         ]);
 
-        // Criar a conta da Atendente
+        // Criar a conta de Acesso Completo
         User::create([
-            'name' => 'Atendente Pragma',
-            'email' => 'atendente@pragma.com',
+            'name' => 'Usuario Completo House Burguer',
+            'email' => 'completo@pragma.com',
             'password' => Hash::make('password123'),
-            'role' => 'Atendente',
-            'access_level' => 'Nível 1',
+            'role' => 'chefe',
+            'access_level' => 'completo',
             'status' => 'Ativo',
         ]);
     }

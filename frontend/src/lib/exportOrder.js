@@ -200,7 +200,7 @@ export const exportOrderPdf = (order) => {
     <meta charset="utf-8">
     <title>${escapeHtml(fileBaseName(order))}</title>
 </head>
-<body style="margin:0;padding:32px;font-family:Arial,Helvetica,sans-serif;color:#0f172a;background:#ffffff;">
+<body style="margin:0;padding:32px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#0f172a;background:#ffffff;">
     <div style="max-width:640px;margin:0 auto;">
         <div style="display:flex;align-items:center;gap:16px;border-bottom:2px solid #0f172a;padding-bottom:16px;">
             <img src="${logoUrl}" alt="House Burguer" width="64" style="width:64px;height:auto;display:block;">
@@ -372,7 +372,7 @@ export const exportOrdersPdf = (orders) => {
         body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     </style>
 </head>
-<body style="margin:0;padding:32px;font-family:Arial,Helvetica,sans-serif;color:#0f172a;background:#ffffff;">
+<body style="margin:0;padding:32px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#0f172a;background:#ffffff;">
     <div style="max-width:100%;margin:0 auto;">
         <div style="display:flex;align-items:center;gap:16px;border-bottom:2px solid #0f172a;padding-bottom:16px;">
             <img src="${logoUrl}" alt="House Burguer" width="64" style="width:64px;height:auto;display:block;">

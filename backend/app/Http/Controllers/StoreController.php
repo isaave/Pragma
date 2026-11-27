@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\StoreSession;
 use App\Models\StoreSetting;
+use App\Services\AlertService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -60,9 +61,9 @@ class StoreController extends Controller
     {
         $user = $request->user();
 
-        if (strtolower((string) $user?->role) !== 'chefe') {
+        if (! $user || ! $user->isCompleto()) {
             return response()->json(
-                ['message' => 'Apenas o chefe pode abrir ou fechar o negócio.'],
+                ['message' => 'Apenas o perfil completo (chefe) pode abrir ou fechar o negócio.'],
                 403
             );
         }
@@ -106,6 +107,8 @@ class StoreController extends Controller
             $setting->updated_by = $user->id;
             $setting->save();
         });
+
+        app(AlertService::class)->storeStatus($nextOpen, $user->name, $openSession?->id);
 
         return response()->json($this->payload($setting->fresh('updatedBy:id,name')) + [
             'message' => $nextOpen

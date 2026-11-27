@@ -36,7 +36,9 @@ export default function ProductCard({ product, onOpen, onEdit, categoryLabel, se
             ? 'danger'
             : product.status === 'desenvolvimento' || (product.status === 'ativo' && !product.available)
                 ? 'warning'
-                : '';
+                : product.status === 'ativo' && product.available
+                    ? 'success'
+                    : '';
 
     const recipe = product.recipe || [];
     const summary = recipe.length > 0

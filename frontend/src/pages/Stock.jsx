@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import api from '../Services/api';
-import { exportStockCsv, exportStockListCsv, exportStockListPdf, exportStockListTxt, exportStockPdf, exportStockTxt } from '../lib/exportStock';
+import { stockApi } from '../Services/api';
+import { exportStockCsv, exportStockPdf, exportStockTxt } from '../lib/exportStock';
 import SegmentedControl from '../components/ui/SegmentedControl';
 import TableToolbar from '../components/ui/TableToolbar';
-import Modal from '../components/ui/Modal';
+import SideDrawer from '../components/ui/SideDrawer';
 import PageHeader from '../components/ui/PageHeader';
-import StatusBadge from '../components/ui/StatusBadge';
 import StockCard from '../components/StockCard';
+import { useResourceFocus } from '../hooks/useResourceFocus';
 import '../styles/stock.css';
 
 const FILTERS = [
@@ -16,14 +16,17 @@ const FILTERS = [
     { key: 'out', label: 'Em falta' },
 ];
 
+const UNIT_OPTIONS = ['unidade', 'grama', 'kilos', 'toneladas'];
+
 // Data de hoje no formato YYYY-MM-DD (fuso local), usado pelos <input type="date">
 const todayStr = () => new Date().toLocaleDateString('en-CA');
 
 const EMPTY_FORM = {
     name: '',
-    unit: 'unidades',
+    unit: 'unidade',
     quantity: '0',
     capacity: '',
+    unit_cost: '0',
     expiry_date: '',
     last_purchase_date: '',
     notes: '',
@@ -59,7 +62,7 @@ export default function Stock() {
 
     const [filter, setFilter] = useState('all');
     const [search, setSearch] = useState('');
-    const [exporting, setExporting] = useState(false);
+    const [highlightedId, setHighlightedId] = useState(null);
     const [mostrarBusca, setMostrarBusca] = useState(false);
     const [mostrarOrdenacao, setMostrarOrdenacao] = useState(false);
     const [ordenacao, setOrdenacao] = useState('padrao');
@@ -68,6 +71,8 @@ export default function Stock() {
     const [form, setForm] = useState(null);
     // restock: null (fechado) ou { item, values: {...} }  -> adicionar estoque
     const [restock, setRestock] = useState(null);
+    // Confirmação de exclusão dentro do mesmo painel lateral
+    const [pendingDelete, setPendingDelete] = useState(null);
 
     const loadItems = useCallback(async () => {
         setLoading(true);
@@ -76,7 +81,7 @@ export default function Stock() {
             const params = {};
             if (filter !== 'all') params.filter = filter;
             if (search.trim()) params.search = search.trim();
-            const res = await api.get('/ingredients', { params });
+            const res = await stockApi.list(params);
             setItems(res.data);
         } catch (err) {
             setError(getErrorMessage(err, 'Erro ao carregar o estoque.'));
@@ -91,12 +96,31 @@ export default function Stock() {
         return () => clearTimeout(timer);
     }, [loadItems]);
 
+    // Notificação de estoque: limpa filtros e destaca o ingrediente de origem.
+    useResourceFocus(({ resourceType, resourceId, highlight }) => {
+        if (resourceType !== 'ingredient' || !resourceId || highlight === false) return;
+        setFilter('all');
+        setSearch('');
+        setHighlightedId(Number(resourceId));
+        window.setTimeout(() => {
+            const element = document.getElementById(`ingredient-${resourceId}`);
+            element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            element?.focus({ preventScroll: true });
+        }, 350);
+        window.setTimeout(() => setHighlightedId(null), 3200);
+    });
+
+    let storedUser = null;
+    try { storedUser = JSON.parse(localStorage.getItem('pragma_user') || 'null'); } catch { /* ignora */ }
+    const accessLevel = String(storedUser?.access_level || '').toLowerCase();
+
     // ---------- Cadastro / edição ----------
 
     const openCreate = () => {
         setError('');
         setInfo('');
         setRestock(null);
+        setPendingDelete(null);
         setForm({ id: null, values: { ...EMPTY_FORM } });
     };
 
@@ -104,6 +128,7 @@ export default function Stock() {
         setError('');
         setInfo('');
         setRestock(null);
+        setPendingDelete(null);
         setForm({
             id: item.id,
             values: {
@@ -111,6 +136,7 @@ export default function Stock() {
                 unit: item.unit,
                 quantity: String(item.quantity),
                 capacity: String(item.capacity),
+                unit_cost: String(item.unit_cost ?? 0),
                 expiry_date: item.expiry_date || '',
                 last_purchase_date: item.last_purchase_date || '',
                 notes: item.notes || '',
@@ -128,8 +154,8 @@ export default function Stock() {
         setInfo('');
         try {
             const res = form.id
-                ? await api.put(`/ingredients/${form.id}`, form.values)
-                : await api.post('/ingredients', form.values);
+                ? await stockApi.update(form.id, form.values)
+                : await stockApi.create(form.values);
             setInfo(res.data.message);
             setForm(null);
             loadItems();
@@ -140,14 +166,22 @@ export default function Stock() {
 
     // ---------- Exclusão ----------
 
-    const deleteItem = async (item) => {
-        if (!window.confirm(`Excluir "${item.name}" do estoque?`)) return;
+    const requestDeleteItem = (item) => {
+        setError('');
+        setInfo('');
+        setForm(null);
+        setRestock(null);
+        setPendingDelete(item);
+    };
+
+    const confirmDeleteItem = async () => {
+        if (!pendingDelete) return;
         setError('');
         setInfo('');
         try {
-            const res = await api.delete(`/ingredients/${item.id}`);
+            const res = await stockApi.remove(pendingDelete.id);
             setInfo(res.data.message);
-            setForm(null);
+            setPendingDelete(null);
             loadItems();
         } catch (err) {
             setError(getErrorMessage(err, 'Erro ao excluir o ingrediente.'));
@@ -160,6 +194,7 @@ export default function Stock() {
         setError('');
         setInfo('');
         setForm(null);
+        setPendingDelete(null);
         setRestock({ item, values: emptyRestock() });
     };
 
@@ -172,7 +207,7 @@ export default function Stock() {
         setError('');
         setInfo('');
         try {
-            const res = await api.post(`/ingredients/${restock.item.id}/restock`, restock.values);
+            const res = await stockApi.restock(restock.item.id, restock.values);
             setInfo(res.data.message);
             setRestock(null);
             loadItems();
@@ -199,37 +234,6 @@ export default function Stock() {
         }
     };
 
-    // Exporta TODOS os ingredientes (ignora filtros e busca)
-    const exportAll = async (format) => {
-        setExporting(true);
-        setError('');
-        setInfo('');
-        try {
-            const res = await api.get('/ingredients');
-            const all = res.data || [];
-
-            if (all.length === 0) {
-                setInfo('Nenhum ingrediente cadastrado para exportar.');
-                return;
-            }
-
-            if (format === 'csv') {
-                exportStockListCsv(all);
-            } else if (format === 'txt') {
-                exportStockListTxt(all);
-            } else if (!exportStockListPdf(all)) {
-                setError('Não foi possível abrir a janela de exportação. Permita pop-ups para exportar em PDF.');
-                return;
-            }
-
-            setInfo(`${all.length} ingrediente(s) exportado(s).`);
-        } catch (err) {
-            setError(getErrorMessage(err, 'Erro ao exportar o estoque.'));
-        } finally {
-            setExporting(false);
-        }
-    };
-
     // ---------- Tela ----------
 
     // Ordenação visual: trabalha numa cópia, sem alterar o items da API
@@ -246,6 +250,12 @@ export default function Stock() {
             return 0;
         });
     }
+
+    const closeDrawer = () => {
+        setForm(null);
+        setRestock(null);
+        setPendingDelete(null);
+    };
 
     const itemAtual = form ? items.find((i) => i.id === form.id) : null;
 
@@ -271,27 +281,17 @@ export default function Stock() {
                     value={filter}
                     onChange={setFilter}
                 />
-                {userRole === 'Chefe' ? (
+                {accessLevel === 'completo' ? (
                     <TableToolbar
                         onAdd={openCreate}
                         onFilter={() => setMostrarOrdenacao(v => !v)}
                         onSearch={() => setMostrarBusca(v => !v)}
-                        exportOptions={[
-                            { label: 'PDF', onClick: () => exportAll('pdf'), disabled: exporting },
-                            { label: 'CSV', onClick: () => exportAll('csv'), disabled: exporting },
-                            { label: 'TXT', onClick: () => exportAll('txt'), disabled: exporting },
-                        ]}
                         ariaLabel="Ações do estoque"
                     />
                 ) : (
                     <TableToolbar
                         onFilter={() => setMostrarOrdenacao(v => !v)}
                         onSearch={() => setMostrarBusca(v => !v)}
-                        exportOptions={[
-                            { label: 'PDF', onClick: () => exportAll('pdf'), disabled: exporting },
-                            { label: 'CSV', onClick: () => exportAll('csv'), disabled: exporting },
-                            { label: 'TXT', onClick: () => exportAll('txt'), disabled: exporting },
-                        ]}
                         ariaLabel="Ações do estoque"
                     />
                 )}
@@ -329,47 +329,82 @@ export default function Stock() {
                 </div>
             )}
 
-            {/* Formulário de cadastro / edição */}
-            <Modal
-                open={!!form}
-                onClose={() => setForm(null)}
-                maxWidth="640px"
-                showDivider={false}
-                closePlacement="top"
-                title={form && form.id ? 'Editar ingrediente' : 'Novo ingrediente'}
-                titleExtra={form && form.id && itemAtual ? (
-                    <StatusBadge label={itemAtual.stock_status} tone={statusTone(itemAtual.stock_status)} />
-                ) : null}
-            >
-                {form && (
-                    <form className="stock-form" onSubmit={saveForm}>
+            {/* Formulário de cadastro / edição no painel lateral */}
+            {form && (
+                <SideDrawer
+                    open
+                    onClose={closeDrawer}
+                    title={form.id ? 'Editar ingrediente' : 'Novo ingrediente'}
+                    eyebrow="Estoque"
+                    subtitle="Informe os dados do ingrediente e seus níveis."
+                    ariaLabel={form.id ? 'Editar ingrediente' : 'Novo ingrediente'}
+                    footer={
+                        <>
+                            {form.id && itemAtual && (
+                                <button
+                                    type="button"
+                                    className="side-drawer-button side-drawer-button--danger"
+                                    onClick={() => requestDeleteItem(itemAtual)}
+                                >
+                                    Excluir
+                                </button>
+                            )}
+                            <span className="side-drawer-footer-spacer" />
+                            <button type="button" className="side-drawer-button" onClick={closeDrawer}>
+                                Cancelar
+                            </button>
+                            <button
+                                type="submit"
+                                form="stock-drawer-form"
+                                className="side-drawer-button side-drawer-button--primary"
+                            >
+                                Salvar
+                            </button>
+                        </>
+                    }
+                >
+                    <form id="stock-drawer-form" className="stock-form" onSubmit={saveForm}>
                         <div className="stock-field">
                             <label>Nome</label>
                             <input type="text" required value={form.values.name} onChange={(e) => changeForm('name', e.target.value)} />
                         </div>
                         <div className="stock-field">
-                            <label>Unidade</label>
-                            <input type="text" required list="stock-units" value={form.values.unit} onChange={(e) => changeForm('unit', e.target.value)} />
-                            <datalist id="stock-units">
-                                <option value="unidades" />
-                                <option value="hambúrgueres" />
-                                <option value="kg" />
-                                <option value="g" />
-                                <option value="L" />
-                                <option value="ml" />
-                            </datalist>
+                            <label htmlFor="stock-unit">Unidade de medida</label>
+                            <select
+                                id="stock-unit"
+                                required
+                                value={form.values.unit}
+                                onChange={(e) => changeForm('unit', e.target.value)}
+                            >
+                                {UNIT_OPTIONS.map((unit) => (
+                                    <option key={unit} value={unit}>
+                                        {unit.charAt(0).toUpperCase() + unit.slice(1)}
+                                    </option>
+                                ))}
+                                {form.values.unit && !UNIT_OPTIONS.includes(form.values.unit) && (
+                                    <option value={form.values.unit}>{form.values.unit}</option>
+                                )}
+                            </select>
                         </div>
                         <div className="stock-field">
-                            <label>Quantidade atual</label>
-                            <input type="number" required min="0" step="0.01" value={form.values.quantity} onChange={(e) => changeForm('quantity', e.target.value)} />
-                        </div>
-                        <div className="stock-field">
-                            <label>Capacidade máxima</label>
-                            <input type="number" required min="0.01" step="0.01" value={form.values.capacity} onChange={(e) => changeForm('capacity', e.target.value)} />
+                            <label htmlFor="stock-quantity">Quantidade atual ({form.values.unit || 'unidade'})</label>
+                            <input
+                                id="stock-quantity"
+                                type="number"
+                                required
+                                min="0"
+                                step="0.01"
+                                value={form.values.quantity}
+                                onChange={(e) => changeForm('quantity', e.target.value)}
+                            />
                         </div>
                         <div className="stock-field">
                             <label>Validade do lote</label>
                             <input type="date" value={form.values.expiry_date} onChange={(e) => changeForm('expiry_date', e.target.value)} />
+                        </div>
+                        <div className="stock-field">
+                            <label>Capacidade máxima</label>
+                            <input type="number" required min="0.01" step="0.01" value={form.values.capacity} onChange={(e) => changeForm('capacity', e.target.value)} />
                         </div>
                         <div className="stock-field">
                             <label>Última compra</label>
@@ -379,14 +414,10 @@ export default function Stock() {
                             <label>Observações</label>
                             <input type="text" value={form.values.notes} onChange={(e) => changeForm('notes', e.target.value)} />
                         </div>
-                        <div className="stock-field stock-field--full">
-                            <button type="submit" className="stock-form-primary">Salvar</button>
-                        </div>
                         {form.id && itemAtual && (
                             <>
                                 <div className="stock-form-divider" />
                                 <div className="stock-form-actions">
-                                    <button type="button" className="stock-form-danger" onClick={() => deleteItem(itemAtual)}>Excluir</button>
                                     <button type="button" onClick={() => handleExport(itemAtual, 'pdf')}>PDF</button>
                                     <button type="button" onClick={() => handleExport(itemAtual, 'csv')}>CSV</button>
                                     <button type="button" onClick={() => handleExport(itemAtual, 'txt')}>TXT</button>
@@ -394,23 +425,34 @@ export default function Stock() {
                             </>
                         )}
                     </form>
-                )}
-            </Modal>
+                </SideDrawer>
+            )}
 
-            {/* Formulário de adicionar estoque (modal "Adicionar" do Figma) */}
-            <Modal
-                open={!!restock}
-                onClose={() => setRestock(null)}
-                maxWidth="520px"
-                showDivider={false}
-                closePlacement="top"
-                title={restock ? restock.item.name : ''}
-                titleExtra={restock ? (
-                    <StatusBadge label={restock.item.stock_status} tone={statusTone(restock.item.stock_status)} />
-                ) : null}
-            >
-                {restock && (
-                    <form className="stock-form" onSubmit={saveRestock}>
+            {/* Formulário de adicionar estoque no painel lateral */}
+            {restock && (
+                <SideDrawer
+                    open
+                    onClose={closeDrawer}
+                    title={restock.item.name}
+                    eyebrow="Estoque"
+                    subtitle="Adicione quantidade ao lote deste ingrediente."
+                    ariaLabel={`Adicionar estoque de ${restock.item.name}`}
+                    footer={
+                        <>
+                            <button type="button" className="side-drawer-button" onClick={closeDrawer}>
+                                Cancelar
+                            </button>
+                            <button
+                                type="submit"
+                                form="restock-drawer-form"
+                                className="side-drawer-button side-drawer-button--primary"
+                            >
+                                Adicionar
+                            </button>
+                        </>
+                    }
+                >
+                    <form id="restock-drawer-form" className="stock-form" onSubmit={saveRestock}>
                         <div className="stock-field stock-field--quantity">
                             <label>Quantidade ({restock.item.unit})</label>
                             <input type="number" required min="0.01" step="0.01" value={restock.values.quantity} onChange={(e) => changeRestock('quantity', e.target.value)} />
@@ -427,12 +469,44 @@ export default function Stock() {
                             <label>Observações</label>
                             <input type="text" value={restock.values.notes} onChange={(e) => changeRestock('notes', e.target.value)} />
                         </div>
-                        <div className="stock-field stock-field--full">
-                            <button type="submit" className="stock-form-primary">Adicionar</button>
+                        <div className="stock-form-divider" />
+                        <div className="stock-form-actions">
+                            <button type="button" onClick={() => handleExport(restock.item, 'pdf')}>PDF</button>
+                            <button type="button" onClick={() => handleExport(restock.item, 'csv')}>CSV</button>
+                            <button type="button" onClick={() => handleExport(restock.item, 'txt')}>TXT</button>
                         </div>
                     </form>
-                )}
-            </Modal>
+                </SideDrawer>
+            )}
+
+            {/* Confirmação de exclusão no próprio painel */}
+            {pendingDelete && (
+                <SideDrawer
+                    open
+                    onClose={closeDrawer}
+                    title={`Excluir ${pendingDelete.name}`}
+                    eyebrow="Estoque"
+                    ariaLabel={`Excluir ${pendingDelete.name}`}
+                    footer={
+                        <>
+                            <button type="button" className="side-drawer-button" onClick={closeDrawer}>
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                className="side-drawer-button side-drawer-button--danger"
+                                onClick={confirmDeleteItem}
+                            >
+                                Excluir ingrediente
+                            </button>
+                        </>
+                    }
+                >
+                    <p className="side-drawer-help">
+                        O ingrediente será removido do estoque. Esta ação não pode ser desfeita.
+                    </p>
+                </SideDrawer>
+            )}
 
             {/* Listagem */}
             {loading && <p className="stock-empty">Carregando...</p>}
@@ -445,8 +519,10 @@ export default function Stock() {
                             key={item.id}
                             item={item}
                             onOpen={openRestock}
-                            onEdit={userRole === 'Chefe' ? openEdit : undefined}
+                            onEdit={accessLevel === 'completo' ? openEdit : undefined}
                             formatDate={formatDate}
+                            statusTone={statusTone}
+                            highlighted={highlightedId === item.id}
                         />
                     ))}
                 </div>

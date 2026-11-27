@@ -15,7 +15,7 @@ class AiController extends Controller
         ]);
 
         $agent = new Agent();
-        $result = $agent->ask(trim($data['question']));
+        $result = $agent->ask(trim($data['question']), $request->user());
 
         return response()->json($result);
     }

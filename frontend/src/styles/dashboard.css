@@ -16,12 +16,12 @@
 
     /* TODO: confirmar no Dev Mode do Figma (espessuras, cantos e tamanhos) */
     --dash-radius: 8px;
-    --dash-gap: 14px;
-    --dash-card-padding: 12px;
-    --dash-label-size: 9px;
-    --dash-value-size: 20px;
-    --dash-title-size: 13px;
-    --dash-text-size: 10px;
+    --dash-gap: 16px;
+    --dash-card-padding: 14px;
+    --dash-label-size: 12px;
+    --dash-value-size: 26px;
+    --dash-title-size: 16px;
+    --dash-text-size: 13px;
     --dash-donut-size: 150px;
     --dash-thumb-size: 32px;
     --dash-stroke-width: 1.5px;
@@ -33,7 +33,7 @@
     --dash-input-bg: var(--card-bg, #ffffff);
     --dash-chip-bg: var(--bg-tertiary, #f8fafc);
     --dash-check-size: 28px;
-    --dash-chip-size: 11px;
+    --dash-chip-size: 13px;
     --dash-submit-height: 34px;
 }
 
@@ -376,7 +376,7 @@
 
 .dash-donut-percent {
     fill: var(--dash-navy);
-    font-size: 22px;
+    font-size: 28px;
     font-weight: 800;
 }
 
@@ -536,27 +536,89 @@
 
 .dash-assistant {
     box-sizing: border-box;
+    position: relative;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 12px;
     min-width: 0;
-    padding: var(--dash-card-padding);
-    border: 1px solid var(--dash-border);
-    border-radius: var(--dash-radius);
-    background: transparent;
+    overflow: hidden;
+    padding: 16px;
+    border: 1px solid #000;
+    border-radius: 16px;
+    background:
+        radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--dash-blue) 14%, transparent), transparent 55%),
+        linear-gradient(140deg, color-mix(in srgb, var(--dash-blue) 5%, var(--card-bg)) 0%, var(--card-bg) 55%, color-mix(in srgb, var(--dash-purple) 6%, var(--card-bg)) 100%);
+    box-shadow: 0 10px 30px rgba(3, 7, 30, 0.07);
+}
+
+.dash-assistant__header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.dash-assistant__avatar {
+    display: grid;
+    flex: 0 0 auto;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--dash-blue), var(--dash-purple));
+    box-shadow: 0 6px 16px color-mix(in srgb, var(--dash-blue) 30%, transparent);
+    color: #fff;
+}
+
+.dash-assistant__intro {
+    flex: 1 1 auto;
+    min-width: 0;
 }
 
 .dash-assistant__title {
     margin: 0;
-    font-size: var(--dash-title-size);
-    font-weight: 700;
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
 }
 
 .dash-assistant__help {
-    margin: 0;
-    color: var(--dash-purple);
-    font-size: var(--dash-label-size);
-    line-height: 1.4;
+    margin: 2px 0 0;
+    color: var(--dash-secondary);
+    font-size: 15px;
+    line-height: 1.45;
+}
+
+.dash-assistant__presence {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: color-mix(in srgb, #22c55e 12%, var(--card-bg));
+    color: #15803d;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.dash-assistant__presence-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 0 3px color-mix(in srgb, #22c55e 20%, transparent);
+}
+
+.dash-assistant__presence--busy {
+    background: color-mix(in srgb, #f59e0b 14%, var(--card-bg));
+    color: #b45309;
+}
+
+.dash-assistant__presence--busy .dash-assistant__presence-dot {
+    background: #f59e0b;
+    box-shadow: 0 0 0 3px color-mix(in srgb, #f59e0b 22%, transparent);
 }
 
 .dash-assistant__suggestions {
@@ -568,20 +630,105 @@
 
 .dash-assistant__suggestion {
     box-sizing: border-box;
-    padding: 5px 10px;
-    border: 1px solid var(--dash-border);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: 1px solid color-mix(in srgb, var(--dash-blue) 20%, var(--dash-soft));
     border-radius: 999px;
-    background: transparent;
-    color: var(--dash-navy);
+    background: color-mix(in srgb, var(--dash-blue) 7%, var(--card-bg));
+    color: var(--dash-blue);
     font-family: inherit;
-    font-size: var(--dash-text-size);
+    font-size: 14px;
+    font-weight: 600;
     cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.dash-assistant__suggestion:hover {
+    transform: translateY(-1px);
+    background: color-mix(in srgb, var(--dash-blue) 13%, var(--card-bg));
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--dash-blue) 18%, transparent);
 }
 
 .dash-assistant__suggestion:focus-visible,
-.dash-assistant__submit:focus-visible {
+.dash-assistant__submit:focus-visible,
+.dash-assistant__textarea:focus-visible {
     outline: 2px solid var(--dash-blue);
     outline-offset: 2px;
+}
+
+.dash-assistant__thread {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 320px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.dash-assistant__message {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.dash-assistant__message-avatar {
+    display: grid;
+    flex: 0 0 auto;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    background: color-mix(in srgb, var(--dash-blue) 12%, var(--card-bg));
+    color: var(--dash-blue);
+}
+
+.dash-assistant__bubble {
+    margin: 0;
+    padding: 10px 12px;
+    border: 1px solid color-mix(in srgb, var(--dash-blue) 14%, var(--dash-soft));
+    border-radius: 4px 12px 12px 12px;
+    background: color-mix(in srgb, var(--dash-blue) 6%, var(--card-bg));
+    color: var(--dash-navy);
+    font-size: 15px;
+    line-height: 1.6;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+
+.dash-assistant__status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    padding: 6px 10px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--dash-purple) 8%, var(--card-bg));
+    color: var(--dash-purple);
+    font-size: 15px;
+}
+
+.dash-assistant__typing {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.dash-assistant__typing i {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--dash-blue);
+    animation: dash-typing 1s infinite ease-in-out;
+}
+
+.dash-assistant__typing i:nth-child(2) { animation-delay: 0.15s; }
+.dash-assistant__typing i:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes dash-typing {
+    0%, 80%, 100% { opacity: 0.25; transform: translateY(0); }
+    40% { opacity: 1; transform: translateY(-3px); }
 }
 
 .dash-assistant__form {
@@ -595,20 +742,21 @@
     box-sizing: border-box;
     flex: 1 1 auto;
     min-width: 0;
-    min-height: 52px;
-    padding: 8px;
-    border: 1px solid var(--dash-soft);
-    border-radius: var(--dash-radius);
-    background: transparent;
+    min-height: 64px;
+    max-height: 160px;
+    padding: 10px 12px;
+    border: 1px solid color-mix(in srgb, var(--dash-blue) 18%, var(--dash-soft));
+    border-radius: 12px;
+    background: var(--card-bg);
     color: var(--dash-navy);
     font-family: inherit;
-    font-size: var(--dash-text-size);
+    font-size: 15px;
+    line-height: 1.5;
     resize: vertical;
 }
 
-.dash-assistant__textarea:focus {
-    outline: 2px solid var(--dash-blue);
-    outline-offset: 1px;
+.dash-assistant__textarea::placeholder {
+    color: color-mix(in srgb, var(--dash-secondary) 70%, transparent);
 }
 
 .dash-assistant__submit {
@@ -617,36 +765,43 @@
     justify-content: center;
     gap: 6px;
     flex: 0 0 auto;
-    min-height: 34px;
-    padding: 0 14px;
+    min-height: 44px;
+    padding: 0 16px;
     border: none;
-    border-radius: var(--dash-radius);
-    background: var(--dash-blue);
-    color: var(--card-bg);
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--dash-blue), var(--dash-purple));
+    box-shadow: 0 6px 16px color-mix(in srgb, var(--dash-blue) 28%, transparent);
+    color: #fff;
     font-family: inherit;
-    font-size: var(--dash-text-size);
+    font-size: 14px;
     font-weight: 700;
     cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.dash-assistant__submit:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px color-mix(in srgb, var(--dash-blue) 35%, transparent);
 }
 
 .dash-assistant__submit:disabled {
-    opacity: 0.6;
+    opacity: 0.55;
     cursor: not-allowed;
+    box-shadow: none;
 }
 
-.dash-assistant__status,
-.dash-assistant__answer {
-    margin: 0;
-    padding: 8px 10px;
-    border-radius: var(--dash-radius);
-    background: color-mix(in srgb, var(--dash-blue) 6%, transparent);
-    font-size: var(--dash-text-size);
-    line-height: 1.5;
-    overflow-wrap: anywhere;
+[data-theme="dark"] .dash-assistant__presence {
+    color: #86efac;
 }
 
-.dash-assistant__status {
-    color: var(--dash-purple);
+[data-theme="dark"] .dash-assistant__presence--busy {
+    color: #fcd34d;
+}
+
+@media (max-width: 480px) {
+    .dash-assistant__presence {
+        display: none;
+    }
 }
 
 /* ===== Pop-up "Saída" ===== */
