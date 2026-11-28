@@ -37,7 +37,8 @@ export default function OrderDetail({
     getHistory,
 }) {
     const isFullscreen = variant === 'fullscreen';
-    const isModal = variant === 'modal' || isFullscreen;
+    const isCard = variant === 'card';
+    const isModal = variant === 'modal' || isFullscreen || isCard;
     const meta = STATUS_META[order.status] || { label: order.status };
     const tone =
         order.status === 'cancelled'
@@ -168,7 +169,7 @@ export default function OrderDetail({
                 <strong className="orders-detail-label">Itens</strong>
                 <div className="orders-detail-table">
                     <div className={`orders-detail-table-head${isModal ? '' : ' orders-detail-table-head--plain'}`}>
-                        <span>Item</span>
+                        <span>Itens</span>
                         <span>Qts</span>
                         <span>Valor</span>
                     </div>
@@ -240,7 +241,17 @@ export default function OrderDetail({
                 </div>
             </div>
 
-            {isModal ? (
+            {isCard ? (
+                <>
+                    {totalNode}
+                    {notesNode}
+                    {historyNode}
+                    <div className="orders-detail-actions orders-detail-actions--card">
+                        {copyButton}
+                        {editButton}
+                    </div>
+                </>
+            ) : isModal ? (
                 <>
                     {totalNode}
                     {notesNode}

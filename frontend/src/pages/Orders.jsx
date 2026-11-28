@@ -4,9 +4,10 @@ import { ordersApi, productsApi } from '../Services/api';
 import PageHeader from '../components/ui/PageHeader';
 import SegmentedControl from '../components/ui/SegmentedControl';
 import TableToolbar from '../components/ui/TableToolbar';
-import SideDrawer from '../components/ui/SideDrawer';
+import FloatingPanel from '../components/ui/FloatingPanel';
 import OrderCard from '../components/OrderCard';
-import OrderDetail from '../components/OrderDetail';
+import OrderExpandedPanel from '../components/OrderExpandedPanel';
+import OrderFloatingCard, { OrderPanelTopBar } from '../components/OrderFloatingCard';
 import useAutoDismiss from '../hooks/useAutoDismiss';
 import { useResourceFocus } from '../hooks/useResourceFocus';
 import { exportOrdersCsv, exportOrdersTxt, exportOrdersPdf } from '../lib/exportOrder';
@@ -200,6 +201,7 @@ export default function Orders() {
     const [mostrarFiltros, setMostrarFiltros] = useState(false);
     const [detailId, setDetailId] = useState(null);
     const [detailMode, setDetailMode] = useState('detail'); // detail | edit | status | delete
+    const [orderExpanded, setOrderExpanded] = useState(false);
     const [highlightedId, setHighlightedId] = useState(null);
     const [exporting, setExporting] = useState(false);
 
@@ -249,6 +251,7 @@ export default function Orders() {
         setStatusModal(null);
         setDetailId(id);
         setDetailMode('detail');
+        setOrderExpanded(false);
         window.setTimeout(() => {
             const element = document.getElementById(`order-${resourceId}`);
             element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -293,6 +296,7 @@ export default function Orders() {
         setDetailId(null);
         setDetailMode('detail');
         setStatusModal(null);
+        setOrderExpanded(false);
     };
 
     const toggleNewOrder = () => {
@@ -303,6 +307,7 @@ export default function Orders() {
             setStatusModal(null);
             setDetailId(null);
             setDetailMode('detail');
+            setOrderExpanded(false);
             setShowNewOrder(true);
         }
     };
@@ -331,6 +336,7 @@ export default function Orders() {
         setStatusModal(null);
         setDetailId(order.id);
         setDetailMode('edit');
+        setOrderExpanded(false);
     };
 
     /* ---------------- Carrinho ---------------- */
@@ -431,6 +437,7 @@ export default function Orders() {
                 setSuccess(res.data.message);
                 setDetailId(null);
                 setDetailMode('detail');
+                setOrderExpanded(false);
                 resetForm();
             } else {
                 const res = await ordersApi.create(payload);
@@ -535,6 +542,7 @@ export default function Orders() {
         setStatusModal(null);
         setDetailId(order.id);
         setDetailMode('delete');
+        setOrderExpanded(false);
     };
 
     const confirmDeleteOrder = async () => {
@@ -544,6 +552,7 @@ export default function Orders() {
             setSuccess(res.data.message);
             setDetailId(null);
             setDetailMode('detail');
+            setOrderExpanded(false);
             await loadOrders();
         } catch (err) {
             setError(getErrorMessage(err, 'Erro ao excluir o pedido.'));
@@ -560,11 +569,14 @@ export default function Orders() {
         });
         setDetailId(order.id);
         setDetailMode('status');
+        setOrderExpanded(false);
     };
 
-    const closeStatusModal = () => {
+    const backToDetail = () => {
+        setShowNewOrder(false);
         setStatusModal(null);
         setDetailMode('detail');
+        setOrderExpanded(false);
     };
 
     const selectStatus = (status) => {
@@ -648,6 +660,7 @@ export default function Orders() {
     const finalizeOrder = (order) => {
         setDetailId(order.id);
         setDetailMode('status');
+        setOrderExpanded(false);
         setStatusModal({ order, selected: 'delivered', reason: '', saving: false, error: '' });
     };
 
@@ -669,8 +682,8 @@ export default function Orders() {
     const detailProps = selectedOrder
         ? {
               order: selectedOrder,
-              expanded: false,
-              onToggleExpand: () => {},
+              expanded: orderExpanded,
+              onToggleExpand: () => setOrderExpanded((value) => !value),
               onClose: closeDrawer,
               onEdit: () => startEditOrder(selectedOrder),
               onFinalize: finalizeOrder,
@@ -937,6 +950,12 @@ export default function Orders() {
 
     /* ---------------- Render ---------------- */
 
+    const inSubFlow =
+        showNewOrder ||
+        detailMode === 'edit' ||
+        detailMode === 'status' ||
+        detailMode === 'delete';
+
     return (
         <div className="orders-page">
             <PageHeader
@@ -1020,158 +1039,222 @@ export default function Orders() {
                     </p>
                 )}
 
-                <div className="orders-grid">
-                    {loading ? (
-                        <p className="orders-empty">A carregar pedidos...</p>
-                    ) : visibleOrders.length === 0 ? (
-                        <p className="orders-empty">Nenhum pedido encontrado com estes filtros.</p>
-                    ) : (
-                        visibleOrders.map((order) => {
-                            const meta = STATUS_META[order.status] || {
-                                label: order.status,
-                            };
-                            const tone =
-                                order.status === 'cancelled'
-                                    ? 'danger'
-                                    : order.status === 'not_delivered' ||
-                                        order.status === 'late'
-                                      ? 'warning'
-                                      : 'info';
+                <div className={`orders-layout${orderExpanded && !inSubFlow ? ' orders-layout--expanded' : ''}`}>
+                    <div className="orders-grid">
+                        {loading ? (
+                            <p className="orders-empty">A carregar pedidos...</p>
+                        ) : visibleOrders.length === 0 ? (
+                            <p className="orders-empty">Nenhum pedido encontrado com estes filtros.</p>
+                        ) : (
+                            visibleOrders.map((order) => {
+                                const meta = STATUS_META[order.status] || {
+                                    label: order.status,
+                                };
+                                const tone =
+                                    order.status === 'cancelled'
+                                        ? 'danger'
+                                        : order.status === 'not_delivered' ||
+                                            order.status === 'late'
+                                          ? 'warning'
+                                          : 'info';
 
-                            return (
-                                <OrderCard
-                                    key={order.id}
-                                    order={order}
-                                    selected={order.id === detailId}
-                                    onOpen={(opened) => {
-                                        setShowNewOrder(false);
-                                        setStatusModal(null);
-                                        setDetailId(opened.id);
-                                        setDetailMode('detail');
-                                    }}
-                                    onFinalize={finalizeOrder}
-                                    canFinalize={canFinalize(order)}
-                                    statusLabel={meta.label}
-                                    tone={tone}
-                                    highlighted={highlightedId === order.id}
-                                />
-                            );
-                        })
-                    )}
+                                return (
+                                    <OrderCard
+                                        key={order.id}
+                                        order={order}
+                                        selected={order.id === detailId}
+                                        onOpen={(opened) => {
+                                            if (
+                                                detailId === opened.id &&
+                                                detailMode === 'detail' &&
+                                                drawerOpen
+                                            ) {
+                                                closeDrawer();
+                                                return;
+                                            }
+                                            setShowNewOrder(false);
+                                            setStatusModal(null);
+                                            setDetailId(opened.id);
+                                            setDetailMode('detail');
+                                            setOrderExpanded(false);
+                                        }}
+                                        onFinalize={finalizeOrder}
+                                        canFinalize={canFinalize(order)}
+                                        statusLabel={meta.label}
+                                        tone={tone}
+                                        highlighted={highlightedId === order.id}
+                                    />
+                                );
+                            })
+                        )}
+                    </div>
+                    <FloatingPanel
+                        inline
+                        open={drawerOpen}
+                        onClose={closeDrawer}
+                        title={drawerTitle}
+                        eyebrow="Gestão de pedidos"
+                        showExpand={drawerOpen && !inSubFlow}
+                        expanded={orderExpanded && !inSubFlow}
+                        expandedContentClass="orders-detail--fullscreen-expanded"
+                        onToggleExpand={() => setOrderExpanded((value) => !value)}
+                        subtitle={
+                            showNewOrder || detailMode === 'edit'
+                                ? 'Informe os itens e confira o total antes de salvar.'
+                                : detailMode === 'status'
+                                  ? 'Escolha o novo status e informe o motivo quando necessário.'
+                                  : undefined
+                        }
+                        minimalHeader={drawerOpen}
+                        ariaLabel={drawerTitle}
+                        footer={detailMode === 'detail' && !showNewOrder && selectedOrder ? null : (
+                            showNewOrder || detailMode === 'edit' ? (
+                                <>
+                                    <button
+                                        type="button"
+                                        className="side-drawer-button"
+                                        onClick={closeDrawer}
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        form="order-drawer-form"
+                                        className="side-drawer-button side-drawer-button--primary"
+                                        disabled={cart.length === 0 || submitting}
+                                    >
+                                        {submitting
+                                            ? 'A guardar...'
+                                            : editingOrder
+                                              ? 'Guardar alterações'
+                                              : 'Criar pedido'}
+                                    </button>
+                                </>
+                            ) : detailMode === 'status' ? (
+                                <button
+                                    type="button"
+                                    className="side-drawer-button side-drawer-button--primary"
+                                    onClick={confirmStatus}
+                                    disabled={
+                                        statusModal?.saving ||
+                                        statusModal?.selected === statusModal?.order.status
+                                    }
+                                >
+                                    {statusModal?.saving ? 'A guardar...' : 'Confirmar status'}
+                                </button>
+                            ) : detailMode === 'delete' ? (
+                                <>
+                                    <button
+                                        type="button"
+                                        className="side-drawer-button"
+                                        onClick={closeDrawer}
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="side-drawer-button side-drawer-button--danger"
+                                        onClick={confirmDeleteOrder}
+                                    >
+                                        Excluir pedido
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    {selectedOrder && canEdit(selectedOrder) && (
+                                        <button
+                                            type="button"
+                                            className="side-drawer-button side-drawer-button--danger"
+                                            onClick={() => startEditOrder(selectedOrder)}
+                                        >
+                                            Editar pedido
+                                        </button>
+                                    )}
+                                    <button
+                                        type="button"
+                                        className="side-drawer-button side-drawer-button--primary"
+                                        onClick={() => openStatusModal(selectedOrder)}
+                                    >
+                                        Alterar status
+                                    </button>
+                                </>
+                            )
+                        )}
+                    >
+                        {(showNewOrder || detailMode !== 'detail') && !orderExpanded && (
+                            <OrderPanelTopBar
+                                onToggleExpand={() => setOrderExpanded(true)}
+                                onClose={closeDrawer}
+                                canExpand={!inSubFlow}
+                                onBack={showNewOrder ? closeDrawer : inSubFlow ? backToDetail : undefined}
+                            />
+                        )}
+                        {(showNewOrder || detailMode !== 'detail') && (
+                            <div className="order-panel-heading">
+                                {orderExpanded && (
+                                    <button
+                                        type="button"
+                                        className="order-panel-collapse"
+                                        onClick={() => setOrderExpanded(false)}
+                                    >
+                                        Recolher
+                                    </button>
+                                )}
+                                <span>Gestão de pedidos</span>
+                                <h3>{drawerTitle}</h3>
+                            </div>
+                        )}
+                        {showNewOrder || detailMode === 'edit' ? (
+                            renderOrderForm()
+                        ) : detailMode === 'status' ? (
+                            renderStatusPanel()
+                        ) : detailMode === 'delete' ? (
+                            <p className="side-drawer-help">
+                                O pedido {orderNumber(selectedOrder.id)} será removido da listagem.
+                                Esta ação não pode ser desfeita.
+                            </p>
+                        ) : (
+                            detailProps &&
+                                (orderExpanded ? (
+                                    <OrderExpandedPanel
+                                        order={selectedOrder}
+                                        copied={detailProps.copied}
+                                        canEdit={detailProps.canEdit}
+                                        canFinalize={detailProps.canFinalize}
+                                        onCopy={detailProps.onCopy}
+                                        onEdit={detailProps.onEdit}
+                                        onFinalize={detailProps.onFinalize}
+                                        onPrint={detailProps.onPrint}
+                                        onChangeStatus={detailProps.onChangeStatus}
+                                        onDelete={detailProps.onDelete}
+                                        onClose={closeDrawer}
+                                        onToggleExpand={detailProps.onToggleExpand}
+                                        formatPrice={detailProps.formatPrice}
+                                        orderNumber={detailProps.orderNumber}
+                                    />
+                                ) : (
+                                    <OrderFloatingCard
+                                        order={selectedOrder}
+                                        copied={detailProps.copied}
+                                        canEdit={detailProps.canEdit}
+                                        canFinalize={detailProps.canFinalize}
+                                        onCopy={detailProps.onCopy}
+                                        onEdit={detailProps.onEdit}
+                                        onFinalize={detailProps.onFinalize}
+                                        onPrint={detailProps.onPrint}
+                                        onChangeStatus={detailProps.onChangeStatus}
+                                        onDelete={detailProps.onDelete}
+                                        onClose={closeDrawer}
+                                        onToggleExpand={detailProps.onToggleExpand}
+                                        formatPrice={detailProps.formatPrice}
+                                        orderNumber={detailProps.orderNumber}
+                                    />
+                                ))
+                        )}
+                    </FloatingPanel>
                 </div>
             </section>
 
-            <SideDrawer
-                open={drawerOpen}
-                onClose={closeDrawer}
-                title={drawerTitle}
-                eyebrow="Gestão de pedidos"
-                subtitle={
-                    showNewOrder || detailMode === 'edit'
-                        ? 'Informe os itens e confira o total antes de salvar.'
-                        : detailMode === 'status'
-                          ? 'Escolha o novo status e informe o motivo quando necessário.'
-                          : undefined
-                }
-                size="lg"
-                ariaLabel={drawerTitle}
-                footer={
-                    showNewOrder || detailMode === 'edit' ? (
-                        <>
-                            <button
-                                type="button"
-                                className="side-drawer-button"
-                                onClick={closeDrawer}
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                type="submit"
-                                form="order-drawer-form"
-                                className="side-drawer-button side-drawer-button--primary"
-                                disabled={cart.length === 0 || submitting}
-                            >
-                                {submitting
-                                    ? 'A guardar...'
-                                    : editingOrder
-                                      ? 'Guardar alterações'
-                                      : 'Criar pedido'}
-                            </button>
-                        </>
-                    ) : detailMode === 'status' ? (
-                        <>
-                            <button
-                                type="button"
-                                className="side-drawer-button"
-                                onClick={closeStatusModal}
-                                disabled={statusModal?.saving}
-                            >
-                                Voltar
-                            </button>
-                            <button
-                                type="button"
-                                className="side-drawer-button side-drawer-button--primary"
-                                onClick={confirmStatus}
-                                disabled={
-                                    statusModal?.saving ||
-                                    statusModal?.selected === statusModal?.order.status
-                                }
-                            >
-                                {statusModal?.saving ? 'A guardar...' : 'Confirmar status'}
-                            </button>
-                        </>
-                    ) : detailMode === 'delete' ? (
-                        <>
-                            <button
-                                type="button"
-                                className="side-drawer-button"
-                                onClick={closeDrawer}
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                type="button"
-                                className="side-drawer-button side-drawer-button--danger"
-                                onClick={confirmDeleteOrder}
-                            >
-                                Excluir pedido
-                            </button>
-                        </>
-                    ) : (
-                        <>
-                            {selectedOrder && canEdit(selectedOrder) && (
-                                <button
-                                    type="button"
-                                    className="side-drawer-button side-drawer-button--danger"
-                                    onClick={() => startEditOrder(selectedOrder)}
-                                >
-                                    Editar pedido
-                                </button>
-                            )}
-                            <button
-                                type="button"
-                                className="side-drawer-button side-drawer-button--primary"
-                                onClick={() => openStatusModal(selectedOrder)}
-                            >
-                                Alterar status
-                            </button>
-                        </>
-                    )
-                }
-            >
-                {showNewOrder || detailMode === 'edit' ? (
-                    renderOrderForm()
-                ) : detailMode === 'status' ? (
-                    renderStatusPanel()
-                ) : detailMode === 'delete' ? (
-                    <p className="side-drawer-help">
-                        O pedido {orderNumber(selectedOrder.id)} será removido da listagem.
-                        Esta ação não pode ser desfeita.
-                    </p>
-                ) : (
-                    detailProps && <OrderDetail {...detailProps} variant="modal" />
-                )}
-            </SideDrawer>
         </div>
     );
 }

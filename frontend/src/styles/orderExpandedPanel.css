@@ -1,0 +1,285 @@
+/* A expansão acontece dentro da área de conteúdo: sidebar e perfil continuam visíveis. */
+.orders-layout--expanded > .orders-grid {
+    display: none;
+}
+
+.floating-panel-fullscreen--inline {
+    position: static;
+    inset: auto;
+    flex: 1 1 auto;
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    padding: 0;
+    overflow: hidden;
+    background: transparent;
+    z-index: auto;
+}
+
+.floating-panel-fullscreen--inline .orders-detail--fullscreen-expanded {
+    max-width: none;
+    height: 100%;
+}
+
+/* Variação expandida do painel lateral de detalhes do pedido. */
+.floating-panel-fullscreen .orders-detail--fullscreen-expanded {
+    max-width: 1120px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.order-expanded {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 0;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    padding: 24px 28px;
+    border: 1px solid var(--orders-border, var(--text-primary));
+    border-radius: 16px;
+    background: var(--orders-card-bg, var(--card-bg));
+    color: var(--orders-text, var(--text-primary));
+    box-shadow: 0 18px 48px rgba(15, 23, 42, 0.18);
+}
+
+/* 2. Barra superior de controles */
+.order-expanded__top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.order-expanded__copy:focus-visible {
+    outline: 2px solid var(--orders-focus-ring);
+    outline-offset: 2px;
+}
+
+/* 3. Cabeçalho do pedido */
+.order-expanded__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+    margin-bottom: 22px;
+}
+
+.order-expanded__identity {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.order-expanded__customer {
+    font-size: 1.75rem;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--orders-text, var(--text-primary));
+    overflow-wrap: anywhere;
+}
+
+.order-expanded__order {
+    margin-top: 2px;
+    color: var(--orders-purple, var(--accent));
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.order-expanded__time {
+    margin-top: 4px;
+    color: var(--orders-text, var(--text-primary));
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+.order-expanded__badge {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 8px 20px;
+    background: var(--orders-blue, var(--accent));
+    color: var(--orders-on-blue);
+    font-size: 0.95rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+/* 4. Itens com miniaturas */
+.order-expanded__items {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.order-expanded__section-title {
+    margin: 0 0 14px;
+    color: var(--orders-text, var(--text-primary));
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.order-expanded__table-head,
+.order-expanded__row {
+    display: grid;
+    grid-template-columns: 1fr 120px 140px;
+    align-items: center;
+}
+
+.order-expanded__table-head {
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--orders-purple, var(--accent));
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.order-expanded__list {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    overflow-y: auto;
+}
+
+.order-expanded__row {
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--orders-text, var(--text-primary));
+    font-size: 1.1rem;
+}
+
+.order-expanded__item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-width: 0;
+}
+
+.order-expanded__thumb {
+    box-sizing: border-box;
+    width: 68px;
+    height: 68px;
+    flex-shrink: 0;
+    padding: 4px;
+    border-radius: 12px;
+    background: var(--sidebar-text);
+    object-fit: cover;
+}
+
+.order-expanded__thumb--fallback {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--orders-purple, var(--accent));
+}
+
+.order-expanded__item-name {
+    min-width: 0;
+    font-weight: 400;
+    overflow-wrap: anywhere;
+}
+
+.order-expanded__qty {
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+.order-expanded__value {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* 5. Rodapé */
+.order-expanded__footer {
+    display: flex;
+    flex-direction: column;
+    margin-top: 14px;
+}
+
+.order-expanded__copy {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    gap: 8px;
+    margin: 14px 0 10px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--orders-text, var(--text-primary));
+    font-size: 0.875rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.order-expanded__copy svg {
+    color: #000000;
+}
+
+.order-expanded__copy:hover {
+    color: var(--orders-purple, var(--accent));
+}
+
+.order-expanded__divider {
+    width: 100%;
+    margin-bottom: 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+.order-expanded__total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+    color: var(--orders-text, var(--text-primary));
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+@media (max-width: 700px) {
+    .order-expanded {
+        padding: 18px;
+    }
+
+    .order-expanded__header {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .order-expanded__customer {
+        font-size: 1.5rem;
+    }
+
+    .order-expanded__table-head,
+    .order-expanded__row {
+        grid-template-columns: minmax(0, 1fr) 56px 96px;
+    }
+
+    .order-expanded__table-head {
+        font-size: 0.8rem;
+    }
+
+    .order-expanded__thumb {
+        width: 48px;
+        height: 48px;
+    }
+
+    .order-expanded__row {
+        font-size: 0.95rem;
+    }
+
+    .order-expanded__item {
+        gap: 10px;
+    }
+
+    .order-expanded__total {
+        font-size: 1.25rem;
+    }
+}

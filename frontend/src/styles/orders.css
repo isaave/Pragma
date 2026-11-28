@@ -8,7 +8,7 @@
 
     --orders-text: var(--text-primary, #03071e);
     --orders-secondary: var(--text-secondary, #475569);
-    --orders-purple: #3d2a9c;
+    --orders-purple: var(--accent, #1d4ed8);
     --orders-blue: var(--accent, #1d4ed8);
     --orders-on-blue: #ffffff;
     --orders-border: var(--text-primary, #03071e);
@@ -18,7 +18,7 @@
     --orders-input-bg: var(--input-bg, #fafbfd);
     --orders-soft-blue: #b9cdea;
     --orders-soft-blue-hover: #a6bfe2;
-    --orders-focus-ring: #6366f1;
+    --orders-focus-ring: var(--accent, #1d4ed8);
     --orders-shadow: var(--card-shadow, 0 4px 16px rgba(3, 7, 30, 0.05));
     --orders-selected-shadow: var(--card-shadow, 0 4px 16px rgba(3, 7, 30, 0.05));
 
@@ -69,6 +69,7 @@
     --orders-radius: 22px; /* Mais arredondado */
 
     /* TODO: confirmar no Dev Mode do Figma (painel/pop-up de detalhe do pedido) */
+    --orders-detail-panel-width: 380px;
     --orders-detail-width: 340px;
     --orders-detail-min-height: min(806px, calc(100vh - 160px));
     --orders-detail-padding: 5px;
@@ -116,10 +117,6 @@
     --orders-form-submit-height: 30px;
     --orders-form-submit-radius: 6px;
     --orders-form-submit-size: 11px;
-}
-
-[data-theme="dark"] {
-    --orders-purple: var(--accent);
 }
 
 /* ===== Página ===== */
@@ -1478,4 +1475,98 @@ body:has(.orders-page) main {
 
 .side-drawer .orders-detail-item-extras {
     border-color: var(--border-color);
+}
+
+/* ===== Retângulo fixo de pedidos ===== */
+
+.floating-panel .orders-form__customer-input {
+    width: 100%;
+}
+
+.floating-panel .orders-form__field {
+    width: 100%;
+    border-color: var(--border-color);
+    background: var(--input-bg);
+}
+
+.floating-panel .orders-form__add-row {
+    align-items: flex-end;
+}
+
+.floating-panel .orders-form__select {
+    flex: 1 1 auto;
+}
+
+.floating-panel .orders-form__chip {
+    background: color-mix(in srgb, var(--accent) 12%, var(--card-bg));
+    color: var(--accent);
+}
+
+.floating-panel .orders-form__chip-button {
+    color: inherit;
+}
+
+.floating-panel .orders-form__divider {
+    background: var(--border-color);
+}
+
+.floating-panel .orders-status-pill {
+    border-color: var(--border-color);
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.floating-panel .orders-status-pill[aria-pressed='true'] {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--card-bg);
+}
+
+.floating-panel .orders-detail-content--modal {
+    padding: 0;
+    color: var(--text-primary);
+}
+
+.floating-panel .orders-detail-table-head,
+.floating-panel .orders-detail-table-row {
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+.floating-panel .orders-detail-item-extras {
+    border-color: var(--border-color);
+}
+
+.floating-panel .side-drawer-total {
+    margin-top: 12px;
+}
+
+/* Cabeçalho em uma linha, como no layout de referência. */
+.orders-page .page-header {
+    gap: 8px;
+}
+
+.orders-page .page-header-text {
+    flex: 0 0 auto !important;
+}
+
+.orders-page .page-header-title,
+.orders-page .page-header-subtitle {
+    white-space: nowrap;
+    overflow-wrap: normal !important;
+}
+
+/* Grid de cards conforme o layout de referência: 3 colunas largas no desktop. */
+@media (min-width: 901px) {
+    .orders-grid {
+        grid-template-columns: repeat(3, 250px);
+        gap: 24px;
+    }
+}
+
+@media (min-width: 561px) and (max-width: 900px) {
+    .orders-grid {
+        grid-template-columns: repeat(2, minmax(0, 250px));
+        gap: 16px;
+    }
 }

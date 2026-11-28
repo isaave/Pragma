@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { LayoutGrid, List, Table2, Utensils } from 'lucide-react';
+import { LayoutGrid, List, Maximize2, Minimize2, Table2, Utensils } from 'lucide-react';
 import api from '../Services/api';
 import { exportOrderCsv, exportOrderPdf, exportOrderTxt } from '../lib/exportOrder';
 import {
@@ -90,6 +90,9 @@ export default function History() {
     const [showSearch, setShowSearch] = useState(false);
     const [showFilters, setShowFilters] = useState(false);
     const [selectedSessionId, setSelectedSessionId] = useState(null);
+    const [selectedOrder, setSelectedOrder] = useState(null);
+    const [orderExpanded, setOrderExpanded] = useState(false);
+    const [orderHistoryOpen, setOrderHistoryOpen] = useState(false);
 
     const loadSessions = useCallback(async () => {
         setLoading(true);
@@ -218,6 +221,102 @@ export default function History() {
         if (!exportOrderPdf(order)) {
             setError('Não foi possível abrir a janela de exportação. Permita pop-ups para exportar em PDF.');
         }
+    };
+
+    const openOrder = (order) => {
+        setSelectedSessionId(null);
+        setSelectedOrder(order);
+        setOrderExpanded(false);
+        setOrderHistoryOpen(false);
+    };
+
+    const renderOrderDetail = (order, fullscreen = false) => {
+        const entries = order.status_history || [];
+        return (
+            <div className={`history-order-detail${fullscreen ? ' history-order-detail--fullscreen' : ''}`}>
+                <div className="history-order-detail__top">
+                    <button
+                        type="button"
+                        className="history-order-detail__icon"
+                        onClick={() => setOrderExpanded((expanded) => !expanded)}
+                        aria-label={orderExpanded ? 'Recolher pedido' : 'Expandir pedido'}
+                        title={orderExpanded ? 'Recolher' : 'Expandir'}
+                    >
+                        {orderExpanded ? <Minimize2 size={16} aria-hidden="true" /> : <Maximize2 size={16} aria-hidden="true" />}
+                    </button>
+                </div>
+
+                <div className="history-order-detail__heading">
+                    <strong>{order.customer_name || `Pedido ${orderNumber(order.id)}`}</strong>
+                    <span className={`history-status history-status--${order.status}`}>
+                        {STATUS_META[order.status]?.label || order.status}
+                    </span>
+                </div>
+                <p className="history-order-detail__meta">
+                    Ordem {orderNumber(order.id)} · {formatDateTime(order.created_at)}
+                </p>
+
+                <div className="history-order-detail__section">
+                    <strong>Itens</strong>
+                    <ul>
+                        {(order.items || []).map((item) => (
+                            <li key={item.id}>
+                                <span>
+                                    {item.quantity}× {item.product?.name || 'Produto'}
+                                </span>
+                                <strong>{formatPrice(item.subtotal)}</strong>
+                                {((item.addons || []).length > 0 || item.notes) && (
+                                    <small>
+                                        {(item.addons || []).map((addon) =>
+                                            `+ ${addon.quantity}× ${addon.addon?.name || 'Adicional'}`
+                                        ).join(', ')}
+                                        {item.notes
+                                            ? `${(item.addons || []).length > 0 ? ' · ' : ''}Obs.: ${item.notes}`
+                                            : ''}
+                                    </small>
+                                )}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+
+                {order.notes && (
+                    <p className="history-order-detail__notes">
+                        <strong>Observações:</strong> {order.notes}
+                    </p>
+                )}
+
+                <div className="history-order-detail__total">
+                    <strong>Total</strong>
+                    <strong>{formatPrice(order.total)}</strong>
+                </div>
+
+                <div className="history-order-detail__actions">
+                    <button type="button" onClick={() => handleExport(order, 'pdf')}>Imprimir / PDF</button>
+                    <button type="button" onClick={() => handleExport(order, 'csv')}>CSV</button>
+                    <button type="button" onClick={() => handleExport(order, 'txt')}>TXT</button>
+                    <button type="button" onClick={() => setOrderHistoryOpen((open) => !open)}>
+                        Histórico ({entries.length})
+                    </button>
+                </div>
+
+                {orderHistoryOpen && (
+                    <div className="history-order-detail__timeline">
+                        {entries.length === 0 ? (
+                            <p>Sem alterações de status.</p>
+                        ) : (
+                            entries.map((entry) => (
+                                <p key={entry.id}>
+                                    {STATUS_META[entry.status]?.label || entry.status} — {formatDateTime(entry.created_at)}
+                                    {entry.user?.name ? ` · por ${entry.user.name}` : ''}
+                                    {entry.reason ? ` — Motivo: ${entry.reason}` : ''}
+                                </p>
+                            ))
+                        )}
+                    </div>
+                )}
+            </div>
+        );
     };
 
     const toggleSearch = () => {
@@ -376,7 +475,21 @@ export default function History() {
                     ) : (
                         <ul className="history-session-orders">
                             {selectedSession.orders.map((order) => (
-                                <li key={order.id}>
+                                <li
+                                    key={order.id}
+                                    role="button"
+                                    tabIndex={0}
+                                    aria-label={`Abrir pedido ${orderNumber(order.id)}`}
+                                    onClick={(event) => {
+                                        if (!event.target.closest('.history-export-actions')) openOrder(order);
+                                    }}
+                                    onKeyDown={(event) => {
+                                        if (event.key === 'Enter' || event.key === ' ') {
+                                            event.preventDefault();
+                                            openOrder(order);
+                                        }
+                                    }}
+                                >
                                     <div>
                                         <strong>
                                             {order.customer_name || `Pedido ${orderNumber(order.id)}`}
@@ -422,6 +535,29 @@ export default function History() {
             )}
         </Modal>
     );
+
+    const orderCard = selectedOrder && !orderExpanded ? (
+        <div
+            className="history-order-card"
+            role="dialog"
+            aria-label={`Pedido ${orderNumber(selectedOrder.id)}`}
+        >
+            {renderOrderDetail(selectedOrder)}
+        </div>
+    ) : null;
+
+    const orderFullscreen = selectedOrder && orderExpanded ? (
+        <div
+            className="history-order-fullscreen"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Pedido ${orderNumber(selectedOrder.id)}`}
+        >
+            <div className="history-order-fullscreen__inner">
+                {renderOrderDetail(selectedOrder, true)}
+            </div>
+        </div>
+    ) : null;
 
     return (
         <div className="history-page">
@@ -536,6 +672,8 @@ export default function History() {
             )}
 
             {detailModal}
+            {orderCard}
+            {orderFullscreen}
         </div>
     );
 }
