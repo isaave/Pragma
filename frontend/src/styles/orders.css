@@ -46,10 +46,10 @@
     --orders-search-max-width: 340px;
 
     /* TODO: confirmar no Dev Mode do Figma (proporções do card de pedido) */
-    --orders-card-min: 200px;
-    --orders-card-max: 230px;
-    --orders-card-min-height: 178px;
-    --orders-card-padding: 8px;
+    --orders-card-min: 290px;
+    --orders-card-max: 300px;
+    --orders-card-min-height: 220px;
+    --orders-card-padding: 12px;
     --orders-card-gap: 6px;
     --orders-card-name-size: 18px;
     --orders-card-order-size: 11px;
@@ -1556,17 +1556,17 @@ body:has(.orders-page) main {
     overflow-wrap: normal !important;
 }
 
-/* Grid de cards conforme o layout de referência: 3 colunas largas no desktop. */
+/* Grid de cards conforme o layout de referência, com cards maiores no desktop. */
 @media (min-width: 901px) {
     .orders-grid {
-        grid-template-columns: repeat(3, 250px);
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--orders-card-min)), var(--orders-card-max)));
         gap: 24px;
     }
 }
 
 @media (min-width: 561px) and (max-width: 900px) {
     .orders-grid {
-        grid-template-columns: repeat(2, minmax(0, 250px));
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--orders-card-min)), var(--orders-card-max)));
         gap: 16px;
     }
 }

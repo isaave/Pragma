@@ -10,7 +10,6 @@ import OrderExpandedPanel from '../components/OrderExpandedPanel';
 import OrderFloatingCard, { OrderPanelTopBar } from '../components/OrderFloatingCard';
 import useAutoDismiss from '../hooks/useAutoDismiss';
 import { useResourceFocus } from '../hooks/useResourceFocus';
-import { exportOrdersCsv, exportOrdersTxt, exportOrdersPdf } from '../lib/exportOrder';
 import {
     FILTERS,
     OPEN_STATUSES,
@@ -203,7 +202,6 @@ export default function Orders() {
     const [detailMode, setDetailMode] = useState('detail'); // detail | edit | status | delete
     const [orderExpanded, setOrderExpanded] = useState(false);
     const [highlightedId, setHighlightedId] = useState(null);
-    const [exporting, setExporting] = useState(false);
 
     useAutoDismiss(success, setSuccess, 4000);
     useAutoDismiss(lastCreated, setLastCreated, 8000);
@@ -483,37 +481,6 @@ export default function Orders() {
                 /* a janela tem um botão para imprimir manualmente */
             }
         }, 350);
-    };
-
-    // Exporta TODOS os pedidos da API (ignora filtros e busca da tela)
-    const exportAll = async (format) => {
-        setExporting(true);
-        setError('');
-        setSuccess('');
-        try {
-            const res = await ordersApi.list();
-            const all = res.data || [];
-
-            if (all.length === 0) {
-                setSuccess('Nenhum pedido cadastrado para exportar.');
-                return;
-            }
-
-            if (format === 'csv') {
-                exportOrdersCsv(all);
-            } else if (format === 'txt') {
-                exportOrdersTxt(all);
-            } else if (!exportOrdersPdf(all)) {
-                setError('Não foi possível abrir a janela de exportação. Permita pop-ups para exportar em PDF.');
-                return;
-            }
-
-            setSuccess(`${all.length} pedido(s) exportado(s).`);
-        } catch (err) {
-            setError(getErrorMessage(err, 'Erro ao exportar os pedidos.'));
-        } finally {
-            setExporting(false);
-        }
     };
 
     const copyOrder = async (order) => {
@@ -996,11 +963,6 @@ export default function Orders() {
                         onAdd={toggleNewOrder}
                         onSearch={() => setMostrarBusca(v => !v)}
                         onFilter={() => setMostrarFiltros(v => !v)}
-                        exportOptions={[
-                            { label: 'PDF', onClick: () => exportAll('pdf'), disabled: exporting },
-                            { label: 'CSV', onClick: () => exportAll('csv'), disabled: exporting },
-                            { label: 'TXT', onClick: () => exportAll('txt'), disabled: exporting },
-                        ]}
                         ariaLabel="Ações dos pedidos"
                     />
                 </div>
