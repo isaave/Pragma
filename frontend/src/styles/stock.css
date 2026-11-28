@@ -385,6 +385,185 @@
     cursor: pointer;
 }
 
+/* ===== Pop-ups de estoque ===== */
+
+.stock-page .stock-modal > div {
+    padding: 0 !important;
+}
+
+.stock-page .stock-modal > div:first-child {
+    padding: 18px 64px 14px !important;
+}
+
+.stock-page .stock-modal > div:last-child {
+    padding: 18px 20px !important;
+}
+
+.stock-page .stock-modal h2 {
+    font-size: 22px !important;
+}
+
+/* Popup de cadastro/edição: mesmo título do popup de produto. */
+.stock-page .stock-form-modal h2 {
+    font-size: 24px !important;
+}
+
+.stock-page .stock-modal .stock-field label {
+    font-size: 11px;
+}
+
+.stock-page .stock-modal .stock-field input,
+.stock-page .stock-modal .stock-field select {
+    height: 30px;
+    padding: 2px 0;
+    border: none;
+    border-bottom: 1px solid var(--stock-border);
+    border-radius: 0;
+    background: transparent;
+    font-size: 13px;
+}
+
+.stock-page .stock-modal .stock-field input:focus,
+.stock-page .stock-modal .stock-field select:focus {
+    outline: none;
+    border-bottom-color: var(--stock-accent);
+}
+
+.stock-page .stock-modal-error {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: var(--stock-danger);
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.stock-page .stock-form-actions--modal {
+    position: relative;
+    justify-content: stretch;
+    width: 100%;
+    gap: 8px;
+    padding-top: 4px;
+}
+
+.stock-page .stock-form-secondary-actions {
+    position: static;
+    display: contents;
+}
+
+.stock-page .stock-form-secondary-actions button {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1 1 0;
+    min-width: 0;
+    height: 30px;
+    padding: 0 8px;
+    border: 1px solid var(--stock-accent);
+    border-radius: var(--stock-field-radius);
+    background: var(--stock-accent);
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.stock-page .stock-form-secondary-actions .stock-form-danger {
+    border-color: var(--stock-danger);
+    background: var(--stock-danger);
+    color: #ffffff;
+}
+
+.stock-page .stock-submit {
+    box-sizing: border-box;
+    flex: 1 1 0;
+    min-width: 0;
+    width: 100%;
+    height: 30px;
+    padding: 0 8px;
+    border: 1px solid var(--stock-accent);
+    border-radius: var(--stock-field-radius);
+    background: var(--stock-accent);
+    color: #ffffff;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.stock-page .stock-submit--danger {
+    border-color: var(--stock-danger);
+    background: var(--stock-danger);
+    color: #ffffff;
+}
+
+.stock-page .stock-form-secondary-actions button:not(:disabled):hover,
+.stock-page .stock-submit:not(:disabled):hover {
+    filter: brightness(0.88);
+}
+
+.stock-page .stock-form-secondary-actions button:not(:disabled):active,
+.stock-page .stock-submit:not(:disabled):active {
+    transform: translateY(1px);
+}
+
+.stock-page .stock-form-secondary-actions button:focus-visible,
+.stock-page .stock-submit:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.stock-page .stock-form-secondary-actions button:disabled,
+.stock-page .stock-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.stock-page .stock-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.stock-detail-content {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 16px;
+}
+
+.stock-detail-field {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.stock-detail-field--full {
+    grid-column: 1 / -1;
+}
+
+.stock-detail-label {
+    color: var(--stock-secondary);
+    font-size: 11px;
+}
+
+.stock-detail-value {
+    color: var(--stock-text);
+    font-size: 13px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.stock-detail-percentage {
+    font-size: 18px;
+}
+
+.stock-delete-help {
+    margin: 0 0 16px;
+    color: var(--stock-secondary);
+    font-size: 13px;
+    line-height: 1.5;
+    text-align: center;
+}
+
 /* ===== Responsivo ===== */
 
 @media (max-width: 419px) {
@@ -409,5 +588,9 @@
 
     .stock-ordenacao-select {
         max-width: none;
+    }
+
+    .stock-detail-content {
+        grid-template-columns: 1fr;
     }
 }

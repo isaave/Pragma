@@ -3,7 +3,9 @@ import { stockApi } from '../Services/api';
 import { exportStockCsv, exportStockPdf, exportStockTxt } from '../lib/exportStock';
 import SegmentedControl from '../components/ui/SegmentedControl';
 import TableToolbar from '../components/ui/TableToolbar';
-import SideDrawer from '../components/ui/SideDrawer';
+import Modal from '../components/ui/Modal';
+import DeleteConfirmModal from '../components/ui/DeleteConfirmModal';
+import StatusBadge from '../components/ui/StatusBadge';
 import PageHeader from '../components/ui/PageHeader';
 import StockCard from '../components/StockCard';
 import { useResourceFocus } from '../hooks/useResourceFocus';
@@ -71,8 +73,13 @@ export default function Stock() {
     const [form, setForm] = useState(null);
     // restock: null (fechado) ou { item, values: {...} }  -> adicionar estoque
     const [restock, setRestock] = useState(null);
-    // Confirmação de exclusão dentro do mesmo painel lateral
+    // Confirmação de exclusão dentro do mesmo popup
     const [pendingDelete, setPendingDelete] = useState(null);
+    // Detalhes do ingrediente ao clicar no card
+    const [detailId, setDetailId] = useState(null);
+    const [submitting, setSubmitting] = useState(false);
+    const [restocking, setRestocking] = useState(false);
+    const [deleting, setDeleting] = useState(false);
 
     const loadItems = useCallback(async () => {
         setLoading(true);
@@ -121,6 +128,7 @@ export default function Stock() {
         setInfo('');
         setRestock(null);
         setPendingDelete(null);
+        setDetailId(null);
         setForm({ id: null, values: { ...EMPTY_FORM } });
     };
 
@@ -129,6 +137,7 @@ export default function Stock() {
         setInfo('');
         setRestock(null);
         setPendingDelete(null);
+        setDetailId(null);
         setForm({
             id: item.id,
             values: {
@@ -150,8 +159,10 @@ export default function Stock() {
 
     const saveForm = async (e) => {
         e.preventDefault();
+        if (submitting) return;
         setError('');
         setInfo('');
+        setSubmitting(true);
         try {
             const res = form.id
                 ? await stockApi.update(form.id, form.values)
@@ -161,6 +172,8 @@ export default function Stock() {
             loadItems();
         } catch (err) {
             setError(getErrorMessage(err, 'Erro ao salvar o ingrediente.'));
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -175,16 +188,20 @@ export default function Stock() {
     };
 
     const confirmDeleteItem = async () => {
-        if (!pendingDelete) return;
+        if (!pendingDelete || deleting) return;
         setError('');
         setInfo('');
+        setDeleting(true);
         try {
             const res = await stockApi.remove(pendingDelete.id);
             setInfo(res.data.message);
             setPendingDelete(null);
+            setDetailId(null);
             loadItems();
         } catch (err) {
             setError(getErrorMessage(err, 'Erro ao excluir o ingrediente.'));
+        } finally {
+            setDeleting(false);
         }
     };
 
@@ -195,6 +212,7 @@ export default function Stock() {
         setInfo('');
         setForm(null);
         setPendingDelete(null);
+        setDetailId(null);
         setRestock({ item, values: emptyRestock() });
     };
 
@@ -204,8 +222,10 @@ export default function Stock() {
 
     const saveRestock = async (e) => {
         e.preventDefault();
+        if (restocking) return;
         setError('');
         setInfo('');
+        setRestocking(true);
         try {
             const res = await stockApi.restock(restock.item.id, restock.values);
             setInfo(res.data.message);
@@ -213,6 +233,8 @@ export default function Stock() {
             loadItems();
         } catch (err) {
             setError(getErrorMessage(err, 'Erro ao adicionar estoque.'));
+        } finally {
+            setRestocking(false);
         }
     };
 
@@ -251,13 +273,30 @@ export default function Stock() {
         });
     }
 
+    // Clicar no card abre o popup de detalhes; o lápis abre o popup de edição.
+    const openDetail = (item) => {
+        setError('');
+        setInfo('');
+        setForm(null);
+        setRestock(null);
+        setPendingDelete(null);
+        setDetailId(item.id);
+    };
+
     const closeDrawer = () => {
         setForm(null);
         setRestock(null);
         setPendingDelete(null);
+        setDetailId(null);
     };
 
     const itemAtual = form ? items.find((i) => i.id === form.id) : null;
+    const selectedItem = items.find((i) => i.id === detailId) || null;
+    const formStatus = form
+        ? form.id
+            ? itemAtual?.stock_status || 'Estoque mediano'
+            : 'Estoque novo'
+        : '';
 
     const statusTone = (status) => {
         if (status === 'Estoque mediano') return 'neutral';
@@ -329,41 +368,22 @@ export default function Stock() {
                 </div>
             )}
 
-            {/* Formulário de cadastro / edição no painel lateral */}
+            {/* Formulário de cadastro / edição em popup */}
             {form && (
-                <SideDrawer
+                <Modal
                     open
                     onClose={closeDrawer}
-                    title={form.id ? 'Editar ingrediente' : 'Novo ingrediente'}
-                    eyebrow="Estoque"
+                    title={form.id ? 'Editar ingrediente' : 'Ingrediente novo'}
                     subtitle="Informe os dados do ingrediente e seus níveis."
                     ariaLabel={form.id ? 'Editar ingrediente' : 'Novo ingrediente'}
-                    footer={
-                        <>
-                            {form.id && itemAtual && (
-                                <button
-                                    type="button"
-                                    className="side-drawer-button side-drawer-button--danger"
-                                    onClick={() => requestDeleteItem(itemAtual)}
-                                >
-                                    Excluir
-                                </button>
-                            )}
-                            <span className="side-drawer-footer-spacer" />
-                            <button type="button" className="side-drawer-button" onClick={closeDrawer}>
-                                Cancelar
-                            </button>
-                            <button
-                                type="submit"
-                                form="stock-drawer-form"
-                                className="side-drawer-button side-drawer-button--primary"
-                            >
-                                Salvar
-                            </button>
-                        </>
-                    }
+                    maxWidth={520}
+                    closePlacement="top"
+                    centerTitle
+                    showDivider={false}
+                    className="stock-modal stock-form-modal"
+                    headerActions={<StatusBadge label={formStatus} tone={statusTone(formStatus)} />}
                 >
-                    <form id="stock-drawer-form" className="stock-form" onSubmit={saveForm}>
+                    <form id="stock-form" className="stock-form" onSubmit={saveForm}>
                         <div className="stock-field">
                             <label>Nome</label>
                             <input type="text" required value={form.values.name} onChange={(e) => changeForm('name', e.target.value)} />
@@ -414,6 +434,8 @@ export default function Stock() {
                             <label>Observações</label>
                             <input type="text" value={form.values.notes} onChange={(e) => changeForm('notes', e.target.value)} />
                         </div>
+                        {error && <p className="stock-modal-error" role="alert">{error}</p>}
+
                         {form.id && itemAtual && (
                             <>
                                 <div className="stock-form-divider" />
@@ -424,35 +446,48 @@ export default function Stock() {
                                 </div>
                             </>
                         )}
+
+                        <div className="stock-form-actions stock-form-actions--modal">
+                            <span className="stock-form-secondary-actions">
+                                {form.id && itemAtual && (
+                                    <button
+                                        type="button"
+                                        className="stock-form-danger"
+                                        onClick={() => requestDeleteItem(itemAtual)}
+                                    >
+                                        Excluir
+                                    </button>
+                                )}
+                            </span>
+                            <button type="submit" className="stock-submit" disabled={submitting}>
+                                {submitting ? 'Salvando...' : 'Salvar'}
+                            </button>
+                        </div>
                     </form>
-                </SideDrawer>
+                </Modal>
             )}
 
-            {/* Formulário de adicionar estoque no painel lateral */}
+            {/* Formulário de adicionar estoque em popup */}
             {restock && (
-                <SideDrawer
+                <Modal
                     open
                     onClose={closeDrawer}
                     title={restock.item.name}
-                    eyebrow="Estoque"
                     subtitle="Adicione quantidade ao lote deste ingrediente."
                     ariaLabel={`Adicionar estoque de ${restock.item.name}`}
-                    footer={
-                        <>
-                            <button type="button" className="side-drawer-button" onClick={closeDrawer}>
-                                Cancelar
-                            </button>
-                            <button
-                                type="submit"
-                                form="restock-drawer-form"
-                                className="side-drawer-button side-drawer-button--primary"
-                            >
-                                Adicionar
-                            </button>
-                        </>
+                    maxWidth={520}
+                    closePlacement="top"
+                    centerTitle
+                    showDivider={false}
+                    className="stock-modal stock-restock-modal"
+                    headerActions={
+                        <StatusBadge
+                            label={restock.item.stock_status || 'Estoque'}
+                            tone={statusTone(restock.item.stock_status)}
+                        />
                     }
                 >
-                    <form id="restock-drawer-form" className="stock-form" onSubmit={saveRestock}>
+                    <form id="restock-form" className="stock-form" onSubmit={saveRestock}>
                         <div className="stock-field stock-field--quantity">
                             <label>Quantidade ({restock.item.unit})</label>
                             <input type="number" required min="0.01" step="0.01" value={restock.values.quantity} onChange={(e) => changeRestock('quantity', e.target.value)} />
@@ -469,44 +504,116 @@ export default function Stock() {
                             <label>Observações</label>
                             <input type="text" value={restock.values.notes} onChange={(e) => changeRestock('notes', e.target.value)} />
                         </div>
+                        {error && <p className="stock-modal-error" role="alert">{error}</p>}
+
                         <div className="stock-form-divider" />
                         <div className="stock-form-actions">
                             <button type="button" onClick={() => handleExport(restock.item, 'pdf')}>PDF</button>
                             <button type="button" onClick={() => handleExport(restock.item, 'csv')}>CSV</button>
                             <button type="button" onClick={() => handleExport(restock.item, 'txt')}>TXT</button>
                         </div>
+
+                        <div className="stock-form-actions stock-form-actions--modal">
+                            <span className="stock-form-secondary-actions">
+                                <button type="button" onClick={closeDrawer}>Cancelar</button>
+                            </span>
+                            <button type="submit" className="stock-submit" disabled={restocking}>
+                                {restocking ? 'Adicionando...' : 'Adicionar'}
+                            </button>
+                        </div>
                     </form>
-                </SideDrawer>
+                </Modal>
             )}
 
-            {/* Confirmação de exclusão no próprio painel */}
-            {pendingDelete && (
-                <SideDrawer
+            {/* Detalhes do ingrediente ao clicar no card */}
+            {selectedItem && !form && !restock && !pendingDelete && (
+                <Modal
                     open
                     onClose={closeDrawer}
-                    title={`Excluir ${pendingDelete.name}`}
-                    eyebrow="Estoque"
-                    ariaLabel={`Excluir ${pendingDelete.name}`}
-                    footer={
-                        <>
-                            <button type="button" className="side-drawer-button" onClick={closeDrawer}>
-                                Cancelar
-                            </button>
-                            <button
-                                type="button"
-                                className="side-drawer-button side-drawer-button--danger"
-                                onClick={confirmDeleteItem}
-                            >
-                                Excluir ingrediente
-                            </button>
-                        </>
+                    title={selectedItem.name}
+                    subtitle="Detalhes do ingrediente e do lote"
+                    ariaLabel={`Detalhes de ${selectedItem.name}`}
+                    maxWidth={520}
+                    closePlacement="top"
+                    centerTitle
+                    showDivider={false}
+                    className="stock-modal stock-detail-modal"
+                    headerActions={
+                        <StatusBadge
+                            label={selectedItem.stock_status || 'Estoque'}
+                            tone={statusTone(selectedItem.stock_status)}
+                        />
                     }
                 >
-                    <p className="side-drawer-help">
-                        O ingrediente será removido do estoque. Esta ação não pode ser desfeita.
-                    </p>
-                </SideDrawer>
+                    <div className="stock-detail-content">
+                        <div className="stock-detail-field">
+                            <span className="stock-detail-label">Quantidade atual</span>
+                            <strong className="stock-detail-value">{selectedItem.quantity} {selectedItem.unit}</strong>
+                        </div>
+                        <div className="stock-detail-field">
+                            <span className="stock-detail-label">Capacidade máxima</span>
+                            <strong className="stock-detail-value">{selectedItem.capacity} {selectedItem.unit}</strong>
+                        </div>
+                        <div className="stock-detail-field">
+                            <span className="stock-detail-label">Nível de estoque</span>
+                            <strong className="stock-detail-value stock-detail-percentage">{selectedItem.percentage}%</strong>
+                        </div>
+                        <div className="stock-detail-field">
+                            <span className="stock-detail-label">Situação</span>
+                            <strong className="stock-detail-value">{selectedItem.stock_status || '-'}</strong>
+                        </div>
+                        <div className="stock-detail-field">
+                            <span className="stock-detail-label">Validade do lote</span>
+                            <strong className="stock-detail-value">{formatDate(selectedItem.expiry_date)}</strong>
+                        </div>
+                        <div className="stock-detail-field">
+                            <span className="stock-detail-label">Última compra</span>
+                            <strong className="stock-detail-value">{formatDate(selectedItem.last_purchase_date)}</strong>
+                        </div>
+                        <div className="stock-detail-field stock-detail-field--full">
+                            <span className="stock-detail-label">Observações</span>
+                            <strong className="stock-detail-value">{selectedItem.notes || 'Sem observações.'}</strong>
+                        </div>
+                    </div>
+
+                    <div className="stock-form-actions stock-form-actions--modal">
+                        {accessLevel === 'completo' && (
+                            <span className="stock-form-secondary-actions">
+                                <button
+                                    type="button"
+                                    className="stock-form-danger"
+                                    onClick={() => requestDeleteItem(selectedItem)}
+                                >
+                                    Excluir
+                                </button>
+                                <button type="button" onClick={() => openEdit(selectedItem)}>
+                                    Editar ingrediente
+                                </button>
+                            </span>
+                        )}
+                        <button
+                            type="button"
+                            className="stock-submit"
+                            onClick={() => openRestock(selectedItem)}
+                            disabled={accessLevel !== 'completo'}
+                        >
+                            Adicionar estoque
+                        </button>
+                    </div>
+                </Modal>
             )}
+
+            <DeleteConfirmModal
+                open={Boolean(pendingDelete)}
+                onClose={closeDrawer}
+                name={pendingDelete?.name}
+                subject="ingrediente"
+                note="do estoque"
+                onConfirm={confirmDeleteItem}
+                confirming={deleting}
+                error={error}
+                className="stock-delete-modal"
+            />
 
             {/* Listagem */}
             {loading && <p className="stock-empty">Carregando...</p>}
@@ -518,7 +625,7 @@ export default function Stock() {
                         <StockCard
                             key={item.id}
                             item={item}
-                            onOpen={openRestock}
+                            onOpen={openDetail}
                             onEdit={accessLevel === 'completo' ? openEdit : undefined}
                             formatDate={formatDate}
                             statusTone={statusTone}

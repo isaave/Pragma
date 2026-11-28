@@ -193,6 +193,7 @@ export default function Orders() {
 
     // Estado do painel de alteração de status
     const [statusModal, setStatusModal] = useState(null); // { order, selected, reason, saving, error }
+    const [deletingOrder, setDeletingOrder] = useState(false);
 
     // Visualização da lista
     const [grupo, setGrupo] = useState('all');
@@ -334,7 +335,6 @@ export default function Orders() {
         setStatusModal(null);
         setDetailId(order.id);
         setDetailMode('edit');
-        setOrderExpanded(false);
     };
 
     /* ---------------- Carrinho ---------------- */
@@ -433,9 +433,8 @@ export default function Orders() {
             if (editingOrder) {
                 const res = await ordersApi.update(editingOrder.id, payload);
                 setSuccess(res.data.message);
-                setDetailId(null);
                 setDetailMode('detail');
-                setOrderExpanded(false);
+                if (!orderExpanded) setDetailId(null);
                 resetForm();
             } else {
                 const res = await ordersApi.create(payload);
@@ -509,11 +508,11 @@ export default function Orders() {
         setStatusModal(null);
         setDetailId(order.id);
         setDetailMode('delete');
-        setOrderExpanded(false);
     };
 
     const confirmDeleteOrder = async () => {
-        if (!selectedOrder) return;
+        if (!selectedOrder || deletingOrder) return;
+        setDeletingOrder(true);
         try {
             const res = await ordersApi.remove(selectedOrder.id);
             setSuccess(res.data.message);
@@ -523,6 +522,8 @@ export default function Orders() {
             await loadOrders();
         } catch (err) {
             setError(getErrorMessage(err, 'Erro ao excluir o pedido.'));
+        } finally {
+            setDeletingOrder(false);
         }
     };
 
@@ -536,14 +537,12 @@ export default function Orders() {
         });
         setDetailId(order.id);
         setDetailMode('status');
-        setOrderExpanded(false);
     };
 
     const backToDetail = () => {
         setShowNewOrder(false);
         setStatusModal(null);
         setDetailMode('detail');
-        setOrderExpanded(false);
     };
 
     const selectStatus = (status) => {
@@ -955,6 +954,7 @@ export default function Orders() {
 
                 <div className="orders-controls">
                     <SegmentedControl
+                        ariaLabel="Filtrar pedidos por grupo"
                         options={[{ value: 'all', label: 'Todos' }, { value: 'novos', label: 'Novos' }, { value: 'completo', label: 'Completo' }]}
                         value={grupo}
                         onChange={setGrupo}
@@ -1001,7 +1001,7 @@ export default function Orders() {
                     </p>
                 )}
 
-                <div className={`orders-layout${orderExpanded && !inSubFlow ? ' orders-layout--expanded' : ''}`}>
+                <div className={`orders-layout${orderExpanded ? ' orders-layout--expanded' : ''}`}>
                     <div className="orders-grid">
                         {loading ? (
                             <p className="orders-empty">A carregar pedidos...</p>
@@ -1057,15 +1057,17 @@ export default function Orders() {
                         title={drawerTitle}
                         eyebrow="Gestão de pedidos"
                         showExpand={drawerOpen && !inSubFlow}
-                        expanded={orderExpanded && !inSubFlow}
-                        expandedContentClass="orders-detail--fullscreen-expanded"
+                        expanded={orderExpanded}
+                        expandedContentClass={`orders-detail--fullscreen-expanded${inSubFlow ? ' orders-detail--fullscreen-form' : ''}`}
                         onToggleExpand={() => setOrderExpanded((value) => !value)}
                         subtitle={
                             showNewOrder || detailMode === 'edit'
                                 ? 'Informe os itens e confira o total antes de salvar.'
                                 : detailMode === 'status'
                                   ? 'Escolha o novo status e informe o motivo quando necessário.'
-                                  : undefined
+                                  : detailMode === 'delete'
+                                    ? 'Esta ação não pode ser desfeita.'
+                                    : undefined
                         }
                         minimalHeader={drawerOpen}
                         ariaLabel={drawerTitle}
@@ -1117,8 +1119,9 @@ export default function Orders() {
                                         type="button"
                                         className="side-drawer-button side-drawer-button--danger"
                                         onClick={confirmDeleteOrder}
+                                        disabled={deletingOrder}
                                     >
-                                        Excluir pedido
+                                        {deletingOrder ? 'Excluindo...' : 'Excluir pedido'}
                                     </button>
                                 </>
                             ) : (
@@ -1143,7 +1146,7 @@ export default function Orders() {
                             )
                         )}
                     >
-                        {(showNewOrder || detailMode !== 'detail') && !orderExpanded && (
+                        {(showNewOrder || detailMode !== 'detail') && (
                             <OrderPanelTopBar
                                 onToggleExpand={() => setOrderExpanded(true)}
                                 onClose={closeDrawer}
@@ -1153,7 +1156,7 @@ export default function Orders() {
                         )}
                         {(showNewOrder || detailMode !== 'detail') && (
                             <div className="order-panel-heading">
-                                {orderExpanded && (
+                                {orderExpanded && !inSubFlow && (
                                     <button
                                         type="button"
                                         className="order-panel-collapse"
@@ -1172,8 +1175,7 @@ export default function Orders() {
                             renderStatusPanel()
                         ) : detailMode === 'delete' ? (
                             <p className="side-drawer-help">
-                                O pedido {orderNumber(selectedOrder.id)} será removido da listagem.
-                                Esta ação não pode ser desfeita.
+                                Confirma a exclusão do pedido {orderNumber(selectedOrder.id)}? Ele será removido da listagem.
                             </p>
                         ) : (
                             detailProps &&

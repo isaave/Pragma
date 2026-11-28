@@ -101,12 +101,18 @@ class ReportController extends Controller
                 $addons = (float) $item->addons->sum(fn ($a) => (float) $a->unit_price * (int) $a->quantity);
                 $value = (float) $item->subtotal + $addons;
 
-                $entry = $productAgg[$name] ??= ['name' => $name, 'units' => 0, 'value' => 0.0];
-                $entry['units'] += (int) $item->quantity;
-                $entry['value'] += $value;
+                // Escreve de volta no array: ??= devolve uma cópia em PHP,
+                // então acumular na variável $entry não atualizava o agregado.
+                if (!isset($productAgg[$name])) {
+                    $productAgg[$name] = ['name' => $name, 'units' => 0, 'value' => 0.0];
+                }
+                $productAgg[$name]['units'] += (int) $item->quantity;
+                $productAgg[$name]['value'] += $value;
 
-                $cat = $categoryAgg[$category] ??= ['category' => $category, 'value' => 0.0];
-                $cat['value'] += $value;
+                if (!isset($categoryAgg[$category])) {
+                    $categoryAgg[$category] = ['category' => $category, 'value' => 0.0];
+                }
+                $categoryAgg[$category]['value'] += $value;
             }
         }
 
@@ -121,8 +127,9 @@ class ReportController extends Controller
             'value' => round($c['value'], 2),
         ])->toArray();
 
-        // Fluxo de caixa por hora (dia atual), com vendas, custos e lucro reais
-        $hours = array_map(fn ($h) => sprintf('%02d:00', $h), range(11, 23));
+        // Fluxo de caixa por hora (dia atual), com vendas, custos e lucro reais.
+        // Cobre as 24 horas: pedidos podem ser criados fora do horário 11h-23h.
+        $hours = array_map(fn ($h) => sprintf('%02d:00', $h), range(0, 23));
         $salesByHour = array_fill(0, count($hours), 0.0);
         $costsByHour = array_fill(0, count($hours), 0.0);
 
@@ -130,7 +137,7 @@ class ReportController extends Controller
             if (!$order->created_at || $order->created_at < $today || $order->status === 'cancelled') {
                 continue;
             }
-            $index = (int) $order->created_at->format('G') - 11;
+            $index = (int) $order->created_at->format('G');
             if ($index >= 0 && $index < count($hours)) {
                 $salesByHour[$index] += (float) $order->total;
             }
@@ -148,14 +155,14 @@ class ReportController extends Controller
             ->get();
 
         foreach ($hourlyMovements as $movement) {
-            $index = (int) optional(\Carbon\Carbon::parse($movement->occurred_at))->format('G') - 11;
+            $index = (int) optional(\Carbon\Carbon::parse($movement->occurred_at))->format('G');
             if ($index >= 0 && $index < count($hours)) {
                 $costsByHour[$index] += (float) $movement->cost;
             }
         }
 
         foreach (Expense::whereDate('created_at', $today->toDateString())->get() as $expense) {
-            $index = (int) $expense->created_at->format('G') - 11;
+            $index = (int) $expense->created_at->format('G');
             if ($index >= 0 && $index < count($hours)) {
                 $costsByHour[$index] += (float) $expense->value;
             }
@@ -244,7 +251,7 @@ class ReportController extends Controller
                 'outgoing_total' => round($outgoing, 2),
                 'profit' => round($profit, 2),
                 'average_ticket' => $validOrders->count() > 0 ? round($revenue / $validOrders->count(), 2) : 0,
-                'active_products' => Product::where('is_active', true)->where('status', 'ativo')->count(),
+                'active_products' => Product::whereNull('deleted_at')->where('is_active', true)->where('status', 'ativo')->count(),
                 'sessions' => StoreSession::count(),
             ],
         ]);

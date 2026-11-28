@@ -16,7 +16,8 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         // Tanto 'basico' quanto 'completo' podem consultar o cardápio (somente leitura para basico)
-        $query = Product::query()->category($request->query('category'));
+        // Produtos excluídos ficam arquivados para não quebrar o histórico dos pedidos.
+        $query = Product::query()->whereNull('deleted_at')->category($request->query('category'));
 
         if ($search = trim((string) $request->query('search', ''))) {
             $query->where('name', 'like', '%' . $search . '%');
@@ -28,6 +29,10 @@ class ProductController extends Controller
     // Mostrar um produto
     public function show(Product $product)
     {
+        if ($product->deleted_at) {
+            abort(404);
+        }
+
         return response()->json($product);
     }
 
@@ -72,10 +77,11 @@ class ProductController extends Controller
         ]);
     }
 
-    // Excluir produto (a receita dele é apagada junto; o estoque não é afetado)
+    // Excluir produto: arquiva para preservar os pedidos que o utilizam.
+    // Um delete real quebraria a FK de order_items e apagaria o histórico de vendas.
     public function destroy(Product $product)
     {
-        $product->delete();
+        $product->forceFill(['deleted_at' => now()])->save();
 
         return response()->json(['message' => 'Produto excluído com sucesso!']);
     }
@@ -109,7 +115,7 @@ class ProductController extends Controller
     private function rules(?int $ignoreId = null): array
     {
         return [
-            'name' => ['required', 'string', 'max:255', Rule::unique('products', 'name')->ignore($ignoreId)],
+            'name' => ['required', 'string', 'max:255', Rule::unique('products', 'name')->whereNull('deleted_at')->ignore($ignoreId)],
             'category' => ['required', Rule::in(Product::CATEGORIES)],
             'description' => 'nullable|string|max:255',
             'price' => 'required|numeric|min:0|max:99999.99',

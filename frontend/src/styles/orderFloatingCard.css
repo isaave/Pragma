@@ -211,7 +211,7 @@
 }
 
 .order-floating-card__copy svg {
-    color: #000000;
+    color: inherit;
 }
 
 .order-floating-card__copy:hover {

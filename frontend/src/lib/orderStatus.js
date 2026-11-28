@@ -32,6 +32,7 @@ export const OPEN_STATUSES = ['pending', 'development', 'preparing', 'ready'];
 export const FILTERS = [
     { key: 'all', label: 'Todos' },
     { key: 'pending', label: 'Pendente' },
+    { key: 'development', label: 'Em desenvolvimento' },
     { key: 'preparing', label: 'Preparando' },
     { key: 'ready', label: 'Pronto' },
     { key: 'delivered', label: 'Entregue' },

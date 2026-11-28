@@ -73,11 +73,14 @@ const LineChart = ({ hours, sales, costs, profit }) => {
             {costs.map((v, i) => (
                 <circle key={`c${i}`} className="dash-line-point--costs" cx={x(i)} cy={y(v)} r="3" />
             ))}
-            {hours.map((h, i) => (
-                <text key={h} className="dash-axis-label" x={x(i)} y={height - 8} textAnchor="middle">
-                    {h}
-                </text>
-            ))}
+            {hours.map((h, i) => {
+                const step = Math.max(1, Math.ceil(hours.length / 8));
+                return (i % step === 0 || i === hours.length - 1) ? (
+                    <text key={h} className="dash-axis-label" x={x(i)} y={height - 8} textAnchor="middle">
+                        {h}
+                    </text>
+                ) : null;
+            })}
         </svg>
     );
 };
@@ -368,7 +371,7 @@ export default function DashboardHome() {
                         </div>
                         <div className="dash-category__legend">
                             {categoryData.map((item, index) => (
-                                <div className="dash-category__row" key={item.label}>
+                                <div className="dash-category__row" key={`${item.label}-${index}`}>
                                     <span className={`dash-dot dash-dot--${index}`} />
                                     <span className="dash-category__name">{item.label}</span>
                                     <span className="dash-category__value">{formatPrice(item.value)}</span>
@@ -415,8 +418,8 @@ export default function DashboardHome() {
 
                 <Card title="Atividades Recentes" subtitle="Últimos eventos do sistema da hamburgueria">
                     <div className="dash-list">
-                        {activities.map((a) => (
-                            <div className="dash-list__row dash-activity" key={a.id}>
+                        {activities.map((a, index) => (
+                            <div className="dash-list__row dash-activity" key={`${a.id}-${index}`}>
                                 <span className="dash-activity__time">{a.time}</span>
                                 <span className="dash-activity__text">{a.text}</span>
                             </div>

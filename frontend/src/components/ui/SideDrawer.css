@@ -278,8 +278,16 @@
 .side-drawer-footer .side-drawer-button--danger,
 .side-drawer-button--danger {
     border-color: var(--danger);
-    background: transparent;
-    color: var(--danger);
+    background: var(--danger);
+    color: #ffffff;
+}
+
+.side-drawer-button:not(:disabled):hover {
+    filter: brightness(0.9);
+}
+
+.side-drawer-button:not(:disabled):active {
+    transform: translateY(1px);
 }
 
 .side-drawer-button:disabled {

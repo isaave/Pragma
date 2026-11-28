@@ -373,6 +373,18 @@
     height: var(--products-primary-height);
 }
 
+/* Rodapé do popup de cadastro/edição */
+.products-form-actions--modal {
+    justify-content: flex-end;
+    padding-top: 4px;
+}
+
+.products-form-actions--modal .products-submit {
+    width: auto;
+    height: 28px;
+    padding: 0 14px;
+}
+
 .products-form-actions .products-form-danger {
     border-color: var(--danger);
     border-radius: var(--products-field-radius);
@@ -1028,6 +1040,108 @@
     .products-check-button {
         align-self: flex-start;
     }
+}
+
+/* Popup de produto: campos com linha inferior e botão centralizado, como o popup de estoque */
+.products-page .products-form-modal .products-field,
+.products-page .products-form-modal .products-price-input {
+    height: 30px;
+    padding: 2px 0;
+    border: none;
+    border-bottom: 1px solid var(--products-border);
+    border-radius: 0;
+    background: transparent;
+    font-size: 13px;
+}
+
+.products-page .products-form-modal .products-price-field {
+    height: 30px;
+    border: none;
+    border-bottom: 1px solid var(--products-border);
+    border-radius: 0;
+    background: transparent;
+}
+
+.products-page .products-form-modal .products-price-prefix {
+    padding-left: 0;
+}
+
+.products-page .products-form-modal .products-field-label {
+    font-size: 11px;
+}
+
+.products-page .products-form-modal .products-field:focus,
+.products-page .products-form-modal .products-price-input:focus {
+    outline: none;
+    border-bottom-color: var(--products-accent);
+}
+
+.products-page .products-form-actions--modal {
+    position: relative;
+    justify-content: stretch;
+    width: 100%;
+    gap: 8px;
+}
+
+.products-page .products-form-secondary-actions {
+    position: static;
+    display: contents;
+}
+
+.products-page .products-form-secondary-actions button {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1 1 0;
+    min-width: 0;
+    height: 30px;
+    padding: 0 8px;
+    border: 1px solid var(--products-blue);
+    border-radius: var(--products-field-radius);
+    background: var(--products-blue);
+    color: var(--products-on-blue);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.products-page .products-form-secondary-actions .products-form-danger {
+    border-color: var(--danger);
+    background: var(--danger);
+    color: #ffffff;
+}
+
+.products-page .products-form-actions--modal .products-submit {
+    flex: 1 1 0;
+    min-width: 0;
+    width: 100%;
+    height: 30px;
+    padding: 0 8px;
+    border: 1px solid var(--products-blue);
+    background: var(--products-blue);
+    color: var(--products-on-blue);
+}
+
+.products-page .products-form-secondary-actions button:not(:disabled):hover,
+.products-page .products-form-actions--modal .products-submit:not(:disabled):hover {
+    filter: brightness(0.88);
+}
+
+.products-page .products-form-secondary-actions button:not(:disabled):active,
+.products-page .products-form-actions--modal .products-submit:not(:disabled):active {
+    transform: translateY(1px);
+}
+
+.products-page .products-form-secondary-actions button:focus-visible,
+.products-page .products-form-actions--modal .products-submit:focus-visible {
+    outline: 2px solid var(--products-focus-ring);
+    outline-offset: 2px;
+}
+
+.products-page .products-form-secondary-actions button:disabled,
+.products-page .products-form-actions--modal .products-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 /* ===== Painel lateral de produtos ===== */

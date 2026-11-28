@@ -220,7 +220,7 @@
 }
 
 .order-expanded__copy svg {
-    color: #000000;
+    color: inherit;
 }
 
 .order-expanded__copy:hover {

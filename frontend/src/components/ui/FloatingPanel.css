@@ -303,9 +303,17 @@
 }
 
 .floating-panel--bare .floating-panel__footer .side-drawer-button--danger {
-    border-color: color-mix(in srgb, var(--danger) 35%, var(--border-color));
-    background: transparent;
-    color: var(--danger);
+    border-color: var(--danger);
+    background: var(--danger);
+    color: #ffffff;
+}
+
+.floating-panel--bare .floating-panel__footer .side-drawer-button:not(:disabled):hover {
+    filter: brightness(0.9);
+}
+
+.floating-panel--bare .floating-panel__footer .side-drawer-button:not(:disabled):active {
+    transform: translateY(1px);
 }
 
 .floating-panel--bare .floating-panel__footer .side-drawer-button:focus-visible {

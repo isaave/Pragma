@@ -7,7 +7,9 @@ import SegmentedControl from '../components/ui/SegmentedControl';
 import TableToolbar from '../components/ui/TableToolbar';
 import ProductCard from '../components/ProductCard';
 import ProductDetail from '../components/ProductDetail';
-import SideDrawer from '../components/ui/SideDrawer';
+import Modal from '../components/ui/Modal';
+import DeleteConfirmModal from '../components/ui/DeleteConfirmModal';
+import StatusBadge from '../components/ui/StatusBadge';
 import useAutoDismiss from '../hooks/useAutoDismiss';
 import '../styles/products.css';
 
@@ -75,6 +77,8 @@ export default function Products() {
     const [form, setForm] = useState(null); // null ou { id, values, recipe }
     const [pick, setPick] = useState({ ingredientId: '', quantity: '', unit: 'unidade' });
     const [pendingDelete, setPendingDelete] = useState(null);
+    const [submitting, setSubmitting] = useState(false);
+    const [deleting, setDeleting] = useState(false);
 
     const [detailId, setDetailId] = useState(null);
     useAutoDismiss(info, setInfo, 4000);
@@ -181,8 +185,10 @@ export default function Products() {
 
     const saveForm = async (e) => {
         e.preventDefault();
+        if (submitting) return;
         setError('');
         setInfo('');
+        setSubmitting(true);
         const payload = {
             ...form.values,
             is_active: form.values.status === 'ativo',
@@ -201,6 +207,8 @@ export default function Products() {
             loadProducts();
         } catch (err) {
             setError(getErrorMessage(err, 'Erro ao salvar o produto.'));
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -215,9 +223,10 @@ export default function Products() {
     };
 
     const confirmDeleteProduct = async () => {
-        if (!pendingDelete) return;
+        if (!pendingDelete || deleting) return;
         setError('');
         setInfo('');
+        setDeleting(true);
         try {
             const res = await productsApi.remove(pendingDelete.id);
             setInfo(res.data.message);
@@ -225,6 +234,8 @@ export default function Products() {
             loadProducts();
         } catch (err) {
             setError(getErrorMessage(err, 'Erro ao excluir o produto.'));
+        } finally {
+            setDeleting(false);
         }
     };
 
@@ -261,15 +272,16 @@ export default function Products() {
     };
 
     const produtoAtual = form ? products.find((p) => p.id === form.id) : null;
+    const formBadge = !form?.id
+        ? { label: 'Novo', tone: 'neutral' }
+        : form.values.status === 'desenvolvimento'
+          ? { label: 'Em desenvolvimento', tone: 'neutral' }
+          : form.values.status === 'inativo'
+            ? { label: 'Inativo', tone: 'warning' }
+            : produtoAtual?.available
+              ? { label: 'Disponível', tone: 'success' }
+              : { label: 'Indisponível', tone: 'warning' };
     const selectedProduct = products.find((p) => p.id === detailId) || null;
-    const drawerOpen = Boolean(form || selectedProduct || pendingDelete);
-    const drawerTitle = pendingDelete
-        ? `Excluir ${pendingDelete.name}`
-        : form
-          ? form.id
-              ? 'Editar produto'
-              : 'Novo produto'
-          : selectedProduct?.name || 'Produto';
 
     return (
         <div className="products-page">
@@ -338,42 +350,23 @@ export default function Products() {
                 </div>
             )}
 
-            {/* Formulário de cadastro / edição no painel lateral */}
+            {/* Formulário de cadastro / edição em popup */}
             {form && (
-                <SideDrawer
+                <Modal
                     open
                     onClose={closeDrawer}
-                    title={form.id ? 'Editar produto' : 'Novo produto'}
-                    eyebrow="Produtos"
+                    title={form.id ? 'Editar produto' : 'Produto novo'}
                     subtitle="Preencha os dados e revise a receita antes de salvar."
                     ariaLabel={form.id ? 'Editar produto' : 'Novo produto'}
-                    footer={
-                        <>
-                            {form.id && produtoAtual && (
-                                <button
-                                    type="button"
-                                    className="side-drawer-button side-drawer-button--danger"
-                                    onClick={() => requestDeleteProduct(produtoAtual)}
-                                >
-                                    Excluir
-                                </button>
-                            )}
-                            <span className="side-drawer-footer-spacer" />
-                            <button type="button" className="side-drawer-button" onClick={closeDrawer}>
-                                Cancelar
-                            </button>
-                            <button
-                                type="submit"
-                                form="product-drawer-form"
-                                className="side-drawer-button side-drawer-button--primary"
-                            >
-                                {form.id ? 'Salvar' : 'Adicionar'}
-                            </button>
-                        </>
-                    }
+                    maxWidth={520}
+                    closePlacement="top"
+                    centerTitle
+                    showDivider={false}
+                    className="products-form-modal"
+                    headerActions={<StatusBadge label={formBadge.label} tone={formBadge.tone} />}
                 >
                     {form && (
-                        <form id="product-drawer-form" className="products-form" onSubmit={saveForm}>
+                        <form id="product-form" className="products-form" onSubmit={saveForm}>
                             <div className="products-form-field">
                                 <label className="products-field-label" htmlFor="product-name">Nome</label>
                                 <input
@@ -580,9 +573,25 @@ export default function Products() {
                                 </>
                             )}
 
+                            <div className="products-form-actions products-form-actions--modal">
+                                <span className="products-form-secondary-actions">
+                                    {form.id && produtoAtual && (
+                                        <button
+                                            type="button"
+                                            className="products-form-danger"
+                                            onClick={() => requestDeleteProduct(produtoAtual)}
+                                        >
+                                            Excluir
+                                        </button>
+                                    )}
+                                </span>
+                                <button type="submit" className="products-submit" disabled={submitting}>
+                                    {submitting ? 'Salvando...' : form.id ? 'Salvar' : 'Adicionar'}
+                                </button>
+                            </div>
                         </form>
                     )}
-                </SideDrawer>
+                </Modal>
             )}
 
             {/* Listagem */}
@@ -595,6 +604,7 @@ export default function Products() {
                         key={p.id}
                         product={p}
                         onOpen={(p) => {
+                            // Clicar no card abre o popup de detalhes; o lápis abre o popup de edição.
                             setForm(null);
                             setPendingDelete(null);
                             setDetailId(p.id);
@@ -607,35 +617,17 @@ export default function Products() {
             </div>
 
             {selectedProduct && !form && !pendingDelete && (
-                <SideDrawer
+                <Modal
                     open
                     onClose={closeDrawer}
                     title={selectedProduct.name}
-                    eyebrow="Produtos"
                     subtitle="Detalhes do produto e da receita"
                     ariaLabel={`Detalhes de ${selectedProduct.name}`}
-                    footer={
-                        <>
-                            {accessLevel === 'completo' && (
-                                <button
-                                    type="button"
-                                    className="side-drawer-button side-drawer-button--danger"
-                                    onClick={() => requestDeleteProduct(selectedProduct)}
-                                >
-                                    Excluir
-                                </button>
-                            )}
-                            <span className="side-drawer-footer-spacer" />
-                            <button
-                                type="button"
-                                className="side-drawer-button side-drawer-button--primary"
-                                onClick={() => openEdit(selectedProduct)}
-                                disabled={accessLevel !== 'completo'}
-                            >
-                                Editar produto
-                            </button>
-                        </>
-                    }
+                    maxWidth={520}
+                    closePlacement="top"
+                    centerTitle
+                    showDivider={false}
+                    className="products-detail-modal"
                 >
                     <ProductDetail
                         product={selectedProduct}
@@ -647,39 +639,44 @@ export default function Products() {
                         onDelete={() => requestDeleteProduct(selectedProduct)}
                         formatPrice={formatPrice}
                         categoryLabel={categoryLabel}
-                        canEdit={accessLevel === 'completo'}
-                        canDelete={accessLevel === 'completo'}
+                        canEdit={false}
+                        canDelete={false}
                     />
-                </SideDrawer>
+                    <div className="products-form-actions products-form-actions--modal">
+                        <span className="products-form-secondary-actions">
+                            {accessLevel === 'completo' && (
+                                <button
+                                    type="button"
+                                    className="products-form-danger"
+                                    onClick={() => requestDeleteProduct(selectedProduct)}
+                                >
+                                    Excluir
+                                </button>
+                            )}
+                        </span>
+                        <button
+                            type="button"
+                            className="products-submit"
+                            onClick={() => openEdit(selectedProduct)}
+                            disabled={accessLevel !== 'completo'}
+                        >
+                            Editar produto
+                        </button>
+                    </div>
+                </Modal>
             )}
 
-            {pendingDelete && (
-                <SideDrawer
-                    open
-                    onClose={closeDrawer}
-                    title={`Excluir ${pendingDelete.name}`}
-                    eyebrow="Produtos"
-                    ariaLabel={`Excluir ${pendingDelete.name}`}
-                    footer={
-                        <>
-                            <button type="button" className="side-drawer-button" onClick={closeDrawer}>
-                                Cancelar
-                            </button>
-                            <button
-                                type="button"
-                                className="side-drawer-button side-drawer-button--danger"
-                                onClick={confirmDeleteProduct}
-                            >
-                                Excluir produto
-                            </button>
-                        </>
-                    }
-                >
-                    <p className="side-drawer-help">
-                        O produto será removido do cardápio. A receita e os ingredientes do estoque não são alterados.
-                    </p>
-                </SideDrawer>
-            )}
+            <DeleteConfirmModal
+                open={Boolean(pendingDelete)}
+                onClose={closeDrawer}
+                name={pendingDelete?.name}
+                subject="produto"
+                note="do cardápio"
+                onConfirm={confirmDeleteProduct}
+                confirming={deleting}
+                error={error}
+                className="products-delete-modal"
+            />
         </div>
     );
 }
