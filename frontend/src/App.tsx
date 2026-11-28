@@ -29,6 +29,8 @@ function AppShell() {
   const [currentUser, setCurrentUser] = useState(null);
   const isMobile = useIsMobile(900);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  // A sidebar desktop é fixa; o conteúdo acompanha a expansão dela com a mesma transição.
+  const [sidebarExpanded, setSidebarExpanded] = useState(false);
 
   // Verifica se já existe um token guardado quando a aplicação arranca
   useEffect(() => {
@@ -120,6 +122,7 @@ function AppShell() {
         isMobile={isMobile}
         mobileOpen={drawerOpen}
         onClose={() => setDrawerOpen(false)}
+        onExpandChange={setSidebarExpanded}
       />
 
       {/* Barra superior no mobile: menu hamburger + perfil */}
@@ -168,7 +171,7 @@ function AppShell() {
         </header>
       )}
 
-      <main style={{ flex: 1, minWidth: 0, padding: isMobile ? '16px' : '24px', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
+      <main style={{ flex: 1, minWidth: 0, padding: isMobile ? '16px' : '24px', paddingLeft: isMobile ? '16px' : (sidebarExpanded ? '244px' : '150px'), transition: isMobile ? undefined : 'padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1)', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
         {!isMobile && view !== 'profile' && !inlineHeader && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '12px', marginBottom: '16px' }}>
             {headerActions}

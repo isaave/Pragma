@@ -410,7 +410,45 @@ class OrderController extends Controller
             ], 422);
         }
 
-        $order->delete();
+        $order->load('items.product.ingredients');
+
+        DB::beginTransaction();
+
+        try {
+            $touchedIngredientIds = [];
+
+            // Devolver ao estoque o que este pedido havia consumido.
+            foreach ($order->items as $item) {
+                $product = $item->product;
+                if ($product) {
+                    foreach ($product->ingredients as $ingredient) {
+                        $touchedIngredientIds[] = $ingredient->id;
+                        $ingredient->increment(
+                            'quantity',
+                            $this->recipeQuantityInStockUnit($ingredient, (int) $item->quantity)
+                        );
+                    }
+                }
+                $item->addons()->delete();
+            }
+
+            // As movimentações referenciam os itens sem cascade, então precisam
+            // ser removidas antes do pedido (senão o FK bloqueia o delete).
+            IngredientMovement::whereIn('order_item_id', $order->items->pluck('id'))->delete();
+            $order->items()->delete();
+            $order->statusHistory()->delete();
+            $order->delete();
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'message' => 'Erro ao excluir o pedido: ' . $e->getMessage(),
+            ], 500);
+        }
+
+        app(AlertService::class)->checkIngredients($touchedIngredientIds);
 
         return response()->json(['message' => 'Pedido excluído com sucesso!']);
     }

@@ -8,7 +8,7 @@
 
     --orders-text: var(--text-primary, #03071e);
     --orders-secondary: var(--text-secondary, #475569);
-    --orders-purple: #3d2a9c;
+    --orders-purple: var(--accent, #1d4ed8);
     --orders-blue: var(--accent, #1d4ed8);
     --orders-on-blue: #ffffff;
     --orders-border: var(--text-primary, #03071e);
@@ -18,7 +18,7 @@
     --orders-input-bg: var(--input-bg, #fafbfd);
     --orders-soft-blue: #b9cdea;
     --orders-soft-blue-hover: #a6bfe2;
-    --orders-focus-ring: #6366f1;
+    --orders-focus-ring: var(--accent, #1d4ed8);
     --orders-shadow: var(--card-shadow, 0 4px 16px rgba(3, 7, 30, 0.05));
     --orders-selected-shadow: var(--card-shadow, 0 4px 16px rgba(3, 7, 30, 0.05));
 
@@ -46,10 +46,10 @@
     --orders-search-max-width: 340px;
 
     /* TODO: confirmar no Dev Mode do Figma (proporções do card de pedido) */
-    --orders-card-min: 200px;
-    --orders-card-max: 230px;
-    --orders-card-min-height: 178px;
-    --orders-card-padding: 8px;
+    --orders-card-min: 290px;
+    --orders-card-max: 300px;
+    --orders-card-min-height: 220px;
+    --orders-card-padding: 12px;
     --orders-card-gap: 6px;
     --orders-card-name-size: 18px;
     --orders-card-order-size: 11px;
@@ -69,6 +69,7 @@
     --orders-radius: 22px; /* Mais arredondado */
 
     /* TODO: confirmar no Dev Mode do Figma (painel/pop-up de detalhe do pedido) */
+    --orders-detail-panel-width: 380px;
     --orders-detail-width: 340px;
     --orders-detail-min-height: min(806px, calc(100vh - 160px));
     --orders-detail-padding: 5px;
@@ -116,10 +117,6 @@
     --orders-form-submit-height: 30px;
     --orders-form-submit-radius: 6px;
     --orders-form-submit-size: 11px;
-}
-
-[data-theme="dark"] {
-    --orders-purple: var(--accent);
 }
 
 /* ===== Página ===== */
@@ -292,6 +289,8 @@ body:has(.orders-page) main {
 
 .orders-layout > .orders-grid {
     flex: 1 1 auto;
+    /* Sem isso o grid cresce com os cards e é cortado pelo overflow da página. */
+    align-self: stretch;
     min-width: 0;
     min-height: 0;
 }
@@ -554,6 +553,144 @@ body:has(.orders-page) main {
 
 .orders-detail--fullscreen::-webkit-scrollbar {
     display: none;
+}
+
+/* Formulários/ações abertos a partir da expansão usam o mesmo card do detalhe. */
+.floating-panel-fullscreen:has(.orders-detail--fullscreen-form) {
+    border-radius: 16px;
+}
+
+.floating-panel-fullscreen--inline .orders-detail--fullscreen-expanded.orders-detail--fullscreen-form {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 0;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    padding: 24px 28px;
+    border-radius: 16px;
+    color: var(--orders-text, var(--text-primary));
+}
+
+.orders-detail--fullscreen-form .order-panel-heading {
+    margin-bottom: 20px;
+}
+
+.orders-detail--fullscreen-form .order-panel-heading > span {
+    font-size: 0.9rem;
+}
+
+.orders-detail--fullscreen-form .order-panel-heading h3 {
+    font-size: 1.75rem;
+    font-weight: 600;
+}
+
+.orders-detail--fullscreen-form .orders-form,
+.orders-detail--fullscreen-form .orders-status-modal,
+.orders-detail--fullscreen-form .side-drawer-help {
+    width: 100%;
+    max-width: 900px;
+    font-size: 0.95rem;
+}
+
+.orders-detail--fullscreen-form .orders-form {
+    gap: 18px;
+}
+
+.orders-detail--fullscreen-form .orders-form__field {
+    height: 44px;
+    padding: 0 14px;
+    border-color: var(--orders-border, var(--border-color));
+    border-radius: 10px;
+    background: var(--orders-input-bg, var(--card-bg));
+    font-size: 0.95rem;
+}
+
+.orders-detail--fullscreen-form .orders-form__customer-input {
+    width: 320px;
+}
+
+.orders-detail--fullscreen-form .orders-form__add-row {
+    gap: 12px;
+}
+
+.orders-detail--fullscreen-form .orders-form__qty {
+    flex-basis: 80px;
+    width: 80px;
+}
+
+.orders-detail--fullscreen-form .orders-form__labels,
+.orders-detail--fullscreen-form .orders-form__label,
+.orders-detail--fullscreen-form .orders-status-label {
+    font-size: 0.9rem;
+}
+
+.orders-detail--fullscreen-form .orders-form__cart {
+    gap: 12px;
+}
+
+.orders-detail--fullscreen-form .orders-form__cart-item {
+    gap: 10px;
+}
+
+.orders-detail--fullscreen-form .orders-form__chip {
+    padding: 8px 14px;
+    font-size: 0.95rem;
+}
+
+.orders-detail--fullscreen-form .orders-form__item-value,
+.orders-detail--fullscreen-form .orders-form__addon {
+    font-size: 0.9rem;
+}
+
+.orders-detail--fullscreen-form .orders-form__textarea,
+.orders-detail--fullscreen-form .orders-status-reason textarea {
+    min-height: 96px;
+    padding: 12px 14px;
+    border-color: var(--orders-border, var(--border-color));
+    font-size: 0.95rem;
+}
+
+.orders-detail--fullscreen-form .orders-form__total {
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+    font-size: 1.25rem;
+}
+
+.orders-detail--fullscreen-form .side-drawer-total {
+    background: transparent;
+}
+
+.orders-detail--fullscreen-form .orders-status-modal {
+    gap: 20px;
+}
+
+.orders-detail--fullscreen-form .orders-status-pills {
+    gap: 12px;
+}
+
+.orders-detail--fullscreen-form .orders-status-pill {
+    padding: 10px 18px;
+    font-size: 0.95rem;
+}
+
+.orders-detail--fullscreen-form .floating-panel__footer--fullscreen {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+    gap: 12px;
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+.orders-detail--fullscreen-form .floating-panel__footer--fullscreen .side-drawer-button {
+    min-height: 42px;
+    padding: 0 20px;
+    border-radius: 10px;
+    font-size: 0.95rem;
 }
 
 .orders-detail--fullscreen .orders-detail-content {
@@ -1478,4 +1615,98 @@ body:has(.orders-page) main {
 
 .side-drawer .orders-detail-item-extras {
     border-color: var(--border-color);
+}
+
+/* ===== Retângulo fixo de pedidos ===== */
+
+.floating-panel .orders-form__customer-input {
+    width: 100%;
+}
+
+.floating-panel .orders-form__field {
+    width: 100%;
+    border-color: var(--border-color);
+    background: var(--input-bg);
+}
+
+.floating-panel .orders-form__add-row {
+    align-items: flex-end;
+}
+
+.floating-panel .orders-form__select {
+    flex: 1 1 auto;
+}
+
+.floating-panel .orders-form__chip {
+    background: color-mix(in srgb, var(--accent) 12%, var(--card-bg));
+    color: var(--accent);
+}
+
+.floating-panel .orders-form__chip-button {
+    color: inherit;
+}
+
+.floating-panel .orders-form__divider {
+    background: var(--border-color);
+}
+
+.floating-panel .orders-status-pill {
+    border-color: var(--border-color);
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.floating-panel .orders-status-pill[aria-pressed='true'] {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--card-bg);
+}
+
+.floating-panel .orders-detail-content--modal {
+    padding: 0;
+    color: var(--text-primary);
+}
+
+.floating-panel .orders-detail-table-head,
+.floating-panel .orders-detail-table-row {
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+.floating-panel .orders-detail-item-extras {
+    border-color: var(--border-color);
+}
+
+.floating-panel .side-drawer-total {
+    margin-top: 12px;
+}
+
+/* Cabeçalho em uma linha, como no layout de referência. */
+.orders-page .page-header {
+    gap: 8px;
+}
+
+.orders-page .page-header-text {
+    flex: 0 0 auto !important;
+}
+
+.orders-page .page-header-title,
+.orders-page .page-header-subtitle {
+    white-space: nowrap;
+    overflow-wrap: normal !important;
+}
+
+/* Grid de cards conforme o layout de referência, com cards maiores no desktop. */
+@media (min-width: 901px) {
+    .orders-grid {
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--orders-card-min)), var(--orders-card-max)));
+        gap: 24px;
+    }
+}
+
+@media (min-width: 561px) and (max-width: 900px) {
+    .orders-grid {
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--orders-card-min)), var(--orders-card-max)));
+        gap: 16px;
+    }
 }

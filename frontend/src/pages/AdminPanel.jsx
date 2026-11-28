@@ -5,6 +5,8 @@ import PageHeader from '../components/ui/PageHeader';
 import SegmentedControl from '../components/ui/SegmentedControl';
 import TableToolbar from '../components/ui/TableToolbar';
 import Modal from '../components/ui/Modal';
+import DeleteConfirmModal from '../components/ui/DeleteConfirmModal';
+import StatusBadge from '../components/ui/StatusBadge';
 import '../styles/users.css';
 
 export default function AdminPanel() {
@@ -20,6 +22,16 @@ export default function AdminPanel() {
     });
     const [isEditing, setIsEditing] = useState(false);
     const [editId, setEditId] = useState(null);
+    const [saving, setSaving] = useState(false);
+    const [feedback, setFeedback] = useState(null);
+    const [pendingDelete, setPendingDelete] = useState(null);
+    const [deleting, setDeleting] = useState(false);
+
+    useEffect(() => {
+        if (!feedback) return undefined;
+        const timer = setTimeout(() => setFeedback(null), 6000);
+        return () => clearTimeout(timer);
+    }, [feedback]);
 
     useEffect(() => {
         const storedUser = localStorage.getItem('pragma_user');
@@ -40,22 +52,29 @@ export default function AdminPanel() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (saving) return;
+        setSaving(true);
+        setFeedback(null);
         try {
+            let message;
             if (isEditing) {
                 const res = await api.put(`/users/${editId}`, formData);
-                alert(res.data.message || 'Utilizador atualizado com sucesso!');
+                message = res.data.message || 'Utilizador atualizado com sucesso!';
             } else {
                 const res = await api.post('/users', formData);
                 const senha = res.data.temporary_password
                     ? `\n\nSenha temporária: ${res.data.temporary_password}`
                     : '';
-                alert((res.data.message || 'Utilizador criado com sucesso!') + senha);
+                message = (res.data.message || 'Utilizador criado com sucesso!') + senha;
             }
             resetForm();
             fetchUsers();
+            setFeedback({ type: 'success', text: message });
         } catch (error) {
             const msg = error.response?.data?.message || 'Erro ao guardar utilizador. Verifica os dados.';
-            alert(msg);
+            setFeedback({ type: 'error', text: msg });
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -64,6 +83,7 @@ export default function AdminPanel() {
         setIsEditing(false);
         setEditId(null);
         setModal(null);
+        setFeedback(null);
     };
 
     const handleEdit = (user) => {
@@ -80,14 +100,25 @@ export default function AdminPanel() {
         setModal('edit');
     };
 
-    const handleDelete = async (id) => {
-        if (confirm('Tens a certeza que queres apagar este utilizador?')) {
-            try {
-                await api.delete(`/users/${id}`);
-                fetchUsers();
-            } catch (error) {
-                alert('Erro ao apagar utilizador.');
-            }
+    const handleDelete = (user) => {
+        setFeedback(null);
+        setPendingDelete(user);
+    };
+
+    const confirmDelete = async () => {
+        if (!pendingDelete || deleting) return;
+        setDeleting(true);
+        setFeedback(null);
+        try {
+            await api.delete(`/users/${pendingDelete.id}`);
+            setPendingDelete(null);
+            fetchUsers();
+            setFeedback({ type: 'success', text: 'Usuário excluído com sucesso.' });
+        } catch (error) {
+            const msg = error.response?.data?.message || 'Erro ao apagar utilizador.';
+            setFeedback({ type: 'error', text: msg });
+        } finally {
+            setDeleting(false);
         }
     };
 
@@ -146,6 +177,15 @@ export default function AdminPanel() {
                     subtitle="Gerencie usuários, cargos e níveis de acesso."
                 />
 
+                {feedback && (
+                    <div
+                        className={`users-feedback users-feedback--${feedback.type}`}
+                        role={feedback.type === 'error' ? 'alert' : 'status'}
+                    >
+                        {feedback.text}
+                    </div>
+                )}
+
                 <div className="users-controls">
                     <div className="users-segmented">
                         <SegmentedControl
@@ -199,8 +239,24 @@ export default function AdminPanel() {
                     subtitle={modal === 'create'
                         ? 'Preencha as informações para registrar o novo colaborador'
                         : 'Atualize as informações do colaborador selecionado'}
+                    maxWidth={520}
+                    closePlacement="top"
+                    centerTitle
+                    showDivider={false}
+                    className="users-modal users-form-modal"
+                    headerActions={
+                        <StatusBadge
+                            label={modal === 'edit' ? formData.status : 'Novo usuário'}
+                            tone={modal === 'edit' ? (formData.status === 'Inativo' ? 'danger' : 'success') : 'neutral'}
+                        />
+                    }
                 >
                     <form className="users-form" onSubmit={handleSubmit}>
+                        {feedback?.type === 'error' && (
+                            <div className="users-feedback users-feedback--error" role="alert">
+                                {feedback.text}
+                            </div>
+                        )}
                         <label>
                             NOME COMPLETO
                             <input
@@ -269,8 +325,10 @@ export default function AdminPanel() {
                             </label>
                         )}
                         <div className="users-form-divider" />
-                        <button type="submit" className="users-modal-primary">
-                            {isEditing ? 'Salvar alterações' : 'Cadastrar usuário'}
+                        <button type="submit" className="users-modal-primary" disabled={saving}>
+                            {saving
+                                ? 'Salvando...'
+                                : isEditing ? 'Salvar alterações' : 'Cadastrar usuário'}
                         </button>
                     </form>
                 </Modal>
@@ -280,6 +338,17 @@ export default function AdminPanel() {
                     onClose={closeModal}
                     title="Informações do Usuário"
                     subtitle="Consulte os dados cadastrais e o status atual do colaborador"
+                    maxWidth={520}
+                    closePlacement="top"
+                    centerTitle
+                    showDivider={false}
+                    className="users-modal users-view-modal"
+                    headerActions={
+                        <StatusBadge
+                            label={selectedUser?.status || '—'}
+                            tone={selectedUser?.status === 'Inativo' ? 'danger' : selectedUser?.status ? 'success' : 'neutral'}
+                        />
+                    }
                 >
                     <div className="users-form">
                         <label>
@@ -372,7 +441,7 @@ export default function AdminPanel() {
                                         <button className="users-action-icon" onClick={() => handleEdit(user)} aria-label="Editar">
                                             <Pencil size={16} />
                                         </button>
-                                        <button className="users-action-icon" onClick={() => handleDelete(user.id)} aria-label="Apagar">
+                                        <button className="users-action-icon" onClick={() => handleDelete(user)} aria-label={`Apagar ${user.name}`}>
                                             <Trash2 size={16} />
                                         </button>
                                     </td>
@@ -389,6 +458,16 @@ export default function AdminPanel() {
                 </table>
                 </div>
             </main>
+            <DeleteConfirmModal
+                open={Boolean(pendingDelete)}
+                onClose={() => setPendingDelete(null)}
+                name={pendingDelete?.name}
+                subject="usuário"
+                onConfirm={confirmDelete}
+                confirming={deleting}
+                error={feedback?.type === 'error' ? feedback.text : ''}
+                className="users-delete-modal"
+            />
         </div>
     );
 }

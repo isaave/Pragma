@@ -5,7 +5,7 @@ import logo from '../assets/LogoHouseBurguer.png';
 import LegalModal from './LegalModal';
 import { useTheme } from '../contexts/ThemeContext';
 
-export default function Sidebar({ currentView, onNavigate, onLogout, currentUser, isMobile = false, mobileOpen = false, onClose }) {
+export default function Sidebar({ currentView, onNavigate, onLogout, currentUser, isMobile = false, mobileOpen = false, onClose, onExpandChange }) {
     const [hoverExpanded, setHoverExpanded] = useState(false);
     const [legalDoc, setLegalDoc] = useState(null); // null | 'terms' | 'privacy'
     const { isDark, toggleTheme } = useTheme();
@@ -264,20 +264,19 @@ export default function Sidebar({ currentView, onNavigate, onLogout, currentUser
     // ===== Modo desktop: barra lateral retrátil no hover =====
     return (
         <aside
-            onMouseEnter={() => setHoverExpanded(true)}
-            onMouseLeave={() => setHoverExpanded(false)}
+            onMouseEnter={() => { setHoverExpanded(true); onExpandChange?.(true); }}
+            onMouseLeave={() => { setHoverExpanded(false); onExpandChange?.(false); }}
             style={{
-                position: 'sticky',
+                position: 'fixed',
                 // Centraliza verticalmente na tela (com folga mínima de 12px)
+                left: '12px',
                 top: `max(12px, calc((100vh - ${sbHeight}) / 2))`,
                 width,
                 transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 overflow: 'hidden',
                 backgroundColor: '#03071e',
                 borderRadius: '30px',
-                margin: '12px',
                 height: sbHeight,
-                alignSelf: 'center',
                 padding: '24px 16px',
                 boxSizing: 'border-box',
                 display: 'flex',
@@ -334,6 +333,8 @@ export default function Sidebar({ currentView, onNavigate, onLogout, currentUser
             {/* Menu de Navegação (centralizado verticalmente) */}
             <nav style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%', flex: 1, justifyContent: 'center' }}>
                 {items.map(({ view, icon: Icon, label, condition }) => {
+                    // Itens restritos (Relatórios/Usuários) só aparecem para completo
+                    if (condition === false) return null;
                     const isActive = currentView === view;
                     return (
                         <button

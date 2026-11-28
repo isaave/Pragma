@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import CloseButton from './CloseButton';
 
 // Uso:
@@ -51,23 +51,83 @@ export default function Modal({
     titleInline = false,
 }) {
     const [titleId] = useState(() => `pragma-modal-title-${++nextModalId}`);
+    const dialogRef = useRef(null);
+    const onCloseRef = useRef(onClose);
+    const previouslyFocusedRef = useRef(null);
+
+    // Mantém o handler atual sem reiniciar o efeito (e o foco) a cada renderização.
+    useEffect(() => {
+        onCloseRef.current = onClose;
+    }, [onClose]);
 
     useEffect(() => {
         if (!open) return undefined;
 
         const previousOverflow = document.body.style.overflow;
         document.body.style.overflow = 'hidden';
+        previouslyFocusedRef.current = document.activeElement;
+
+        const dialog = dialogRef.current;
+        const focusableSelector = [
+            'a[href]',
+            'button:not([disabled])',
+            'input:not([disabled])',
+            'select:not([disabled])',
+            'textarea:not([disabled])',
+            '[tabindex]:not([tabindex="-1"])',
+        ].join(', ');
+        const getFocusable = () => (dialog
+            ? [...dialog.querySelectorAll(focusableSelector)].filter((el) => el.offsetParent !== null)
+            : []);
+
+        // Foco inicial no primeiro campo editável (ou no botão de fechar).
+        const focusFrame = requestAnimationFrame(() => {
+            const focusable = getFocusable();
+            const firstField = focusable.find((el) => ['INPUT', 'SELECT', 'TEXTAREA'].includes(el.tagName));
+            (firstField || focusable[0] || dialog)?.focus?.({ preventScroll: true });
+        });
 
         const handleKeyDown = (event) => {
-            if (event.key === 'Escape') onClose();
+            if (event.key === 'Escape') {
+                event.stopPropagation();
+                onCloseRef.current();
+                return;
+            }
+            if (event.key !== 'Tab' || !dialog) return;
+
+            const focusable = getFocusable();
+            if (!focusable.length) {
+                event.preventDefault();
+                dialog.focus({ preventScroll: true });
+                return;
+            }
+
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+            const active = document.activeElement;
+            if (!dialog.contains(active)) {
+                event.preventDefault();
+                (event.shiftKey ? last : first).focus({ preventScroll: true });
+            } else if (event.shiftKey && active === first) {
+                event.preventDefault();
+                last.focus({ preventScroll: true });
+            } else if (!event.shiftKey && active === last) {
+                event.preventDefault();
+                first.focus({ preventScroll: true });
+            }
         };
         document.addEventListener('keydown', handleKeyDown);
 
         return () => {
+            cancelAnimationFrame(focusFrame);
             document.body.style.overflow = previousOverflow;
             document.removeEventListener('keydown', handleKeyDown);
+            const previouslyFocused = previouslyFocusedRef.current;
+            if (previouslyFocused instanceof HTMLElement && document.contains(previouslyFocused)) {
+                previouslyFocused.focus({ preventScroll: true });
+            }
         };
-    }, [open, onClose]);
+    }, [open]);
 
     if (!open) return null;
 
@@ -90,10 +150,12 @@ export default function Modal({
             onClick={onClose}
         >
             <div
+                ref={dialogRef}
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby={titleNode ? undefined : titleId}
                 aria-label={titleNode ? ariaLabel : undefined}
+                tabIndex={-1}
                 onClick={event => event.stopPropagation()}
                 className={className}
                 style={{

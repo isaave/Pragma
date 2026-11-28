@@ -1,0 +1,391 @@
+/* Retângulo fixo à direita — segue exatamente o estilo dos cards de pedido. */
+.floating-panel {
+    position: fixed;
+    top: 24%;
+    right: 24px;
+    z-index: 200;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    width: min(250px, calc(100vw - 32px));
+    max-height: calc(90vh - 24px);
+    overflow: hidden;
+    border: var(--orders-border-width, 1px) solid var(--orders-border, var(--border-color));
+    border-radius: var(--orders-radius, 22px);
+    background: var(--orders-card-bg, var(--card-bg));
+    color: var(--orders-text, var(--text-primary));
+    box-shadow: var(--orders-shadow, 0 4px 16px rgba(3, 7, 30, 0.05));
+    animation: floating-panel-in 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.floating-panel:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.floating-panel__header {
+    box-sizing: border-box;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 8px 0;
+    border-bottom: 1px solid transparent;
+}
+
+.floating-panel__header:not(.floating-panel__header--minimal) {
+    padding: 12px 14px 10px;
+    border-bottom-color: var(--border-color);
+}
+
+.floating-panel__heading {
+    min-width: 0;
+}
+
+.floating-panel__eyebrow {
+    display: block;
+    margin-bottom: 3px;
+    color: var(--accent);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+}
+
+.floating-panel__title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.floating-panel__subtitle {
+    margin: 4px 0 0;
+    color: var(--text-secondary);
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.floating-panel__actions {
+    display: flex;
+    flex: 0 0 auto;
+    gap: 2px;
+}
+
+.floating-panel__icon {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--card-bg);
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+.floating-panel__icon:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.floating-panel__icon:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.floating-panel__body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 12px 14px;
+    scrollbar-color: var(--border-color) transparent;
+    scrollbar-width: thin;
+}
+
+.floating-panel--bare .floating-panel__body {
+    padding: 8px;
+}
+
+.floating-panel__footer {
+    box-sizing: border-box;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    padding: 8px;
+    border-top: 1px solid var(--border-color);
+    background: var(--card-bg);
+}
+
+/* Detalhe com tipografia idêntica à dos cards. */
+.floating-panel .orders-detail-content--modal {
+    display: flex;
+    flex-direction: column;
+    gap: var(--orders-card-gap, 6px);
+    padding: 0;
+    color: var(--orders-text);
+}
+
+.floating-panel .orders-detail-heading {
+    align-items: flex-start;
+}
+
+.floating-panel .orders-detail-name {
+    font-size: var(--orders-card-name-size, 18px);
+}
+
+.floating-panel .orders-detail-meta {
+    font-size: var(--orders-card-order-size, 11px);
+}
+
+.floating-panel .orders-detail-table-head,
+.floating-panel .orders-detail-table-row {
+    border-color: var(--border-color);
+    color: var(--orders-text);
+    font-size: var(--orders-card-table-size, 12px);
+}
+
+.floating-panel .orders-detail-table-head {
+    font-size: var(--orders-card-table-head-size, 11px);
+}
+
+.floating-panel .orders-detail-thumb {
+    display: none;
+}
+
+.floating-panel .orders-detail-item-extras {
+    border-color: var(--border-color);
+}
+
+.floating-panel .orders-detail-total {
+    font-size: var(--orders-card-total-size, 16px);
+}
+
+.floating-panel .orders-detail-label {
+    display: none;
+}
+
+.floating-panel .orders-detail-actions--card {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    margin-top: 2px;
+}
+
+.floating-panel .orders-detail-actions--card > button {
+    width: 100%;
+    min-height: 26px;
+    justify-content: flex-start;
+    font-size: 11px;
+}
+
+.floating-panel .orders-detail-history {
+    max-height: 140px;
+    overflow-y: auto;
+}
+
+.floating-panel .side-drawer-total {
+    margin-top: 12px;
+}
+
+.floating-panel-fullscreen {
+    position: fixed;
+    inset: 0;
+    z-index: 210;
+    overflow-y: auto;
+    padding: 16px;
+    background: var(--bg-primary);
+    animation: floating-panel-in 160ms ease-out both;
+}
+
+.floating-panel-fullscreen .orders-detail--fullscreen {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 860px;
+    height: auto;
+    max-height: none;
+    margin: 0 auto;
+    padding: 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: var(--card-bg);
+    box-shadow: 0 18px 48px rgba(3, 7, 30, 0.18);
+}
+
+@keyframes floating-panel-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 600px) {
+    .floating-panel {
+        top: 18%;
+        right: 12px;
+        width: calc(100vw - 24px);
+        max-height: calc(82vh - 24px);
+    }
+
+    .floating-panel-fullscreen {
+        padding: 8px;
+    }
+
+    .floating-panel-fullscreen .orders-detail--fullscreen {
+        padding: 14px;
+    }
+}
+
+/* Painel lateral de detalhes: retângulo vertical alto, cinza-azulado claro. */
+.floating-panel--bare {
+    /* Começa abaixo do cabeçalho e da toolbar, alinhado ao topo da grade. */
+    top: 124px;
+    bottom: 16px;
+    right: 24px;
+    width: min(var(--orders-detail-panel-width, 420px), calc(100vw - 32px));
+    height: auto;
+    max-height: none;
+    padding: 20px 24px;
+    border: 1px solid var(--orders-border, var(--text-primary));
+    border-radius: 16px;
+    background: var(--orders-card-bg, var(--card-bg));
+    color: var(--orders-text, var(--text-primary));
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);
+    justify-content: space-between;
+    animation: floating-panel-in 180ms ease-out;
+}
+
+.floating-panel--bare .floating-panel__body {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+    padding: 0;
+    overflow-y: auto;
+}
+
+/* Rodapé das ações mantém o mesmo painel lateral. */
+.floating-panel--bare .floating-panel__footer {
+    justify-content: stretch;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 12px 0 0;
+    border-top: 1px solid var(--border-color);
+    background: transparent;
+}
+
+.floating-panel--bare .floating-panel__footer .side-drawer-button {
+    flex: 1 1 auto;
+    border-color: var(--border-color);
+    border-radius: 10px;
+    background: var(--bg-tertiary);
+    color: var(--orders-text, var(--text-primary));
+}
+
+.floating-panel--bare .floating-panel__footer .side-drawer-button--primary {
+    border-color: var(--orders-blue, var(--accent));
+    background: var(--orders-blue, var(--accent));
+    color: var(--orders-on-blue);
+}
+
+.floating-panel--bare .floating-panel__footer .side-drawer-button--primary:hover {
+    background: color-mix(in srgb, var(--orders-blue, var(--accent)) 82%, black);
+}
+
+.floating-panel--bare .floating-panel__footer .side-drawer-button--danger {
+    border-color: var(--danger);
+    background: var(--danger);
+    color: #ffffff;
+}
+
+.floating-panel--bare .floating-panel__footer .side-drawer-button:not(:disabled):hover {
+    filter: brightness(0.9);
+}
+
+.floating-panel--bare .floating-panel__footer .side-drawer-button:not(:disabled):active {
+    transform: translateY(1px);
+}
+
+.floating-panel--bare .floating-panel__footer .side-drawer-button:focus-visible {
+    outline: 2px solid var(--orders-focus-ring);
+    outline-offset: 2px;
+}
+
+.floating-panel__footer--fullscreen {
+    justify-content: flex-end;
+    margin-top: 16px;
+    padding: 12px 0 0;
+    border-top: 1px solid var(--border-color);
+    background: transparent;
+}
+
+@media (max-width: 900px) {
+    .floating-panel--bare {
+        top: 124px;
+        bottom: 12px;
+        right: 12px;
+        width: min(320px, calc(100vw - 24px));
+        padding: 16px 18px;
+    }
+}
+
+@media (max-width: 600px) {
+    .floating-panel--bare {
+        top: auto;
+        bottom: 12px;
+        left: 12px;
+        right: 12px;
+        width: calc(100vw - 24px);
+        height: auto;
+        max-height: calc(100vh - 136px);
+        padding: 16px 18px 20px;
+        border-right: 1px solid var(--orders-border, var(--text-primary));
+        border-bottom: 1px solid var(--orders-border, var(--text-primary));
+        border-left: 1px solid var(--orders-border, var(--text-primary));
+        border-radius: 16px;
+    }
+
+    .floating-panel--bare .floating-panel__body {
+        overflow-y: auto;
+    }
+}
+
+@media (max-height: 680px) and (min-width: 601px) {
+    .floating-panel--bare {
+        top: 116px;
+        bottom: 8px;
+        padding: 12px 18px;
+    }
+}
+
+/* No fluxo da página o painel ocupa a coluna direita: nunca sobrepõe a toolbar. */
+.orders-layout > .floating-panel--inline {
+    position: static;
+    inset: auto;
+    flex: 0 0 var(--orders-detail-panel-width, 420px);
+    width: auto;
+    height: 100%;
+    max-height: none;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+@media (max-width: 900px) {
+    .orders-layout > .floating-panel--inline {
+        flex: 0 0 auto;
+        width: 100%;
+        height: auto;
+        min-height: 420px;
+        max-height: none;
+    }
+}

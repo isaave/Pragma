@@ -3,6 +3,7 @@ import { Mail, Lock, Eye, EyeOff, ClipboardList, History, Package, BarChart3, Us
 import api from '../Services/api';
 import logo from '../assets/LogoHouseBurguer.png';
 import logoSemEscrita from '../assets/LogoSemEscrita.png';
+import logoSemEscritaModoEscuro from '../assets/LogoSemEscritaModoEscuro.png';
 import { useTheme } from '../contexts/ThemeContext';
 import useIsMobile from '../hooks/useIsMobile';
 
@@ -364,7 +365,13 @@ export default function Login({ onLoginSuccess }) {
                     ? { ...styles.frame, width: '100%', height: 'auto', minHeight: 'calc(100vh - 32px)', borderRadius: '0', boxShadow: 'none', flexDirection: 'column' }
                     : styles.frame}
             >
-                {!isMobile && <img src={logoSemEscrita} alt="House Burguer" style={styles.cornerLogo} />}
+                {!isMobile && (
+                    <img
+                        src={isDark ? logoSemEscritaModoEscuro : logoSemEscrita}
+                        alt="House Burguer"
+                        style={styles.cornerLogo}
+                    />
+                )}
                 {/* ===== LADO ESQUERDO: Onboarding (apenas em telas grandes) ===== */}
             {!isMobile && (
             <div style={styles.left}>
